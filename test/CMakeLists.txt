@@ -31,3 +31,4 @@ function(frt_add_test test_name)
 endfunction()
 
 add_subdirectory(either)
+add_subdirectory(expects)
