@@ -12,4 +12,5 @@ BraceWrapping:
   AfterStruct: true
   AfterEnum: true
   AfterUnion: true
+  AfterNamespace: true
 InsertNewlineAtEOF: true
