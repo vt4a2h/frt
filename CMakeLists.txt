@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.28)
 project(frt
     VERSION 0.0.0
     DESCRIPTION "Result types for modern C++"
-    LANGUAGES CXX)
+    LANGUAGES C CXX)
 
 add_library(frt INTERFACE)
 add_library(frt::frt ALIAS frt)
