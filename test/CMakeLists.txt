@@ -1,4 +1,4 @@
-find_package(Catch2 CONFIG REQUIRED)
+find_package(Catch2 3 CONFIG REQUIRED)
 
 function(frt_add_test test_name)
     string(REPLACE "_" "-" test_target_name "${test_name}")

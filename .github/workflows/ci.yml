@@ -33,12 +33,7 @@ jobs:
           wget https://apt.llvm.org/llvm.sh
           chmod +x llvm.sh
           sudo ./llvm.sh 20
-          echo "CC=/usr/bin/clang-20" >> $GITHUB_ENV
-          echo "CXX=/usr/bin/clang++-20" >> $GITHUB_ENV
-        shell: bash
-
-      - name: Setup vcpkg
-        run: echo "VCPKG_ROOT=$VCPKG_INSTALLATION_ROOT" >> $GITHUB_ENV
+          sudo apt-get install libc++-dev
         shell: bash
 
       - name: Activate Developer Environment
