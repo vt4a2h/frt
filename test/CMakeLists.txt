@@ -19,6 +19,7 @@ function(frt_add_test test_name)
 
     target_link_libraries(${test_target_name} PRIVATE
         frt::frt
+        frt::frt-test-helpers
 
         Catch2::Catch2
         Catch2::Catch2WithMain
@@ -30,5 +31,6 @@ function(frt_add_test test_name)
     set(frt_test_target_name ${test_target_name} PARENT_SCOPE)
 endfunction()
 
+add_subdirectory(helpers)
 add_subdirectory(either)
 add_subdirectory(expects)

@@ -1,9 +1,15 @@
 #include <catch2/catch_all.hpp>
 
+#include <string>
+
 #include <frt/either.hpp>
+
+#include <test/helpers/types.hpp>
 
 TEST_CASE("Create", "[either]")
 {
+  using namespace test::helpers;
+  using namespace std::literals;
   using Either = frt::either<std::vector<int>, std::string>;
 
   const std::vector expectedLeftValue{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
@@ -138,5 +144,37 @@ TEST_CASE("Create", "[either]")
     const Either either{frt::create_right, std::move(tmp)};
 
     REQUIRE(either.right() == expectedRightValue);
+  }
+
+  SECTION("In-place left (Args...)")
+  {
+    using EitherFoo = frt::either<TestArgsIl, std::string>;
+    const EitherFoo either{frt::in_place_left, 1, 2.0};
+
+    REQUIRE(either.left() == TestArgsIl{1, 2.0});
+  }
+
+  SECTION("In-place left (initializer_list, Args...)")
+  {
+    using EitherFoo = frt::either<TestArgsIl, std::string>;
+    const EitherFoo either{frt::in_place_left, {"a"s, "b"s}, 1, 2.0};
+
+    REQUIRE(either.left() == TestArgsIl{{"a"s, "b"s}, 1, 2.0});
+  }
+
+  SECTION("In-place right (Args...)")
+  {
+    using EitherFoo = frt::either<std::string, TestArgsIl>;
+    const EitherFoo either{frt::in_place_right, 1, 2.0};
+
+    REQUIRE(either.right() == TestArgsIl{1, 2.0});
+  }
+
+  SECTION("In-place right (initializer_list, Args...)")
+  {
+    using EitherFoo = frt::either<std::string, TestArgsIl>;
+    const EitherFoo either{frt::in_place_right, {"a"s, "b"s}, 1, 2.0};
+
+    REQUIRE(either.right() == TestArgsIl{{"a"s, "b"s}, 1, 2.0});
   }
 }

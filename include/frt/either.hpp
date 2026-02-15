@@ -129,16 +129,50 @@ struct Data
   }
 
   template <ValidConstructableFrom<Left> U>
-  constexpr Data(CreateLeftTag, U &&u) noexcept(std::is_nothrow_constructible_v<Left, U &&>)
+  constexpr Data(CreateLeftTag, U &&u) noexcept(std::is_nothrow_constructible_v<Left, U>)
   {
     std::construct_at(std::addressof(left_), std::forward<U>(u));
     is_left_ = true;
   }
 
   template <ValidConstructableFrom<Right> U>
-  constexpr Data(CreateRightTag, U &&u) noexcept(std::is_nothrow_constructible_v<Right, U &&>)
+  constexpr Data(CreateRightTag, U &&u) noexcept(std::is_nothrow_constructible_v<Right, U>)
   {
     std::construct_at(std::addressof(right_), std::forward<U>(u));
+    is_left_ = false;
+  }
+
+  template <class... Args>
+    requires(std::constructible_from<Left, Args...>)
+  constexpr Data(InPlaceLeftTag, Args &&...args) noexcept(std::is_nothrow_constructible_v<Left, Args...>)
+  {
+    std::construct_at(std::addressof(left_), std::forward<Args>(args)...);
+    is_left_ = true;
+  }
+
+  template <class U, class... Args>
+    requires(std::constructible_from<Left, std::initializer_list<U> &, Args...>)
+  constexpr Data(InPlaceLeftTag, std::initializer_list<U> ilist,
+                 Args &&...args) noexcept(std::is_nothrow_constructible_v<Left, std::initializer_list<U> &, Args...>)
+  {
+    std::construct_at(std::addressof(left_), ilist, std::forward<Args>(args)...);
+    is_left_ = true;
+  }
+
+  template <class... Args>
+    requires(std::constructible_from<Right, Args...>)
+  constexpr Data(InPlaceRightTag, Args &&...args) noexcept(std::is_nothrow_constructible_v<Right, Args...>)
+  {
+    std::construct_at(std::addressof(right_), std::forward<Args>(args)...);
+    is_left_ = false;
+  }
+
+  template <class U, class... Args>
+    requires(std::constructible_from<Right, std::initializer_list<U> &, Args...>)
+  constexpr Data(InPlaceRightTag, std::initializer_list<U> ilist,
+                 Args &&...args) noexcept(std::is_nothrow_constructible_v<Right, std::initializer_list<U> &, Args...>)
+  {
+    std::construct_at(std::addressof(right_), ilist, std::forward<Args>(args)...);
     is_left_ = false;
   }
 
@@ -247,6 +281,36 @@ public:
   template <detail::either_::ValidConstructableFrom<right_t> U>
   constexpr either(create_right_t t, U &&u) noexcept(std::is_nothrow_constructible_v<right_t, U>)
       : data_(t, std::forward<U>(u))
+  {
+  }
+
+  template <class... Args>
+    requires(std::constructible_from<left_t, Args...>)
+  constexpr either(in_place_left_t t, Args &&...args) noexcept(std::is_nothrow_constructible_v<left_t, Args...>)
+      : data_(t, std::forward<Args>(args)...)
+  {
+  }
+
+  template <class U, class... Args>
+    requires(std::constructible_from<left_t, std::initializer_list<U> &, Args...>)
+  constexpr either(in_place_left_t t, std::initializer_list<U> ilist, Args &&...args) noexcept(
+      std::is_nothrow_constructible_v<left_t, std::initializer_list<U> &, Args...>)
+      : data_(t, ilist, std::forward<Args>(args)...)
+  {
+  }
+
+  template <class... Args>
+    requires(std::constructible_from<right_t, Args...>)
+  constexpr either(in_place_right_t t, Args &&...args) noexcept(std::is_nothrow_constructible_v<right_t, Args...>)
+      : data_(t, std::forward<Args>(args)...)
+  {
+  }
+
+  template <class U, class... Args>
+    requires(std::constructible_from<right_t, std::initializer_list<U> &, Args...>)
+  constexpr either(in_place_right_t t, std::initializer_list<U> ilist, Args &&...args) noexcept(
+      std::is_nothrow_constructible_v<right_t, std::initializer_list<U> &, Args...>)
+      : data_(t, ilist, std::forward<Args>(args)...)
   {
   }
 

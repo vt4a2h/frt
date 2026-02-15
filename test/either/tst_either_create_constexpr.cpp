@@ -2,6 +2,8 @@
 
 #include <frt/either.hpp>
 
+#include <test/helpers/types.hpp>
+
 constexpr auto makeExpectedLeft() { return std::vector{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}; }
 constexpr auto makeExpectedRight()
 {
@@ -11,6 +13,8 @@ constexpr auto makeExpectedRight()
 
 TEST_CASE("Create constexpr", "[either]")
 {
+  using namespace test::helpers;
+  using namespace std::literals;
   using Either = frt::either<std::vector<int>, std::string>;
 
   SECTION("Copy ctor")
@@ -170,6 +174,46 @@ TEST_CASE("Create constexpr", "[either]")
       auto tmp = makeExpectedRight();
       Either either{frt::create_right, std::move(tmp)};
       return either.right() == makeExpectedRight();
+    }();
+    STATIC_REQUIRE(valid);
+  }
+
+  SECTION("In-place left (Args...)")
+  {
+    constexpr auto valid = [] {
+      using EitherFoo = frt::either<TestArgsIl, std::string>;
+      const EitherFoo either{frt::in_place_left, 1, 2.0};
+      return either.left() == TestArgsIl{1, 2.0};
+    }();
+    STATIC_REQUIRE(valid);
+  }
+
+  SECTION("In-place left (initializer_list, Args...)")
+  {
+    constexpr auto valid = [] {
+      using EitherFoo = frt::either<TestArgsIl, std::string>;
+      const EitherFoo either{frt::in_place_left, {"a"s, "b"s}, 1, 2.0};
+      return either.left() == TestArgsIl{{"a"s, "b"s}, 1, 2.0};
+    }();
+    STATIC_REQUIRE(valid);
+  }
+
+  SECTION("In-place right (Args...)")
+  {
+    constexpr auto valid = [] {
+      using EitherFoo = frt::either<std::string, TestArgsIl>;
+      const EitherFoo either{frt::in_place_right, 1, 2.0};
+      return either.right() == TestArgsIl{1, 2.0};
+    }();
+    STATIC_REQUIRE(valid);
+  }
+
+  SECTION("In-place right (initializer_list, Args...)")
+  {
+    constexpr auto valid = [] {
+      using EitherFoo = frt::either<std::string, TestArgsIl>;
+      const EitherFoo either{frt::in_place_right, {"a"s, "b"s}, 1, 2.0};
+      return either.right() == TestArgsIl{{"a"s, "b"s}, 1, 2.0};
     }();
     STATIC_REQUIRE(valid);
   }
