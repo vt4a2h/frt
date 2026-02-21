@@ -29,4 +29,20 @@ struct TestArgsIl
   std::vector<std::string> vs_{};
 };
 
+struct ComparableTypeFirst
+{
+  std::string d_{};
+
+  friend constexpr bool operator==(const ComparableTypeFirst &, const ComparableTypeFirst &) noexcept = default;
+  friend constexpr auto operator<=>(const ComparableTypeFirst &, const ComparableTypeFirst &) noexcept = default;
+};
+
+struct ComparableTypeSecond
+{
+  int d_{};
+
+  friend constexpr bool operator==(const ComparableTypeSecond &, const ComparableTypeSecond &) noexcept = default;
+  friend constexpr auto operator<=>(const ComparableTypeSecond &, const ComparableTypeSecond &) noexcept = default;
+};
+
 } // namespace test::helpers

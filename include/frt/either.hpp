@@ -143,7 +143,6 @@ struct Data
   }
 
   template <class... Args>
-    requires(std::constructible_from<Left, Args...>)
   constexpr Data(InPlaceLeftTag, Args &&...args) noexcept(std::is_nothrow_constructible_v<Left, Args...>)
   {
     std::construct_at(std::addressof(left_), std::forward<Args>(args)...);
@@ -151,7 +150,6 @@ struct Data
   }
 
   template <class U, class... Args>
-    requires(std::constructible_from<Left, std::initializer_list<U> &, Args...>)
   constexpr Data(InPlaceLeftTag, std::initializer_list<U> ilist,
                  Args &&...args) noexcept(std::is_nothrow_constructible_v<Left, std::initializer_list<U> &, Args...>)
   {
@@ -160,7 +158,6 @@ struct Data
   }
 
   template <class... Args>
-    requires(std::constructible_from<Right, Args...>)
   constexpr Data(InPlaceRightTag, Args &&...args) noexcept(std::is_nothrow_constructible_v<Right, Args...>)
   {
     std::construct_at(std::addressof(right_), std::forward<Args>(args)...);
@@ -168,7 +165,6 @@ struct Data
   }
 
   template <class U, class... Args>
-    requires(std::constructible_from<Right, std::initializer_list<U> &, Args...>)
   constexpr Data(InPlaceRightTag, std::initializer_list<U> ilist,
                  Args &&...args) noexcept(std::is_nothrow_constructible_v<Right, std::initializer_list<U> &, Args...>)
   {
@@ -207,16 +203,42 @@ struct Data
   bool is_left_;
 
   friend constexpr bool operator==(const Data &lhs, const Data &rhs) noexcept
-    requires(std::equality_comparable<Left> && std::equality_comparable<Right>)
   {
     return lhs.is_left_ == rhs.is_left_ && (lhs.is_left_ ? lhs.left_ == rhs.left_ : lhs.right_ == rhs.right_);
   }
 
   friend constexpr std::partial_ordering operator<=>(const Data &lhs, const Data &rhs) noexcept
-    requires std::three_way_comparable<Left> && std::three_way_comparable<Right>
   {
     if (lhs.is_left_ == rhs.is_left_) {
       return lhs.is_left_ ? lhs.left_ <=> rhs.left_ : lhs.right_ <=> rhs.right_;
+    } else {
+      return std::partial_ordering::unordered;
+    }
+  }
+
+  friend constexpr bool operator==(const Data &lhs, const Left &rhs) noexcept
+  {
+    return lhs.is_left_ && lhs.left_ == rhs;
+  }
+
+  friend constexpr bool operator==(const Data &lhs, const Right &rhs) noexcept
+  {
+    return !lhs.is_left_ && lhs.right_ == rhs;
+  }
+
+  friend constexpr std::partial_ordering operator<=>(const Data &lhs, const Left &rhs) noexcept
+  {
+    if (lhs.is_left_) {
+      return lhs.left_ <=> rhs;
+    } else {
+      return std::partial_ordering::unordered;
+    }
+  }
+
+  friend constexpr std::partial_ordering operator<=>(const Data &lhs, const Right &rhs) noexcept
+  {
+    if (!lhs.is_left_) {
+      return lhs.right_ <=> rhs;
     } else {
       return std::partial_ordering::unordered;
     }
@@ -333,8 +355,37 @@ public:
     return std::forward_like<Self>(self.data_.right_);
   }
 
-  friend constexpr bool operator==(const either &lhs, const either &rhs) noexcept = default;
-  friend constexpr auto operator<=>(const either &, const either &) noexcept = default;
+  friend constexpr bool operator==(const either &lhs, const either &rhs) noexcept
+    requires(std::equality_comparable<Left> && std::equality_comparable<Right>)
+  = default;
+
+  friend constexpr auto operator<=>(const either &, const either &) noexcept
+    requires std::three_way_comparable<Left> && std::three_way_comparable<Right>
+  = default;
+
+  friend constexpr bool operator==(const either &lhs, const Left &rhs) noexcept
+    requires(std::equality_comparable<Left>)
+  {
+    return lhs.data_ == rhs;
+  }
+
+  friend constexpr bool operator==(const either &lhs, const Right &rhs) noexcept
+    requires(std::equality_comparable<Right>)
+  {
+    return lhs.data_ == rhs;
+  }
+
+  friend constexpr auto operator<=>(const either &lhs, const Left &rhs) noexcept
+    requires(std::three_way_comparable<Left>)
+  {
+    return lhs.data_ <=> rhs;
+  }
+
+  friend constexpr auto operator<=>(const either &lhs, const Right &rhs) noexcept
+    requires(std::three_way_comparable<Right>)
+  {
+    return lhs.data_ <=> rhs;
+  }
 
 private:
   detail::either_::Data<left_t, right_t> data_;
