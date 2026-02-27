@@ -31,6 +31,10 @@ concept ValidType = requires {
   requires !std::is_array_v<bare_t<T>>;
 };
 
+struct VoidTag
+{
+};
+
 } // namespace detail::either_
 
 template <detail::either_::ValidType Left, detail::either_::ValidType Right>
@@ -92,6 +96,11 @@ constexpr bool is_data_<Data<L, R>> = true;
 
 template <class T>
 concept IsData = is_data_<bare_t<T>>;
+
+template <class T>
+concept IsHashable = requires(T v) {
+  { std::hash<T>{}(v) } -> std::same_as<std::size_t>;
+};
 
 template <IsNotVoid Left, IsNotVoid Right>
 struct Data
@@ -392,3 +401,31 @@ private:
 };
 
 } // namespace frt
+
+template <>
+struct std::hash<frt::void_t>
+{
+  constexpr std::size_t operator()(const frt::void_t &) const noexcept { return 0; }
+};
+
+template <frt::detail::either_::ValidType Left, frt::detail::either_::ValidType Right>
+  requires(frt::detail::either_::IsHashable<Left> && frt::detail::either_::IsHashable<Right>)
+struct std::hash<frt::either<Left, Right>>
+{
+  constexpr std::size_t operator()(const frt::either<Left, Right> &e) const noexcept
+  {
+    if (e.is_left()) {
+      if constexpr (std::same_as<frt::detail::either_::bare_t<Left>, frt::void_t>) {
+        return std::hash<frt::void_t>{}(frt::void_val);
+      } else {
+        return std::hash<frt::detail::either_::bare_t<Left>>{}(e.left());
+      }
+    } else {
+      if constexpr (std::same_as<frt::detail::either_::bare_t<Right>, frt::void_t>) {
+        return std::hash<frt::void_t>{}(frt::void_val);
+      } else {
+        return std::hash<frt::detail::either_::bare_t<Right>>{}(e.right());
+      }
+    }
+  }
+};
