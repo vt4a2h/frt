@@ -98,13 +98,73 @@ template <class T>
 concept IsData = is_data_<bare_t<T>>;
 
 template <class T>
+concept IsNotData = !is_data_<bare_t<T>>;
+
+template <class T>
 concept IsHashable = requires(T v) {
   { std::hash<T>{}(v) } -> std::same_as<std::size_t>;
+};
+
+template <class T>
+concept SameLeftAndRight = requires {
+  requires IsData<T>;
+  requires std::same_as<typename bare_t<T>::left_t, typename bare_t<T>::right_t>;
+};
+
+template <class Val, class T>
+concept EqualityComparableSame = requires {
+  requires IsData<T>;
+  requires IsNotData<Val>;
+  requires SameLeftAndRight<T>;
+  requires std::equality_comparable_with<typename bare_t<T>::left_t, Val>;
+};
+
+template <class Val, class T>
+concept EqualityComparableLeft = requires {
+  requires IsData<T>;
+  requires IsNotData<Val>;
+  requires !SameLeftAndRight<T>;
+  requires std::equality_comparable_with<typename bare_t<T>::left_t, bare_t<Val>>;
+};
+
+template <class Val, class T>
+concept EqualityComparableRight = requires {
+  requires IsData<T>;
+  requires IsNotData<Val>;
+  requires !SameLeftAndRight<T>;
+  requires std::equality_comparable_with<typename bare_t<T>::right_t, bare_t<Val>>;
+};
+
+template <class Val, class T>
+concept ThreeWayComparableSame = requires {
+  requires IsData<T>;
+  requires IsNotData<Val>;
+  requires SameLeftAndRight<T>;
+  requires std::three_way_comparable_with<typename bare_t<T>::left_t, Val>;
+};
+
+template <class Val, class T>
+concept ThreeWayComparableLeft = requires {
+  requires IsData<T>;
+  requires IsNotData<Val>;
+  requires !SameLeftAndRight<T>;
+  requires std::three_way_comparable_with<typename bare_t<T>::left_t, bare_t<Val>>;
+};
+
+template <class Val, class T>
+concept ThreeWayComparableRight = requires {
+  requires IsData<T>;
+  requires IsNotData<Val>;
+  requires !SameLeftAndRight<T>;
+  requires std::three_way_comparable_with<typename bare_t<T>::right_t, bare_t<Val>>;
 };
 
 template <IsNotVoid Left, IsNotVoid Right>
 struct Data
 {
+  using left_t = bare_t<Left>;
+  using right_t = bare_t<Right>;
+
   Data() noexcept = delete;
 
   constexpr Data(const Data &data) noexcept(std::is_nothrow_copy_constructible_v<Left> &&
@@ -225,35 +285,50 @@ struct Data
     }
   }
 
-  friend constexpr bool operator==(const Data &lhs, const Left &rhs) noexcept
+  template <EqualityComparableSame<Data> Val>
+  friend constexpr bool operator==(const Data &lhs, const Val &val) noexcept
   {
-    return lhs.is_left_ && lhs.left_ == rhs;
+    return lhs.is_left_ ? lhs.left_ == val : lhs.right_ == val;
   }
 
-  friend constexpr bool operator==(const Data &lhs, const Right &rhs) noexcept
+  template <EqualityComparableLeft<Data> Val>
+  friend constexpr bool operator==(const Data &lhs, const Val &val) noexcept
   {
-    return !lhs.is_left_ && lhs.right_ == rhs;
+    return lhs.is_left_ && lhs.left_ == val;
   }
 
-  friend constexpr std::partial_ordering operator<=>(const Data &lhs, const Left &rhs) noexcept
+  template <EqualityComparableRight<Data> Val>
+  friend constexpr bool operator==(const Data &lhs, const Val &val) noexcept
+  {
+    return !lhs.is_left_ && lhs.right_ == val;
+  }
+
+  template <ThreeWayComparableSame<Data> Val>
+  friend constexpr std::partial_ordering operator<=>(const Data &lhs, const Val &val) noexcept
+  {
+    return lhs.is_left_ ? lhs.left_ <=> val : lhs.right_ <=> val;
+  }
+
+  template <ThreeWayComparableLeft<Data> Val>
+  friend constexpr std::partial_ordering operator<=>(const Data &lhs, const Val &val) noexcept
   {
     if (lhs.is_left_) {
-      return lhs.left_ <=> rhs;
+      return lhs.left_ <=> val;
     } else {
       return std::partial_ordering::unordered;
     }
   }
 
-  friend constexpr std::partial_ordering operator<=>(const Data &lhs, const Right &rhs) noexcept
+  template <ThreeWayComparableRight<Data> Val>
+  friend constexpr std::partial_ordering operator<=>(const Data &lhs, const Val &val) noexcept
   {
     if (!lhs.is_left_) {
-      return lhs.right_ <=> rhs;
+      return lhs.right_ <=> val;
     } else {
       return std::partial_ordering::unordered;
     }
   }
 };
-
 } // namespace detail::either_
 
 using in_place_left_t = detail::either_::InPlaceLeftTag;
@@ -267,6 +342,9 @@ using create_right_t = detail::either_::CreateRightTag;
 
 inline constexpr create_left_t create_left = {};
 inline constexpr create_right_t create_right = {};
+
+using void_t = detail::either_::VoidTag;
+inline constexpr detail::either_::VoidTag void_val = {};
 
 template <detail::either_::ValidType Left, detail::either_::ValidType Right>
 class either
@@ -364,36 +442,16 @@ public:
     return std::forward_like<Self>(self.data_.right_);
   }
 
-  friend constexpr bool operator==(const either &lhs, const either &rhs) noexcept
-    requires(std::equality_comparable<Left> && std::equality_comparable<Right>)
-  = default;
-
-  friend constexpr auto operator<=>(const either &, const either &) noexcept
-    requires std::three_way_comparable<Left> && std::three_way_comparable<Right>
-  = default;
-
-  friend constexpr bool operator==(const either &lhs, const Left &rhs) noexcept
-    requires(std::equality_comparable<Left>)
+  template <class Other>
+  friend constexpr bool operator==(const either &lhs, const Other &other) noexcept
   {
-    return lhs.data_ == rhs;
+    return lhs.data_ == other;
   }
 
-  friend constexpr bool operator==(const either &lhs, const Right &rhs) noexcept
-    requires(std::equality_comparable<Right>)
+  template <class Other>
+  friend constexpr auto operator<=>(const either &lhs, const Other &other) noexcept
   {
-    return lhs.data_ == rhs;
-  }
-
-  friend constexpr auto operator<=>(const either &lhs, const Left &rhs) noexcept
-    requires(std::three_way_comparable<Left>)
-  {
-    return lhs.data_ <=> rhs;
-  }
-
-  friend constexpr auto operator<=>(const either &lhs, const Right &rhs) noexcept
-    requires(std::three_way_comparable<Right>)
-  {
-    return lhs.data_ <=> rhs;
+    return lhs.data_ <=> other;
   }
 
 private:
