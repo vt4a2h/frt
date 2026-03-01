@@ -45,4 +45,22 @@ struct ComparableTypeSecond
   friend constexpr auto operator<=>(const ComparableTypeSecond &, const ComparableTypeSecond &) noexcept = default;
 };
 
+struct NonHashable
+{
+  friend constexpr bool operator==(const NonHashable &l, const NonHashable &r) noexcept { return l.v_ == r.v_; }
+  int v_{};
+};
+
+struct Hashable
+{
+  friend constexpr bool operator==(const Hashable &l, const Hashable &r) noexcept { return l.v_ == r.v_; }
+  int v_{};
+};
+
 } // namespace test::helpers
+
+template <>
+struct std::hash<test::helpers::Hashable>
+{
+  constexpr std::size_t operator()(const test::helpers::Hashable &h) const noexcept { return h.v_; }
+};

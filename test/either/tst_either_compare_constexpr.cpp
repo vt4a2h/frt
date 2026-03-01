@@ -7,7 +7,7 @@
 using namespace test::helpers;
 using either = frt::either<ComparableTypeFirst, ComparableTypeSecond>;
 
-TEST_CASE("Compare two either (constexpr)", "[either]")
+TEST_CASE("Compare two either (constexpr)", "[either][constexpr]")
 {
   using namespace std::literals;
 
@@ -192,7 +192,7 @@ TEST_CASE("Compare two either (constexpr)", "[either]")
   }
 }
 
-TEST_CASE("Compare either and value (either has left) (constexpr)", "[either]")
+TEST_CASE("Compare either and value (either has left) (constexpr)", "[either][constexpr]")
 {
   SECTION("Compare either (left) and value (left) - equal")
   {
@@ -325,7 +325,7 @@ TEST_CASE("Compare either and value (either has left) (constexpr)", "[either]")
   }
 }
 
-TEST_CASE("Compare either and value (either has right) (constexpr)", "[either]")
+TEST_CASE("Compare either and value (either has right) (constexpr)", "[either][constexpr]")
 {
   SECTION("Compare either (right) and value (right) - equal")
   {

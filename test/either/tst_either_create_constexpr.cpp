@@ -11,7 +11,7 @@ constexpr auto makeExpectedRight()
                      "incididunt ut labore et dolore magna aliqua"};
 }
 
-TEST_CASE("Create constexpr", "[either]")
+TEST_CASE("Create constexpr", "[either][constexpr]")
 {
   using namespace test::helpers;
   using namespace std::literals;
