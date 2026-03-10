@@ -346,6 +346,18 @@ inline constexpr create_right_t create_right = {};
 using void_t = detail::either_::VoidTag;
 inline constexpr detail::either_::VoidTag void_val = {};
 
+/*!
+ * \brief This is the monad "Either".
+ *
+ * This is a simple tagged union with two distinct tags, `Left` and `Right`. The closest analog from the standard
+ * library is `std::variant<L, R>`. This is a generic version of `frt::expected<E, U>` that should be used when tags do
+ * not necessarily represent expected or unexpected results.
+ *
+ * The underlying types must not be references or arrays.
+ *
+ * The `frt::expects` is used to ensure the invariant. By default, the program is terminated upon the violation of the
+ * contract.
+ */
 template <detail::either_::ValidType Left, detail::either_::ValidType Right>
 class either
 {
@@ -353,20 +365,24 @@ public:
   using left_t = detail::either_::bare_t<Left>;
   using right_t = detail::either_::bare_t<Right>;
 
+  //! The object must be created of either Left or Right. The uninitialized state is not permitted.
   either() = delete;
 
+  //! Create from another `either` by copy.
   constexpr either(const either &src) noexcept(std::is_nothrow_copy_constructible_v<left_t> &&
                                                std::is_nothrow_copy_constructible_v<right_t>)
       : data_(src.data_)
   {
   }
 
+  //! Create from another `either` by move.
   constexpr either(either &&src) noexcept(std::is_nothrow_move_constructible_v<left_t> &&
                                           std::is_nothrow_move_constructible_v<right_t>)
       : data_(std::move(src.data_))
   {
   }
 
+  //! Assign from another `either` by copy.
   constexpr either &operator=(const either &src) noexcept(std::is_nothrow_copy_assignable_v<left_t> &&
                                                           std::is_nothrow_copy_assignable_v<right_t>)
   {
@@ -374,6 +390,7 @@ public:
     return *this;
   }
 
+  //! Assign from another `either` by move.
   constexpr either &operator=(either &&src) noexcept(std::is_nothrow_move_assignable_v<left_t> &&
                                                      std::is_nothrow_move_assignable_v<right_t>)
   {
@@ -381,18 +398,21 @@ public:
     return *this;
   }
 
+  //! Create from the left alternative.
   template <detail::either_::ValidConstructableFrom<left_t> U>
   constexpr either(create_left_t t, U &&u) noexcept(std::is_nothrow_constructible_v<left_t, U>)
       : data_(t, std::forward<U>(u))
   {
   }
 
+  //! Create from the right alternative.
   template <detail::either_::ValidConstructableFrom<right_t> U>
   constexpr either(create_right_t t, U &&u) noexcept(std::is_nothrow_constructible_v<right_t, U>)
       : data_(t, std::forward<U>(u))
   {
   }
 
+  //! Create from the left alternative in-place (with arguments).
   template <class... Args>
     requires(std::constructible_from<left_t, Args...>)
   constexpr either(in_place_left_t t, Args &&...args) noexcept(std::is_nothrow_constructible_v<left_t, Args...>)
@@ -400,6 +420,7 @@ public:
   {
   }
 
+  //! Create from the left alternative in-place (with an initializer list and arguments).
   template <class U, class... Args>
     requires(std::constructible_from<left_t, std::initializer_list<U> &, Args...>)
   constexpr either(in_place_left_t t, std::initializer_list<U> ilist, Args &&...args) noexcept(
@@ -408,6 +429,7 @@ public:
   {
   }
 
+  //! Create from the right alternative in-place (with arguments).
   template <class... Args>
     requires(std::constructible_from<right_t, Args...>)
   constexpr either(in_place_right_t t, Args &&...args) noexcept(std::is_nothrow_constructible_v<right_t, Args...>)
@@ -415,6 +437,7 @@ public:
   {
   }
 
+  //! Create from the right alternative in-place (with an initializer list and arguments).
   template <class U, class... Args>
     requires(std::constructible_from<right_t, std::initializer_list<U> &, Args...>)
   constexpr either(in_place_right_t t, std::initializer_list<U> ilist, Args &&...args) noexcept(
@@ -423,11 +446,16 @@ public:
   {
   }
 
+  //! Default destructor.
   constexpr ~either() = default;
 
+  //! Check for the left alternative.
   [[nodiscard]] constexpr bool is_left() const noexcept { return data_.is_left_; }
+
+  //! Check for the right alternative.
   [[nodiscard]] constexpr bool is_right() const noexcept { return !is_left(); }
 
+  //! Get the left alternative. Pre-condition: must contain the left alternative.
   template <class Self>
   [[nodiscard]] constexpr auto &&left(this Self &&self)
   {
@@ -435,6 +463,7 @@ public:
     return std::forward_like<Self>(self.data_.left_);
   }
 
+  //! Get the right alternative. Pre-condition: must contain the right alternative.
   template <class Self>
   [[nodiscard]] constexpr auto &&right(this Self &&self)
   {
@@ -442,12 +471,14 @@ public:
     return std::forward_like<Self>(self.data_.right_);
   }
 
+  //! Compare with another comparable object (not necessary of the `either` type)
   template <class Other>
   friend constexpr bool operator==(const either &lhs, const Other &other) noexcept
   {
     return lhs.data_ == other;
   }
 
+  //! Three-way compare with another comparable object (not necessary of the `either` type)
   template <class Other>
   friend constexpr auto operator<=>(const either &lhs, const Other &other) noexcept
   {
@@ -460,12 +491,14 @@ private:
 
 } // namespace frt
 
+//! Hasher for the void alternative. The hash is always 0.
 template <>
 struct std::hash<frt::void_t>
 {
   constexpr std::size_t operator()(const frt::void_t &) const noexcept { return 0; }
 };
 
+//! Hasher for the `frt::either<L, R>` alternative. The result is either hash of the left or of the right alternative.
 template <frt::detail::either_::ValidType Left, frt::detail::either_::ValidType Right>
   requires(frt::detail::either_::IsHashable<Left> && frt::detail::either_::IsHashable<Right>)
 struct std::hash<frt::either<Left, Right>>
