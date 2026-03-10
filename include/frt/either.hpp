@@ -328,6 +328,26 @@ struct Data
       return std::partial_ordering::unordered;
     }
   }
+
+  constexpr void swap(Data &rhs) noexcept(std::is_nothrow_swappable_v<Left> && std::is_nothrow_swappable_v<Right>)
+  {
+    using std::swap;
+    if (is_left_ != rhs.is_left_) {
+      auto tmp = *this;
+
+      this->destroy();
+      this->initFrom(rhs);
+
+      rhs.destroy();
+      rhs.initFrom(tmp);
+    } else if (is_left_) {
+      swap(left_, rhs.left_);
+    } else {
+      swap(right_, rhs.right_);
+    }
+  }
+
+  friend constexpr void swap(Data &lhs, Data &rhs) noexcept(noexcept(lhs.swap(rhs))) { lhs.swap(rhs); }
 };
 } // namespace detail::either_
 
@@ -484,6 +504,15 @@ public:
   {
     return lhs.data_ <=> other;
   }
+
+  //! Swap value with \p rhs.
+  constexpr void swap(either &rhs) noexcept(std::is_nothrow_swappable_v<left_t> && std::is_nothrow_swappable_v<right_t>)
+  {
+    data_.swap(rhs.data_);
+  }
+
+  //! Swap \p lhs and \p rhs.
+  friend constexpr void swap(either &lhs, either &rhs) noexcept(noexcept(lhs.swap(rhs))) { lhs.swap(rhs); }
 
 private:
   detail::either_::Data<left_t, right_t> data_;
