@@ -33,6 +33,10 @@
 - Constexpr tests use lambda expression for testsing:
   `constexpr auto valid = [] { /* test code here; return bool convertable expr, e.g. a == b */ }; STATIC_REQUIRE(valid);`.
   Use all `_constexpr.cpp` tests as example.
+- Constexpr tests must cover all the same scenarios as non-constexpr tests. The number of test cases must be the
+  same. The number of sections must be the same. Ignore this rule if this is technically impossible due to the language
+  limitations or similar.
+- More complicated types like `std::vector` or `std::string` must be used for constexpr tests as well.
 - Use long strings as test data. For example, "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod
   tempor incididunt ut labore et dolore magna aliqua".
 - Always build and run all tests.
