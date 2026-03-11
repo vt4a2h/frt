@@ -348,6 +348,54 @@ struct Data
   }
 
   friend constexpr void swap(Data &lhs, Data &rhs) noexcept(noexcept(lhs.swap(rhs))) { lhs.swap(rhs); }
+
+  template <class... Args>
+    requires(std::constructible_from<Left, Args...>)
+  constexpr Left &emplaceLeft(Args &&...args) noexcept(std::is_nothrow_constructible_v<Left, Args...>)
+  {
+    destroy();
+    std::construct_at(std::addressof(left_), std::forward<Args>(args)...);
+    is_left_ = true;
+
+    return left_;
+  }
+
+  template <class U, class... Args>
+    requires(std::constructible_from<Left, std::initializer_list<U> &, Args...>)
+  constexpr Left &
+  emplaceLeft(std::initializer_list<U> ilist,
+              Args &&...args) noexcept(std::is_nothrow_constructible_v<Left, std::initializer_list<U> &, Args...>)
+  {
+    destroy();
+    std::construct_at(std::addressof(left_), ilist, std::forward<Args>(args)...);
+    is_left_ = true;
+
+    return left_;
+  }
+
+  template <class... Args>
+    requires(std::constructible_from<Right, Args...>)
+  constexpr Right &emplaceRight(Args &&...args) noexcept(std::is_nothrow_constructible_v<Right, Args...>)
+  {
+    destroy();
+    std::construct_at(std::addressof(right_), std::forward<Args>(args)...);
+    is_left_ = false;
+
+    return right_;
+  }
+
+  template <class U, class... Args>
+    requires(std::constructible_from<Right, std::initializer_list<U> &, Args...>)
+  constexpr Right &
+  emplaceRight(std::initializer_list<U> ilist,
+               Args &&...args) noexcept(std::is_nothrow_constructible_v<Right, std::initializer_list<U> &, Args...>)
+  {
+    destroy();
+    std::construct_at(std::addressof(right_), ilist, std::forward<Args>(args)...);
+    is_left_ = false;
+
+    return right_;
+  }
 };
 } // namespace detail::either_
 
@@ -513,6 +561,42 @@ public:
 
   //! Swap \p lhs and \p rhs.
   friend constexpr void swap(either &lhs, either &rhs) noexcept(noexcept(lhs.swap(rhs))) { lhs.swap(rhs); }
+
+  //! Emplace left (from args)
+  template <class... Args>
+    requires(std::constructible_from<left_t, Args...>)
+  constexpr left_t &emplaceLeft(Args &&...args) noexcept(std::is_nothrow_constructible_v<left_t, Args...>)
+  {
+    return data_.emplaceLeft(std::forward<Args>(args)...);
+  }
+
+  //! Emplace left (from an initializer list and args)
+  template <class U, class... Args>
+    requires(std::constructible_from<left_t, std::initializer_list<U> &, Args...>)
+  constexpr left_t &
+  emplaceLeft(std::initializer_list<U> ilist,
+              Args &&...args) noexcept(std::is_nothrow_constructible_v<left_t, std::initializer_list<U> &, Args...>)
+  {
+    return data_.emplaceLeft(ilist, std::forward<Args>(args)...);
+  }
+
+  //! Emplace right (from args)
+  template <class... Args>
+    requires(std::constructible_from<right_t, Args...>)
+  constexpr right_t &emplaceRight(Args &&...args) noexcept(std::is_nothrow_constructible_v<right_t, Args...>)
+  {
+    return data_.emplaceRight(std::forward<Args>(args)...);
+  }
+
+  //! Emplace right (from an initializer list and args)
+  template <class U, class... Args>
+    requires(std::constructible_from<right_t, std::initializer_list<U> &, Args...>)
+  constexpr right_t &
+  emplaceRight(std::initializer_list<U> ilist,
+               Args &&...args) noexcept(std::is_nothrow_constructible_v<right_t, std::initializer_list<U> &, Args...>)
+  {
+    return data_.emplaceRight(ilist, std::forward<Args>(args)...);
+  }
 
 private:
   detail::either_::Data<left_t, right_t> data_;
