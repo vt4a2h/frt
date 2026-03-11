@@ -26,6 +26,10 @@
 - The `Catch2` framework is used for testing.
 - Each `TEST_CASE` should contain a single `REQUIRE`-like instruction or from zero to many `SECTION`s with a single
   `REQUIRE`-like instruction pre each.
+- Instead of having two or more `REQUIRE`-like instructions in a single `SECTION`, consider splitting the test into
+  multiple `SECTION`s. For example, one `SECTION` for `REQUIRE(result.is_a())` and another `SECTION` for
+  `REQUIRE(result.get_a() == expected_a)`.
+- Test negative scenarios as well.
 - The `TEST_CASE` macro has two arguments: the test name and the tag. The tag should correspond to the feature name. For
   example, `TEST_CASE("Create", "[either]")`.
 - The `TEST_CASE` macro for constexpr tests contains an additional tag `[constexpr]`. For example,
