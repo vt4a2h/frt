@@ -523,7 +523,7 @@ public:
   //! Check for the right alternative.
   [[nodiscard]] constexpr bool is_right() const noexcept { return !is_left(); }
 
-  //! Get the left alternative. Pre-condition: must contain the left alternative.
+  //! Get the left alternative. Pre-condition: it must contain the left alternative.
   template <class Self>
   [[nodiscard]] constexpr auto &&left(this Self &&self)
   {
@@ -531,12 +531,44 @@ public:
     return std::forward_like<Self>(self.data_.left_);
   }
 
-  //! Get the right alternative. Pre-condition: must contain the right alternative.
+  //! Returns the left alternative or \p default value if the object contains the right alternative.
+  template <class U = left_t>
+    requires(std::is_copy_constructible_v<left_t> && std::is_convertible_v<U, left_t>)
+  [[nodiscard]] constexpr left_t left_or(U &&default_value) const &
+  {
+    return is_left() ? data_.left_ : static_cast<left_t>(std::forward<U>(default_value));
+  }
+
+  //! Returns the left alternative or \p default value if the object contains the right alternative.
+  template <class U = left_t>
+    requires(std::is_move_constructible_v<left_t> && std::is_convertible_v<U, left_t>)
+  [[nodiscard]] constexpr left_t left_or(U &&default_value) &&
+  {
+    return is_left() ? std::move(data_.left_) : static_cast<left_t>(std::forward<U>(default_value));
+  }
+
+  //! Get the right alternative. Pre-condition: it must contain the right alternative.
   template <class Self>
   [[nodiscard]] constexpr auto &&right(this Self &&self)
   {
     expects(self.is_right());
     return std::forward_like<Self>(self.data_.right_);
+  }
+
+  //! Returns the right alternative or \p default value if the object contains the left alternative.
+  template <class U = right_t>
+    requires(std::is_copy_constructible_v<right_t> && std::is_convertible_v<U, right_t>)
+  [[nodiscard]] constexpr right_t right_or(U &&default_value) const &
+  {
+    return is_right() ? data_.right_ : static_cast<right_t>(std::forward<U>(default_value));
+  }
+
+  //! Returns the right alternative or \p default value if the object contains the left alternative.
+  template <class U = right_t>
+    requires(std::is_copy_constructible_v<right_t> && std::is_convertible_v<U, right_t>)
+  [[nodiscard]] constexpr right_t right_or(U &&default_value) &&
+  {
+    return is_right() ? std::move(data_.right_) : static_cast<right_t>(std::forward<U>(default_value));
   }
 
   //! Compare with another comparable object (not necessary of the `either` type)
