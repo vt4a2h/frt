@@ -41,6 +41,16 @@
   same. The number of sections must be the same. Ignore this rule if this is technically impossible due to the language
   limitations or similar.
 - More complicated types like `std::vector` or `std::string` must be used for constexpr tests as well.
+- Common functions and variables used by more than one `TEST_CASE` in scope of the same file can be placed above the
+  first `TEST_CASE`.
+- The default values, expected values, and similar should be placed as close as possible to the place when they are
+  used.
+- Avoid duplication among the default values, expected values, and similar.
+- Don't use magic numbers.
+- Don't use magic string literals
+- Double-check for unused statements (e.g. `using namespace`).
+- Double-check for unused variables.
+- Double-check for unused headers.
 - Use long strings as test data. For example, "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod
   tempor incididunt ut labore et dolore magna aliqua".
 - Always build and run all tests.
