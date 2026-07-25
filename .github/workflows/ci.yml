@@ -42,11 +42,19 @@ jobs:
           sudo apt-get install libc++-dev
         shell: bash
 
+      - name: Export GitHub Cache Variables
+        shell: bash
+        run: |
+          echo "ACTIONS_CACHE_URL=${{ env.ACTIONS_CACHE_URL }}" >> $GITHUB_ENV
+          echo "ACTIONS_RUNTIME_TOKEN=${{ env.ACTIONS_RUNTIME_TOKEN }}" >> $GITHUB_ENV  
+
       - name: Activate Developer Environment
         if: runner.os == 'Windows'
         uses: ilammy/msvc-dev-cmd@v1
 
       - name: Configure CMake
+        env:
+          VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/vcpkg-binary-cache,readwrite
         shell: bash
         run: >
           cmake --preset ${{ matrix.preset }} 
