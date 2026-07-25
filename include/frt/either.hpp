@@ -580,7 +580,7 @@ public:
 
   //! Three-way compare with another comparable object (not necessary of the `either` type)
   template <class Other>
-  friend constexpr auto operator<=>(const either &lhs, const Other &other) noexcept
+  friend constexpr std::partial_ordering operator<=>(const either &lhs, const Other &other) noexcept
   {
     return lhs.data_ <=> other;
   }
