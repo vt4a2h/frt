@@ -52,7 +52,7 @@ if (FRT_DEPENDENCIES_FROM_CPM)
     endif ()
     include("${CMAKE_CURRENT_BINARY_DIR}/cmake/CPM.cmake")
 
-    CPMAddPackage("gh:catchorg/Catch2@3.12.0")
+    CPMAddPackage("gh:catchorg/Catch2@3.15.2")
     # For catch_discover_tests
     list(APPEND CMAKE_MODULE_PATH ${Catch2_SOURCE_DIR}/extras)
 endif ()
