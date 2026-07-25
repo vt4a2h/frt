@@ -8,7 +8,7 @@
 
 - Use cmake for building.
 - Available presets are located at the root of the repository in the CMakePresets.json file.
-- Prefer using `*-clang` presets.
+- Prefer using `host-clang` preset.
 - Prefer building all targets (`--target all`).
 - Add `-- -v` flag for verbose output.
 
@@ -37,8 +37,8 @@
 - Constexpr tests use lambda expression for testsing:
   `constexpr auto valid = [] { /* test code here; return bool convertable expr, e.g. a == b */ }; STATIC_REQUIRE(valid);`.
   Use all `_constexpr.cpp` tests as example.
-- Constexpr tests must cover all the same scenarios as non-constexpr tests. The number of test cases must be the
-  same. The number of sections must be the same. Ignore this rule if this is technically impossible due to the language
+- Constexpr tests must cover all the same scenarios as non-constexpr tests. The number of test cases must be the same.
+  The number of sections must be the same. Ignore this rule if this is technically impossible due to the language
   limitations or similar.
 - More complicated types like `std::vector` or `std::string` must be used for constexpr tests as well.
 - Common functions and variables used by more than one `TEST_CASE` in scope of the same file can be placed above the
