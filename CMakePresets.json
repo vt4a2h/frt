@@ -108,6 +108,10 @@
       "displayName": "Windows MSVC",
       "description": "Configuring for Windows with MSVC",
       "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_CXX_STANDARD": "23",
+        "CMAKE_CXX_FLAGS": "/std:c++latest /EHsc"
+      },
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",
