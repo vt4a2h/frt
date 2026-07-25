@@ -96,6 +96,10 @@
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++"
       },
+      "environment": {
+        "CC": "clang",
+        "CXX": "clang++"
+      },
       "condition": {
         "type": "equals",
         "lhs": "${hostSystemName}",
