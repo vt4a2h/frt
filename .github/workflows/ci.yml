@@ -13,9 +13,9 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            preset: linux-gcc
+            preset: linux-gcc-14
           - os: ubuntu-latest
-            preset: linux-clang
+            preset: linux-clang-20
           - os: macos-latest
             preset: mac-clang
           - os: windows-latest
@@ -28,7 +28,7 @@ jobs:
         uses: llvm/actions/install-ninja@main
 
       - name: Install Clang 20
-        if: matrix.preset == 'linux-clang'
+        if: matrix.preset == 'linux-clang-20'
         run: |
           wget https://apt.llvm.org/llvm.sh
           chmod +x llvm.sh

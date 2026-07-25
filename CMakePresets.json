@@ -38,9 +38,9 @@
       }
     },
     {
-      "name": "linux-gcc",
-      "displayName": "Linux GCC",
-      "description": "Configuring for Linux with GCC",
+      "name": "linux-gcc-14",
+      "displayName": "Linux GCC 14",
+      "description": "Configuring for Linux with GCC 14",
       "inherits": "base",
       "cacheVariables": {
         "CMAKE_C_COMPILER": "gcc-14",
@@ -53,14 +53,14 @@
       }
     },
     {
-      "name": "linux-clang",
-      "displayName": "Linux Clang",
-      "description": "Configuring for Linux with Clang",
+      "name": "linux-clang-20",
+      "displayName": "Linux Clang 20",
+      "description": "Configuring for Linux with Clang 20",
       "inherits": "base",
       "cacheVariables": {
         "CMAKE_C_COMPILER": "/usr/bin/clang-20",
         "CMAKE_CXX_COMPILER": "/usr/bin/clang++-20",
-        "CMAKE_CXX_FLAGS": "-stdlib=libc++",
+        "CMAKE_CXX_FLAGS": "-stdlib=libc++ -Wno-c2y-extensions -Wno-error=c2y-extensions",
         "CMAKE_EXE_LINKER_FLAGS": "-stdlib=libc++ -lc++abi",
         "CMAKE_SHARED_LINKER_FLAGS": "-stdlib=libc++ -lc++abi"
       },
@@ -122,12 +122,12 @@
       "configurePreset": "host-clang"
     },
     {
-      "name": "linux-gcc",
-      "configurePreset": "linux-gcc"
+      "name": "linux-gcc-14",
+      "configurePreset": "linux-gcc-14"
     },
     {
-      "name": "linux-clang",
-      "configurePreset": "linux-clang"
+      "name": "linux-clang-20",
+      "configurePreset": "linux-clang-20"
     },
     {
       "name": "mac-clang",
@@ -164,8 +164,8 @@
       }
     },
     {
-      "name": "linux-gcc",
-      "configurePreset": "linux-gcc",
+      "name": "linux-gcc-14",
+      "configurePreset": "linux-gcc-14",
       "output": {
         "outputOnFailure": true
       },
@@ -174,8 +174,8 @@
       }
     },
     {
-      "name": "linux-clang",
-      "configurePreset": "linux-clang",
+      "name": "linux-clang-20",
+      "configurePreset": "linux-clang-20",
       "output": {
         "outputOnFailure": true
       },
