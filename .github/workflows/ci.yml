@@ -47,7 +47,10 @@ jobs:
         uses: ilammy/msvc-dev-cmd@v1
 
       - name: Configure CMake
-        run: cmake --preset ${{ matrix.preset }} -DCMAKE_BUILD_TYPE=Release
+        run: >
+          cmake --preset ${{ matrix.preset }} 
+          -DCMAKE_BUILD_TYPE=Release 
+          -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
 
       - name: Build
         run: cmake --build --preset ${{ matrix.preset }} --config Release
