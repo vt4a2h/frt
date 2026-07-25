@@ -14,7 +14,7 @@
 
 ## Testing
 
-- All tests located at the `test` directory.
+- All tests are located in the `test` directory.
 - Tests for each large feature are located at the respective subdirectories. For example, `test/either`.
 - The test file name should follow this pattern: `tst_feature_name_functionality.cpp`. For example,
   `tst_either_create.cpp`. Where `tst_` is a prefix, `either` is a `feature_name`, `create` is a
