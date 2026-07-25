@@ -46,9 +46,9 @@ jobs:
         uses: actions/cache@v6
         with:
           path: ${{ github.workspace }}/vcpkg-binary-cache
-          key: vcpkg-binary-cache-${{ runner.os }}-${{ github.sha }}
+          key: vcpkg-binary-cache-${{ runner.os }}-${{ matrix.preset }}-${{ github.sha }}
           restore-keys: |
-            vcpkg-binary-cache-${{ runner.os }}-  
+            vcpkg-binary-cache-${{ runner.os }}-${{ matrix.preset }}-  
 
       - name: Activate Developer Environment
         if: runner.os == 'Windows'
