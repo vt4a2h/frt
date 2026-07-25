@@ -8,8 +8,6 @@ project(frt
 add_library(frt INTERFACE)
 add_library(frt::frt ALIAS frt)
 
-target_compile_features(frt INTERFACE cxx_std_23)
-
 target_include_directories(frt INTERFACE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
@@ -31,12 +29,6 @@ if (FRT_DEV_MODE)
         /W4
         /WX
         >
-    )
-
-    set_target_properties(frt PROPERTIES
-        CXX_STANDARD 23
-        CXX_STANDARD_REQUIRED ON
-        CXX_EXTENSIONS OFF
     )
 endif ()
 

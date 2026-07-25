@@ -9,14 +9,6 @@ function(frt_add_test test_name)
         tst_${test_name}.cpp
     )
 
-    target_compile_features(${test_target_name} PRIVATE cxx_std_23)
-
-    set_target_properties(${test_target_name} PROPERTIES
-        CXX_STANDARD 23
-        CXX_STANDARD_REQUIRED ON
-        CXX_EXTENSIONS OFF
-    )
-
     target_link_libraries(${test_target_name} PRIVATE
         frt::frt
         frt::frt-test-helpers
