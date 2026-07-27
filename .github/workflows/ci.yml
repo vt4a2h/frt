@@ -13,7 +13,7 @@ jobs:
       matrix:
         include:
           - os: ubuntu-26.04
-            preset: linux-gcc-14
+            preset: linux-gcc-16
           - os: ubuntu-26.04
             preset: linux-clang-22
           - os: macos-latest
@@ -24,11 +24,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install CMake
-        if: matrix.os == 'ubuntu-latest'
-        uses: jwlawson/actions-setup-cmake@v2
-        with:
-          cmake-version: '>=4.0.0'
+      - name: Install gcc-16
+        if: matrix.os == 'ubuntu-26.04'
+        run: sudo apt install gcc-16 g++-16
 
       - name: Install Clang 22
         if: matrix.preset == 'linux-clang-22'

@@ -47,17 +47,17 @@
       }
     },
     {
-      "name": "linux-gcc-14",
-      "displayName": "Linux GCC 14",
-      "description": "Configuring for Linux with GCC 14",
+      "name": "linux-gcc-16",
+      "displayName": "Linux GCC 16",
+      "description": "Configuring for Linux with GCC 16",
       "inherits": "base",
       "cacheVariables": {
-        "CMAKE_C_COMPILER": "gcc-14",
-        "CMAKE_CXX_COMPILER": "g++-14"
+        "CMAKE_C_COMPILER": "gcc-16",
+        "CMAKE_CXX_COMPILER": "g++-16"
       },
       "environment": {
-        "CC": "gcc-14",
-        "CXX": "gcc-14"
+        "CC": "gcc-16",
+        "CXX": "gcc-16"
       },
       "condition": {
         "type": "equals",
@@ -148,8 +148,8 @@
       "configurePreset": "host-clang"
     },
     {
-      "name": "linux-gcc-14",
-      "configurePreset": "linux-gcc-14"
+      "name": "linux-gcc-16",
+      "configurePreset": "linux-gcc-16"
     },
     {
       "name": "linux-clang-22",
@@ -190,8 +190,8 @@
       }
     },
     {
-      "name": "linux-gcc-14",
-      "configurePreset": "linux-gcc-14",
+      "name": "linux-gcc-16",
+      "configurePreset": "linux-gcc-16",
       "output": {
         "outputOnFailure": true
       },
