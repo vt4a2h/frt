@@ -12,9 +12,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
+          - os: ubuntu-26.04
             preset: linux-gcc-14
-          - os: ubuntu-latest
+          - os: ubuntu-26.04
             preset: linux-clang-22
           - os: macos-latest
             preset: mac-clang
