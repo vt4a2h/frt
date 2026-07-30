@@ -26,13 +26,9 @@ using bare_t = std::remove_cvref_t<T>;
 
 template <class T>
 concept ValidType = requires {
-  requires std::destructible<bare_t<T>> || std::is_void_v<bare_t<T>>;
+  requires std::destructible<bare_t<T>>;
   requires !std::is_reference_v<T>;
   requires !std::is_array_v<bare_t<T>>;
-};
-
-struct VoidTag
-{
 };
 
 } // namespace detail::either_
@@ -55,7 +51,10 @@ template <class T>
 concept IsNotEither = !is_either_<bare_t<T>>;
 
 template <class T>
-concept IsNotVoid = !std::is_void_v<bare_t<T>>;
+concept IsVoid = std::is_void_v<bare_t<T>>;
+
+template <class T>
+concept IsNotVoid = !IsVoid<T>;
 
 struct InPlaceLeftTag
 {
@@ -91,13 +90,15 @@ concept ValidConstructableFrom = requires {
 template <class T>
 concept IsHashable = requires(T v) {
   { std::hash<T>{}(v) } -> std::same_as<std::size_t>;
-};
+} || IsVoid<T>;
 
 template <class L1, class R1, class L2, class R2>
 concept EqualityComparable = std::equality_comparable_with<L1, L2> && std::equality_comparable_with<R1, R2>;
 
 template <class L1, class R1, class L2, class R2>
 concept ThreeWayComparable = std::three_way_comparable_with<L1, L2> && std::three_way_comparable_with<R1, R2>;
+
+inline constexpr std::size_t void_hash{};
 
 } // namespace detail::either_
 
@@ -112,9 +113,6 @@ using create_right_t = detail::either_::CreateRightTag;
 
 inline constexpr create_left_t create_left = {};
 inline constexpr create_right_t create_right = {};
-
-using void_t = detail::either_::VoidTag;
-inline constexpr detail::either_::VoidTag void_val = {};
 
 /*!
  * \brief This is the monad "Either".
@@ -421,29 +419,22 @@ private:
 
 } // namespace frt
 
-//! Hasher for the void alternative. The hash is always 0.
-template <>
-struct std::hash<frt::void_t>
-{
-  constexpr std::size_t operator()(const frt::void_t &) const noexcept { return 0; }
-};
-
 //! Hasher for the `frt::either<L, R>` alternative. The result is either hash of the left or of the right alternative.
-template <frt::detail::either_::ValidType Left, frt::detail::either_::ValidType Right>
+template <class Left, class Right>
   requires(frt::detail::either_::IsHashable<Left> && frt::detail::either_::IsHashable<Right>)
 struct std::hash<frt::either<Left, Right>>
 {
   constexpr std::size_t operator()(const frt::either<Left, Right> &e) const noexcept
   {
     if (e.is_left()) {
-      if constexpr (std::same_as<frt::detail::either_::bare_t<Left>, frt::void_t>) {
-        return std::hash<frt::void_t>{}(frt::void_val);
+      if constexpr (frt::detail::either_::IsVoid<Left>) {
+        return frt::detail::either_::void_hash;
       } else {
         return std::hash<frt::detail::either_::bare_t<Left>>{}(e.left());
       }
     } else {
-      if constexpr (std::same_as<frt::detail::either_::bare_t<Right>, frt::void_t>) {
-        return std::hash<frt::void_t>{}(frt::void_val);
+      if constexpr (frt::detail::either_::IsVoid<Right>) {
+        return frt::detail::either_::void_hash;
       } else {
         return std::hash<frt::detail::either_::bare_t<Right>>{}(e.right());
       }

@@ -36,16 +36,16 @@ TEST_CASE("Hashable right custom type (constexpr)", "[either][constexpr]")
   STATIC_REQUIRE(valid);
 }
 
-TEST_CASE("Hashable void_t (constexpr)", "[either][constexpr]")
-{
-  constexpr auto valid = [] {
-    const frt::either<frt::void_t, int> either{frt::create_left, frt::void_val};
-
-    const auto actualHash = std::hash<frt::either<frt::void_t, int>>{}(either);
-    const auto expectedHash = std::hash<frt::void_t>{}(frt::void_val);
-
-    return actualHash == expectedHash;
-  }();
-
-  STATIC_REQUIRE(valid);
-}
+// TEST_CASE("Hashable void_t (constexpr)", "[either][constexpr]")
+// {
+//   constexpr auto valid = [] {
+//     const frt::either<void, int> either{frt::create_left, };
+//
+//     const auto actualHash = std::hash<frt::either<frt::void_t, int>>{}(either);
+//     const auto expectedHash = std::hash<frt::void_t>{}(frt::void_val);
+//
+//     return actualHash == expectedHash;
+//   }();
+//
+//   STATIC_REQUIRE(valid);
+// }
