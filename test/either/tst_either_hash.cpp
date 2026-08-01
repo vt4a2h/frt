@@ -7,13 +7,14 @@
 
 #include <test/helpers/types.hpp>
 
-TEMPLATE_TEST_CASE_SIG("Hashable concept", "[either]", ((class T, bool Hashable), T, Hashable), (void, true),
-                       (frt::either<int, std::string>, true), (frt::either<std::string, int>, true),
+TEMPLATE_TEST_CASE_SIG("Hashable concept", "[either]", ((class T, bool Hashable), T, Hashable),
+                       (frt::detail::either_::Void, true), (frt::either<int, std::string>, true),
+                       (frt::either<std::string, int>, true),
                        (frt::either<test::helpers::NonHashable, std::string>, false),
                        (frt::either<std::string, test::helpers::NonHashable>, false),
-                       (frt::either<test::helpers::NonHashable, test::helpers::NonHashable>, false)/*,
+                       (frt::either<test::helpers::NonHashable, test::helpers::NonHashable>, false),
                        (frt::either<void, std::string>, true), (frt::either<std::string, void>, true),
-                       (frt::either<void, void>, true)*/)
+                       (frt::either<void, void>, true))
 {
   STATIC_REQUIRE(frt::detail::either_::IsHashable<T> == Hashable);
 }
