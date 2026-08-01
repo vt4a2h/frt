@@ -130,29 +130,34 @@ inline constexpr in_place_right_t in_place_right{in_place_right_t::Secret{}};
 template <detail::either_::ValidType Left, detail::either_::ValidType Right>
 struct either
 {
-  using left_t = detail::either_::SelectedType<Left>;
-  using right_t = detail::either_::SelectedType<Right>;
+private:
+  using left_internal_t = detail::either_::SelectedType<Left>;
+  using right_internal_t = detail::either_::SelectedType<Right>;
+
+public:
+  using left_t = detail::either_::bare_t<Left>;
+  using right_t = detail::either_::bare_t<Right>;
 
   //! The object must be created of either Left or Right. The uninitialized state is not permitted.
   either() = delete;
 
   //! Create from another `either` by copy.
-  constexpr either(const either &src) noexcept(std::is_nothrow_copy_constructible_v<left_t> &&
-                                               std::is_nothrow_copy_constructible_v<right_t>)
+  constexpr either(const either &src) noexcept(std::is_nothrow_copy_constructible_v<left_internal_t> &&
+                                               std::is_nothrow_copy_constructible_v<right_internal_t>)
   {
     initFrom(src);
   }
 
   //! Create from another `either` by move.
-  constexpr either(either &&src) noexcept(std::is_nothrow_move_constructible_v<left_t> &&
-                                          std::is_nothrow_move_constructible_v<right_t>)
+  constexpr either(either &&src) noexcept(std::is_nothrow_move_constructible_v<left_internal_t> &&
+                                          std::is_nothrow_move_constructible_v<right_internal_t>)
   {
     initFrom(std::move(src));
   }
 
   //! Assign from another `either` by copy.
-  constexpr either &operator=(const either &src) noexcept(std::is_nothrow_copy_assignable_v<left_t> &&
-                                                          std::is_nothrow_copy_assignable_v<right_t>)
+  constexpr either &operator=(const either &src) noexcept(std::is_nothrow_copy_assignable_v<left_internal_t> &&
+                                                          std::is_nothrow_copy_assignable_v<right_internal_t>)
   {
     destroy();
     initFrom(src);
@@ -161,8 +166,8 @@ struct either
   }
 
   //! Assign from another `either` by move.
-  constexpr either &operator=(either &&src) noexcept(std::is_nothrow_move_assignable_v<left_t> &&
-                                                     std::is_nothrow_move_assignable_v<right_t>)
+  constexpr either &operator=(either &&src) noexcept(std::is_nothrow_move_assignable_v<left_internal_t> &&
+                                                     std::is_nothrow_move_assignable_v<right_internal_t>)
   {
     destroy();
     initFrom(std::move(src));
@@ -172,8 +177,8 @@ struct either
 
   //! Create from the left alternative in-place (with arguments).
   template <class... Args>
-    requires(std::constructible_from<left_t, Args...>)
-  constexpr either(in_place_left_t, Args &&...args) noexcept(std::is_nothrow_constructible_v<left_t, Args...>)
+    requires(std::constructible_from<left_internal_t, Args...>)
+  constexpr either(in_place_left_t, Args &&...args) noexcept(std::is_nothrow_constructible_v<left_internal_t, Args...>)
   {
     std::construct_at(std::addressof(left_), std::forward<Args>(args)...);
     is_left_ = true;
@@ -181,9 +186,9 @@ struct either
 
   //! Create from the left alternative in-place (with an initializer list and arguments).
   template <class U, class... Args>
-    requires(std::constructible_from<left_t, std::initializer_list<U> &, Args...>)
+    requires(std::constructible_from<left_internal_t, std::initializer_list<U> &, Args...>)
   constexpr either(in_place_left_t, std::initializer_list<U> ilist, Args &&...args) noexcept(
-      std::is_nothrow_constructible_v<left_t, std::initializer_list<U> &, Args...>)
+      std::is_nothrow_constructible_v<left_internal_t, std::initializer_list<U> &, Args...>)
   {
     std::construct_at(std::addressof(left_), ilist, std::forward<Args>(args)...);
     is_left_ = true;
@@ -191,8 +196,9 @@ struct either
 
   //! Create from the right alternative in-place (with arguments).
   template <class... Args>
-    requires(std::constructible_from<right_t, Args...>)
-  constexpr either(in_place_right_t, Args &&...args) noexcept(std::is_nothrow_constructible_v<right_t, Args...>)
+    requires(std::constructible_from<right_internal_t, Args...>)
+  constexpr either(in_place_right_t,
+                   Args &&...args) noexcept(std::is_nothrow_constructible_v<right_internal_t, Args...>)
   {
     std::construct_at(std::addressof(right_), std::forward<Args>(args)...);
     is_left_ = false;
@@ -200,9 +206,9 @@ struct either
 
   //! Create from the right alternative in-place (with an initializer list and arguments).
   template <class U, class... Args>
-    requires(std::constructible_from<right_t, std::initializer_list<U> &, Args...>)
+    requires(std::constructible_from<right_internal_t, std::initializer_list<U> &, Args...>)
   constexpr either(in_place_right_t, std::initializer_list<U> ilist, Args &&...args) noexcept(
-      std::is_nothrow_constructible_v<right_t, std::initializer_list<U> &, Args...>)
+      std::is_nothrow_constructible_v<right_internal_t, std::initializer_list<U> &, Args...>)
   {
     std::construct_at(std::addressof(right_), ilist, std::forward<Args>(args)...);
     is_left_ = false;
@@ -226,19 +232,19 @@ struct either
   }
 
   //! Returns the left alternative or \p default value if the object contains the right alternative.
-  template <class U = left_t>
-    requires(std::is_copy_constructible_v<left_t> && std::is_convertible_v<U, left_t>)
-  [[nodiscard]] constexpr left_t left_or(U &&default_value) const &
+  template <class U = left_internal_t>
+    requires(std::is_copy_constructible_v<left_internal_t> && std::is_convertible_v<U, left_internal_t>)
+  [[nodiscard]] constexpr left_internal_t left_or(U &&default_value) const &
   {
-    return is_left() ? left_ : static_cast<left_t>(std::forward<U>(default_value));
+    return is_left() ? left_ : static_cast<left_internal_t>(std::forward<U>(default_value));
   }
 
   //! Returns the left alternative or \p default value if the object contains the right alternative.
-  template <class U = left_t>
-    requires(std::is_move_constructible_v<left_t> && std::is_convertible_v<U, left_t>)
-  [[nodiscard]] constexpr left_t left_or(U &&default_value) &&
+  template <class U = left_internal_t>
+    requires(std::is_move_constructible_v<left_internal_t> && std::is_convertible_v<U, left_internal_t>)
+  [[nodiscard]] constexpr left_internal_t left_or(U &&default_value) &&
   {
-    return is_left() ? std::move(left_) : static_cast<left_t>(std::forward<U>(default_value));
+    return is_left() ? std::move(left_) : static_cast<left_internal_t>(std::forward<U>(default_value));
   }
 
   //! Get the right alternative. Pre-condition: it must contain the right alternative.
@@ -250,24 +256,24 @@ struct either
   }
 
   //! Returns the right alternative or \p default value if the object contains the left alternative.
-  template <class U = right_t>
-    requires(std::is_copy_constructible_v<right_t> && std::is_convertible_v<U, right_t>)
-  [[nodiscard]] constexpr right_t right_or(U &&default_value) const &
+  template <class U = right_internal_t>
+    requires(std::is_copy_constructible_v<right_internal_t> && std::is_convertible_v<U, right_internal_t>)
+  [[nodiscard]] constexpr right_internal_t right_or(U &&default_value) const &
   {
-    return is_right() ? right_ : static_cast<right_t>(std::forward<U>(default_value));
+    return is_right() ? right_ : static_cast<right_internal_t>(std::forward<U>(default_value));
   }
 
   //! Returns the right alternative or \p default value if the object contains the left alternative.
-  template <class U = right_t>
-    requires(std::is_move_constructible_v<right_t> && std::is_convertible_v<U, right_t>)
-  [[nodiscard]] constexpr right_t right_or(U &&default_value) &&
+  template <class U = right_internal_t>
+    requires(std::is_move_constructible_v<right_internal_t> && std::is_convertible_v<U, right_internal_t>)
+  [[nodiscard]] constexpr right_internal_t right_or(U &&default_value) &&
   {
-    return is_right() ? std::move(right_) : static_cast<right_t>(std::forward<U>(default_value));
+    return is_right() ? std::move(right_) : static_cast<right_internal_t>(std::forward<U>(default_value));
   }
 
   //! Compare with another either
   template <class L, class R>
-    requires(detail::either_::EqualityComparable<left_t, right_t, L, R>)
+    requires(detail::either_::EqualityComparable<left_internal_t, right_internal_t, L, R>)
   [[nodiscard]] friend constexpr bool
   operator==(const either &lhs, const either<L, R> &rhs) noexcept(noexcept(static_cast<bool>(lhs.left_ == rhs.left_)) &&
                                                                   noexcept(static_cast<bool>(lhs.right_ == rhs.right_)))
@@ -285,7 +291,7 @@ struct either
 
   //! Three-way compare with another either
   template <class L, class R>
-    requires(detail::either_::ThreeWayComparable<left_t, right_t, L, R>)
+    requires(detail::either_::ThreeWayComparable<left_internal_t, right_internal_t, L, R>)
   [[nodiscard]] friend constexpr std::partial_ordering
   operator<=>(const either &lhs,
               const either<L, R> &rhs) noexcept(noexcept(static_cast<std::partial_ordering>(lhs.left_ <=> rhs.left_)) &&
@@ -299,7 +305,8 @@ struct either
   }
 
   //! Swap value with \p rhs.
-  constexpr void swap(either &rhs) noexcept(std::is_nothrow_swappable_v<left_t> && std::is_nothrow_swappable_v<right_t>)
+  constexpr void swap(either &rhs) noexcept(std::is_nothrow_swappable_v<left_internal_t> &&
+                                            std::is_nothrow_swappable_v<right_internal_t>)
   {
     using std::swap;
     if (is_left_ != rhs.is_left_) {
@@ -322,8 +329,9 @@ struct either
 
   //! Emplace left (from args)
   template <class... Args>
-    requires(std::constructible_from<left_t, Args...>)
-  constexpr left_t &emplaceLeft(Args &&...args) noexcept(std::is_nothrow_constructible_v<left_t, Args...>)
+    requires(std::constructible_from<left_internal_t, Args...>)
+  constexpr left_internal_t &
+  emplaceLeft(Args &&...args) noexcept(std::is_nothrow_constructible_v<left_internal_t, Args...>)
   {
     destroy();
     std::construct_at(std::addressof(left_), std::forward<Args>(args)...);
@@ -334,10 +342,9 @@ struct either
 
   //! Emplace left (from an initializer list and args)
   template <class U, class... Args>
-    requires(std::constructible_from<left_t, std::initializer_list<U> &, Args...>)
-  constexpr left_t &
-  emplaceLeft(std::initializer_list<U> ilist,
-              Args &&...args) noexcept(std::is_nothrow_constructible_v<left_t, std::initializer_list<U> &, Args...>)
+    requires(std::constructible_from<left_internal_t, std::initializer_list<U> &, Args...>)
+  constexpr left_internal_t &emplaceLeft(std::initializer_list<U> ilist, Args &&...args) noexcept(
+      std::is_nothrow_constructible_v<left_internal_t, std::initializer_list<U> &, Args...>)
   {
     destroy();
     std::construct_at(std::addressof(left_), ilist, std::forward<Args>(args)...);
@@ -348,8 +355,9 @@ struct either
 
   //! Emplace right (from args)
   template <class... Args>
-    requires(std::constructible_from<right_t, Args...>)
-  constexpr right_t &emplaceRight(Args &&...args) noexcept(std::is_nothrow_constructible_v<right_t, Args...>)
+    requires(std::constructible_from<right_internal_t, Args...>)
+  constexpr right_internal_t &
+  emplaceRight(Args &&...args) noexcept(std::is_nothrow_constructible_v<right_internal_t, Args...>)
   {
     destroy();
     std::construct_at(std::addressof(right_), std::forward<Args>(args)...);
@@ -360,10 +368,9 @@ struct either
 
   //! Emplace right (from an initializer list and args)
   template <class U, class... Args>
-    requires(std::constructible_from<right_t, std::initializer_list<U> &, Args...>)
-  constexpr right_t &
-  emplaceRight(std::initializer_list<U> ilist,
-               Args &&...args) noexcept(std::is_nothrow_constructible_v<right_t, std::initializer_list<U> &, Args...>)
+    requires(std::constructible_from<right_internal_t, std::initializer_list<U> &, Args...>)
+  constexpr right_internal_t &emplaceRight(std::initializer_list<U> ilist, Args &&...args) noexcept(
+      std::is_nothrow_constructible_v<right_internal_t, std::initializer_list<U> &, Args...>)
   {
     destroy();
     std::construct_at(std::addressof(right_), ilist, std::forward<Args>(args)...);
@@ -396,8 +403,8 @@ private:
 
   union
   {
-    left_t left_;
-    right_t right_;
+    left_internal_t left_;
+    right_internal_t right_;
   };
   bool is_left_;
 };
