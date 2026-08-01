@@ -25,8 +25,14 @@ template <class T>
 using bare_t = std::remove_cvref_t<T>;
 
 template <class T>
+concept IsVoid = std::is_void_v<bare_t<T>>;
+
+template <class T>
+concept IsNotVoid = !IsVoid<T>;
+
+template <class T>
 concept ValidType = requires {
-  requires std::destructible<bare_t<T>>;
+  requires std::destructible<bare_t<T>> || IsVoid<T>;
   requires !std::is_reference_v<T>;
   requires !std::is_array_v<bare_t<T>>;
 };
@@ -49,12 +55,6 @@ concept IsEither = is_either_<bare_t<T>>;
 
 template <class T>
 concept IsNotEither = !is_either_<bare_t<T>>;
-
-template <class T>
-concept IsVoid = std::is_void_v<bare_t<T>>;
-
-template <class T>
-concept IsNotVoid = !IsVoid<T>;
 
 struct InPlaceLeftTag
 {
@@ -93,10 +93,12 @@ concept IsHashable = requires(T v) {
 } || IsVoid<T>;
 
 template <class L1, class R1, class L2, class R2>
-concept EqualityComparable = std::equality_comparable_with<L1, L2> && std::equality_comparable_with<R1, R2>;
+concept EqualityComparable = (std::equality_comparable_with<L1, L2> || (IsVoid<L1> && IsVoid<L2>)) &&
+                             (std::equality_comparable_with<R1, R2> || (IsVoid<R1> && IsVoid<R2>));
 
 template <class L1, class R1, class L2, class R2>
-concept ThreeWayComparable = std::three_way_comparable_with<L1, L2> && std::three_way_comparable_with<R1, R2>;
+concept ThreeWayComparable = (std::three_way_comparable_with<L1, L2> || (IsVoid<L1> && IsVoid<L2>)) &&
+                             (std::three_way_comparable_with<R1, R2> || (IsVoid<R1> && IsVoid<R2>));
 
 inline constexpr std::size_t void_hash{};
 
@@ -414,6 +416,456 @@ private:
     Left left_;
     Right right_;
   };
+  bool is_left_;
+};
+
+template <detail::either_::ValidType Right>
+struct either<void, Right>
+{
+  using left_t = void;
+  using right_t = detail::either_::bare_t<Right>;
+
+  either() = default;
+
+  //! Create from another `either` by copy.
+  constexpr either(const either &src) noexcept(std::is_nothrow_copy_constructible_v<right_t>) { initFrom(src); }
+
+  //! Create from another `either` by move.
+  constexpr either(either &&src) noexcept(std::is_nothrow_move_constructible_v<right_t>) { initFrom(std::move(src)); }
+
+  //! Assign from another `either` by copy.
+  constexpr either &operator=(const either &src) noexcept(std::is_nothrow_copy_assignable_v<right_t>)
+  {
+    destroy();
+    initFrom(src);
+
+    return *this;
+  }
+
+  //! Assign from another `either` by move.
+  constexpr either &operator=(either &&src) noexcept(std::is_nothrow_move_assignable_v<right_t>)
+  {
+    destroy();
+    initFrom(std::move(src));
+
+    return *this;
+  }
+
+  //! Create from the right alternative.
+  template <detail::either_::ValidConstructableFrom<right_t> U>
+  constexpr either(create_right_t, U &&u) noexcept(std::is_nothrow_constructible_v<right_t, U>)
+  {
+    std::construct_at(std::addressof(right_), std::forward<U>(u));
+    is_left_ = false;
+  }
+
+  //! Create from the right alternative in-place (with arguments).
+  template <class... Args>
+    requires(std::constructible_from<right_t, Args...>)
+  constexpr either(in_place_right_t, Args &&...args) noexcept(std::is_nothrow_constructible_v<right_t, Args...>)
+  {
+    std::construct_at(std::addressof(right_), std::forward<Args>(args)...);
+    is_left_ = false;
+  }
+
+  //! Create from the right alternative in-place (with an initializer list and arguments).
+  template <class U, class... Args>
+    requires(std::constructible_from<right_t, std::initializer_list<U> &, Args...>)
+  constexpr either(in_place_right_t, std::initializer_list<U> ilist, Args &&...args) noexcept(
+      std::is_nothrow_constructible_v<right_t, std::initializer_list<U> &, Args...>)
+  {
+    std::construct_at(std::addressof(right_), ilist, std::forward<Args>(args)...);
+    is_left_ = false;
+  }
+
+  //! Default destructor.
+  constexpr ~either() { destroy(); }
+
+  //! Check for the left alternative.
+  [[nodiscard]] constexpr bool is_left() const noexcept { return is_left_; }
+
+  //! Check for the right alternative.
+  [[nodiscard]] constexpr bool is_right() const noexcept { return !is_left(); }
+
+  //! Get the right alternative. Pre-condition: it must contain the right alternative.
+  template <class Self>
+  [[nodiscard]] constexpr auto &&right(this Self &&self)
+  {
+    expects(self.is_right());
+    return std::forward_like<Self>(self.right_);
+  }
+
+  //! Returns the right alternative or \p default value if the object contains the left alternative.
+  template <class U = right_t>
+    requires(std::is_copy_constructible_v<right_t> && std::is_convertible_v<U, right_t>)
+  [[nodiscard]] constexpr right_t right_or(U &&default_value) const &
+  {
+    return is_right() ? right_ : static_cast<right_t>(std::forward<U>(default_value));
+  }
+
+  //! Returns the right alternative or \p default value if the object contains the left alternative.
+  template <class U = right_t>
+    requires(std::is_move_constructible_v<right_t> && std::is_convertible_v<U, right_t>)
+  [[nodiscard]] constexpr right_t right_or(U &&default_value) &&
+  {
+    return is_right() ? std::move(right_) : static_cast<right_t>(std::forward<U>(default_value));
+  }
+
+  //! Compare with another either
+  template <class L, class R>
+    requires(detail::either_::EqualityComparable<left_t, right_t, L, R>)
+  [[nodiscard]] friend constexpr bool
+  operator==(const either &lhs, const either<L, R> &rhs) noexcept(noexcept(static_cast<bool>(lhs.right_ == rhs.right_)))
+  {
+    if (lhs.is_left_ != rhs.is_left_) {
+      return false;
+    }
+
+    if (lhs.is_left_) {
+      return true;
+    } else {
+      return lhs.right_ == rhs.right_;
+    }
+  }
+
+  //! Three-way compare with another either
+  template <class L, class R>
+    requires(detail::either_::ThreeWayComparable<left_t, right_t, L, R>)
+  [[nodiscard]] friend constexpr std::partial_ordering
+  operator<=>(const either &lhs,
+              const either<L, R> &rhs) noexcept(noexcept(static_cast<std::partial_ordering>(lhs.right_ <=> rhs.right_)))
+  {
+    if (lhs.is_left_ == rhs.is_left_) {
+      return lhs.is_left_ ? true : lhs.right_ <=> rhs.right_;
+    } else {
+      return std::partial_ordering::unordered;
+    }
+  }
+
+  //! Swap value with \p rhs.
+  constexpr void swap(either &rhs) noexcept(std::is_nothrow_swappable_v<right_t>)
+  {
+    using std::swap;
+    if (is_left_ != rhs.is_left_) {
+      auto tmp = *this;
+
+      this->destroy();
+      this->initFrom(rhs);
+
+      rhs.destroy();
+      rhs.initFrom(tmp);
+    } else if (!is_left_) {
+      swap(right_, rhs.right_);
+    }
+  }
+
+  //! Swap \p lhs and \p rhs.
+  friend constexpr void swap(either &lhs, either &rhs) noexcept(noexcept(lhs.swap(rhs))) { lhs.swap(rhs); }
+
+  //! Emplace right (from args)
+  template <class... Args>
+    requires(std::constructible_from<right_t, Args...>)
+  constexpr right_t &emplaceRight(Args &&...args) noexcept(std::is_nothrow_constructible_v<right_t, Args...>)
+  {
+    destroy();
+    std::construct_at(std::addressof(right_), std::forward<Args>(args)...);
+    is_left_ = false;
+
+    return right_;
+  }
+
+  //! Emplace right (from an initializer list and args)
+  template <class U, class... Args>
+    requires(std::constructible_from<right_t, std::initializer_list<U> &, Args...>)
+  constexpr right_t &
+  emplaceRight(std::initializer_list<U> ilist,
+               Args &&...args) noexcept(std::is_nothrow_constructible_v<right_t, std::initializer_list<U> &, Args...>)
+  {
+    destroy();
+    std::construct_at(std::addressof(right_), ilist, std::forward<Args>(args)...);
+    is_left_ = false;
+
+    return right_;
+  }
+
+private:
+  constexpr void destroy()
+  {
+    if (!is_left_) {
+      std::destroy_at(std::addressof(right_));
+    }
+  }
+
+  template <class D>
+  constexpr void initFrom(D &&data)
+  {
+    if (!data.is_left_) {
+      std::construct_at(std::addressof(right_), std::forward_like<D>(data.right_));
+    }
+    is_left_ = data.is_left_;
+  }
+
+  union
+  {
+    Right right_;
+  };
+  bool is_left_{};
+};
+
+template <detail::either_::ValidType Left>
+struct either<Left, void>
+{
+  using left_t = detail::either_::bare_t<Left>;
+  using right_t = void;
+
+  either() = default;
+
+  //! Create from another `either` by copy.
+  constexpr either(const either &src) noexcept(std::is_nothrow_copy_constructible_v<left_t>) { initFrom(src); }
+
+  //! Create from another `either` by move.
+  constexpr either(either &&src) noexcept(std::is_nothrow_move_constructible_v<left_t>) { initFrom(std::move(src)); }
+
+  //! Assign from another `either` by copy.
+  constexpr either &operator=(const either &src) noexcept(std::is_nothrow_copy_assignable_v<left_t>)
+  {
+    destroy();
+    initFrom(src);
+
+    return *this;
+  }
+
+  //! Assign from another `either` by move.
+  constexpr either &operator=(either &&src) noexcept(std::is_nothrow_move_assignable_v<left_t>)
+  {
+    destroy();
+    initFrom(std::move(src));
+
+    return *this;
+  }
+
+  //! Create from the right alternative.
+  template <detail::either_::ValidConstructableFrom<left_t> U>
+  constexpr either(create_left_t, U &&u) noexcept(std::is_nothrow_constructible_v<left_t, U>)
+  {
+    std::construct_at(std::addressof(left_), std::forward<U>(u));
+    is_left_ = false;
+  }
+
+  //! Create from the right alternative in-place (with arguments).
+  template <class... Args>
+    requires(std::constructible_from<left_t, Args...>)
+  constexpr either(in_place_left_t, Args &&...args) noexcept(std::is_nothrow_constructible_v<left_t, Args...>)
+  {
+    std::construct_at(std::addressof(left_), std::forward<Args>(args)...);
+    is_left_ = false;
+  }
+
+  //! Create from the right alternative in-place (with an initializer list and arguments).
+  template <class U, class... Args>
+    requires(std::constructible_from<left_t, std::initializer_list<U> &, Args...>)
+  constexpr either(in_place_left_t, std::initializer_list<U> ilist, Args &&...args) noexcept(
+      std::is_nothrow_constructible_v<left_t, std::initializer_list<U> &, Args...>)
+  {
+    std::construct_at(std::addressof(left_), ilist, std::forward<Args>(args)...);
+    is_left_ = false;
+  }
+
+  //! Default destructor.
+  constexpr ~either() { destroy(); }
+
+  //! Check for the left alternative.
+  [[nodiscard]] constexpr bool is_left() const noexcept { return is_left_; }
+
+  //! Check for the right alternative.
+  [[nodiscard]] constexpr bool is_right() const noexcept { return !is_left(); }
+
+  //! Get the right alternative. Pre-condition: it must contain the right alternative.
+  template <class Self>
+  [[nodiscard]] constexpr auto &&right(this Self &&self)
+  {
+    expects(self.is_right());
+    return std::forward_like<Self>(self.left_);
+  }
+
+  //! Returns the right alternative or \p default value if the object contains the left alternative.
+  template <class U = left_t>
+    requires(std::is_copy_constructible_v<left_t> && std::is_convertible_v<U, left_t>)
+  [[nodiscard]] constexpr left_t left_or(U &&default_value) const &
+  {
+    return is_right() ? left_ : static_cast<left_t>(std::forward<U>(default_value));
+  }
+
+  //! Returns the right alternative or \p default value if the object contains the left alternative.
+  template <class U = left_t>
+    requires(std::is_move_constructible_v<left_t> && std::is_convertible_v<U, left_t>)
+  [[nodiscard]] constexpr left_t left_or(U &&default_value) &&
+  {
+    return is_right() ? std::move(left_) : static_cast<left_t>(std::forward<U>(default_value));
+  }
+
+  //! Compare with another either
+  template <class L, class R>
+    requires(detail::either_::EqualityComparable<left_t, left_t, L, R>)
+  [[nodiscard]] friend constexpr bool
+  operator==(const either &lhs, const either<L, R> &rhs) noexcept(noexcept(static_cast<bool>(lhs.left_ == rhs.left_)))
+  {
+    if (lhs.is_left_ != rhs.is_left_) {
+      return false;
+    }
+
+    if (lhs.is_left_) {
+      return true;
+    } else {
+      return lhs.left_ == rhs.left_;
+    }
+  }
+
+  //! Three-way compare with another either
+  template <class L, class R>
+    requires(detail::either_::ThreeWayComparable<left_t, left_t, L, R>)
+  [[nodiscard]] friend constexpr std::partial_ordering
+  operator<=>(const either &lhs,
+              const either<L, R> &rhs) noexcept(noexcept(static_cast<std::partial_ordering>(lhs.left_ <=> rhs.left_)))
+  {
+    if (lhs.is_left_ == rhs.is_left_) {
+      return lhs.is_left_ ? true : lhs.left_ <=> rhs.left_;
+    } else {
+      return std::partial_ordering::unordered;
+    }
+  }
+
+  //! Swap value with \p rhs.
+  constexpr void swap(either &rhs) noexcept(std::is_nothrow_swappable_v<left_t>)
+  {
+    using std::swap;
+    if (is_left_ != rhs.is_left_) {
+      auto tmp = *this;
+
+      this->destroy();
+      this->initFrom(rhs);
+
+      rhs.destroy();
+      rhs.initFrom(tmp);
+    } else if (!is_left_) {
+      swap(left_, rhs.left_);
+    }
+  }
+
+  //! Swap \p lhs and \p rhs.
+  friend constexpr void swap(either &lhs, either &rhs) noexcept(noexcept(lhs.swap(rhs))) { lhs.swap(rhs); }
+
+  //! Emplace right (from args)
+  template <class... Args>
+    requires(std::constructible_from<left_t, Args...>)
+  constexpr left_t &emplaceRight(Args &&...args) noexcept(std::is_nothrow_constructible_v<left_t, Args...>)
+  {
+    destroy();
+    std::construct_at(std::addressof(left_), std::forward<Args>(args)...);
+    is_left_ = false;
+
+    return left_;
+  }
+
+  //! Emplace right (from an initializer list and args)
+  template <class U, class... Args>
+    requires(std::constructible_from<left_t, std::initializer_list<U> &, Args...>)
+  constexpr left_t &
+  emplaceRight(std::initializer_list<U> ilist,
+               Args &&...args) noexcept(std::is_nothrow_constructible_v<left_t, std::initializer_list<U> &, Args...>)
+  {
+    destroy();
+    std::construct_at(std::addressof(left_), ilist, std::forward<Args>(args)...);
+    is_left_ = false;
+
+    return left_;
+  }
+
+private:
+  constexpr void destroy()
+  {
+    if (!is_left_) {
+      std::destroy_at(std::addressof(left_));
+    }
+  }
+
+  template <class D>
+  constexpr void initFrom(D &&data)
+  {
+    if (!data.is_left_) {
+      std::construct_at(std::addressof(left_), std::forward_like<D>(data.left_));
+    }
+    is_left_ = data.is_left_;
+  }
+
+  union
+  {
+    Left left_;
+  };
+  bool is_left_{};
+};
+
+//! Weird, but why not? Technically it's possible to have an `either<void, void>`, but practically useless.
+template <>
+struct either<void, void>
+{
+  using left_t = void;
+  using right_t = void;
+
+  //! The object must be created of either Left or Right. The uninitialized state is not permitted.
+  either() = delete;
+
+  //! Create from another `either` by copy.
+  constexpr either(const either &src) noexcept = default;
+
+  //! Create from another `either` by move.
+  constexpr either(either &&src) noexcept = default;
+
+  //! Assign from another `either` by copy.
+  constexpr either &operator=(const either &src) noexcept = default;
+
+  //! Assign from another `either` by move.
+  constexpr either &operator=(either &&src) noexcept = default;
+
+  //! Create from the left alternative.
+  constexpr either(create_left_t) noexcept : is_left_(true) {}
+
+  //! Create from the right alternative.
+  constexpr either(create_right_t) noexcept : is_left_(false) {}
+
+  //! Create from the left alternative in-place (with arguments).
+  constexpr either(in_place_left_t) noexcept : is_left_(true) {}
+
+  //! Create from the right alternative in-place (with an initializer list and arguments).
+  constexpr either(in_place_right_t) noexcept : is_left_(false) {}
+
+  //! Default destructor.
+  constexpr ~either() = default;
+
+  //! Check for the left alternative.
+  [[nodiscard]] constexpr bool is_left() const noexcept { return is_left_; }
+
+  //! Check for the right alternative.
+  [[nodiscard]] constexpr bool is_right() const noexcept { return !is_left(); }
+
+  //! Compare with another either
+  [[nodiscard]] friend constexpr bool operator==(const either &lhs, const either &rhs) noexcept = default;
+
+  //! Three-way compare with another either
+  [[nodiscard]] friend constexpr std::partial_ordering operator<=>(const either &lhs,
+                                                                   const either &rhs) noexcept = default;
+
+  //! Swap value with \p rhs.
+  constexpr void swap(either &rhs) noexcept
+  {
+    using std::swap;
+    swap(is_left_, rhs.is_left_);
+  }
+
+  //! Swap \p lhs and \p rhs.
+  friend constexpr void swap(either &lhs, either &rhs) noexcept(noexcept(lhs.swap(rhs))) { lhs.swap(rhs); }
+
+private:
   bool is_left_;
 };
 
