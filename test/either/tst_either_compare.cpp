@@ -10,10 +10,10 @@ using either = frt::either<ComparableTypeFirst, ComparableTypeSecond>;
 
 TEST_CASE("Compare two either", "[either]")
 {
-  const either e1{frt::create_left, ComparableTypeFirst{"Lorem ipsum dolor sit amet, "}};
-  const either e2{frt::create_left, ComparableTypeFirst{"consectetur adipiscing elit, sed do eiusmod tempor "}};
-  const either e3{frt::create_right, ComparableTypeSecond{1}};
-  const either e4{frt::create_right, ComparableTypeSecond{2}};
+  const either e1{frt::in_place_left, ComparableTypeFirst{"Lorem ipsum dolor sit amet, "}};
+  const either e2{frt::in_place_left, ComparableTypeFirst{"consectetur adipiscing elit, sed do eiusmod tempor "}};
+  const either e3{frt::in_place_right, ComparableTypeSecond{1}};
+  const either e4{frt::in_place_right, ComparableTypeSecond{2}};
 
   SECTION("Compare two either (both left) - equal") { REQUIRE(e1 == e1); }
   SECTION("Compare two either (both left) - not equal") { REQUIRE(e1 != e2); }

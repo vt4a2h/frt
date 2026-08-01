@@ -21,8 +21,8 @@ TEST_CASE("Swap", "[either]")
 
   SECTION("Both left (member swap)")
   {
-    Either e1{frt::create_left, leftValue1};
-    Either e2{frt::create_left, leftValue2};
+    Either e1{frt::in_place_left, leftValue1};
+    Either e2{frt::in_place_left, leftValue2};
 
     e1.swap(e2);
 
@@ -32,8 +32,8 @@ TEST_CASE("Swap", "[either]")
 
   SECTION("Both left (non-member swap)")
   {
-    Either e1{frt::create_left, leftValue1};
-    Either e2{frt::create_left, leftValue2};
+    Either e1{frt::in_place_left, leftValue1};
+    Either e2{frt::in_place_left, leftValue2};
 
     using std::swap;
     swap(e1, e2);
@@ -44,8 +44,8 @@ TEST_CASE("Swap", "[either]")
 
   SECTION("Both right (member swap)")
   {
-    Either e1{frt::create_right, rightValue1};
-    Either e2{frt::create_right, rightValue2};
+    Either e1{frt::in_place_right, rightValue1};
+    Either e2{frt::in_place_right, rightValue2};
 
     e1.swap(e2);
 
@@ -55,8 +55,8 @@ TEST_CASE("Swap", "[either]")
 
   SECTION("Both right (non-member swap)")
   {
-    Either e1{frt::create_right, rightValue1};
-    Either e2{frt::create_right, rightValue2};
+    Either e1{frt::in_place_right, rightValue1};
+    Either e2{frt::in_place_right, rightValue2};
 
     using std::swap;
     swap(e1, e2);
@@ -67,8 +67,8 @@ TEST_CASE("Swap", "[either]")
 
   SECTION("Left and Right (member swap)")
   {
-    Either e1{frt::create_left, leftValue1};
-    Either e2{frt::create_right, rightValue2};
+    Either e1{frt::in_place_left, leftValue1};
+    Either e2{frt::in_place_right, rightValue2};
 
     e1.swap(e2);
 
@@ -80,8 +80,8 @@ TEST_CASE("Swap", "[either]")
 
   SECTION("Left and Right (non-member swap)")
   {
-    Either e1{frt::create_left, leftValue1};
-    Either e2{frt::create_right, rightValue2};
+    Either e1{frt::in_place_left, leftValue1};
+    Either e2{frt::in_place_right, rightValue2};
 
     using std::swap;
     swap(e1, e2);
@@ -94,8 +94,8 @@ TEST_CASE("Swap", "[either]")
 
   SECTION("Right and Left (member swap)")
   {
-    Either e1{frt::create_right, rightValue1};
-    Either e2{frt::create_left, leftValue2};
+    Either e1{frt::in_place_right, rightValue1};
+    Either e2{frt::in_place_left, leftValue2};
 
     e1.swap(e2);
 
@@ -107,8 +107,8 @@ TEST_CASE("Swap", "[either]")
 
   SECTION("Right and Left (non-member swap)")
   {
-    Either e1{frt::create_right, rightValue1};
-    Either e2{frt::create_left, leftValue2};
+    Either e1{frt::in_place_right, rightValue1};
+    Either e2{frt::in_place_left, leftValue2};
 
     using std::swap;
     swap(e1, e2);

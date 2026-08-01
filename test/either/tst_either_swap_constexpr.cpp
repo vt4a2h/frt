@@ -16,8 +16,8 @@ TEST_CASE("Swap (constexpr)", "[either][constexpr]")
       const std::vector l1{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
       const std::vector l2{9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
 
-      Either e1{frt::create_left, l1};
-      Either e2{frt::create_left, l2};
+      Either e1{frt::in_place_left, l1};
+      Either e2{frt::in_place_left, l2};
 
       e1.swap(e2);
 
@@ -33,8 +33,8 @@ TEST_CASE("Swap (constexpr)", "[either][constexpr]")
       const std::vector l1{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
       const std::vector l2{9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
 
-      Either e1{frt::create_left, l1};
-      Either e2{frt::create_left, l2};
+      Either e1{frt::in_place_left, l1};
+      Either e2{frt::in_place_left, l2};
 
       using std::swap;
       swap(e1, e2);
@@ -54,8 +54,8 @@ TEST_CASE("Swap (constexpr)", "[either][constexpr]")
                              "laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi "
                              "architecto beatae vitae dicta sunt explicabo.";
 
-      Either e1{frt::create_right, r1};
-      Either e2{frt::create_right, r2};
+      Either e1{frt::in_place_right, r1};
+      Either e2{frt::in_place_right, r2};
 
       e1.swap(e2);
 
@@ -74,8 +74,8 @@ TEST_CASE("Swap (constexpr)", "[either][constexpr]")
                              "laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi "
                              "architecto beatae vitae dicta sunt explicabo.";
 
-      Either e1{frt::create_right, r1};
-      Either e2{frt::create_right, r2};
+      Either e1{frt::in_place_right, r1};
+      Either e2{frt::in_place_right, r2};
 
       using std::swap;
       swap(e1, e2);
@@ -94,8 +94,8 @@ TEST_CASE("Swap (constexpr)", "[either][constexpr]")
                              "laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi "
                              "architecto beatae vitae dicta sunt explicabo.";
 
-      Either e1{frt::create_left, l1};
-      Either e2{frt::create_right, r2};
+      Either e1{frt::in_place_left, l1};
+      Either e2{frt::in_place_right, r2};
 
       e1.swap(e2);
 
@@ -113,8 +113,8 @@ TEST_CASE("Swap (constexpr)", "[either][constexpr]")
                              "laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi "
                              "architecto beatae vitae dicta sunt explicabo.";
 
-      Either e1{frt::create_left, l1};
-      Either e2{frt::create_right, r2};
+      Either e1{frt::in_place_left, l1};
+      Either e2{frt::in_place_right, r2};
 
       using std::swap;
       swap(e1, e2);
@@ -132,8 +132,8 @@ TEST_CASE("Swap (constexpr)", "[either][constexpr]")
                              "incididunt ut labore et dolore magna aliqua";
       const std::vector l2{9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
 
-      Either e1{frt::create_right, r1};
-      Either e2{frt::create_left, l2};
+      Either e1{frt::in_place_right, r1};
+      Either e2{frt::in_place_left, l2};
 
       e1.swap(e2);
 
@@ -150,8 +150,8 @@ TEST_CASE("Swap (constexpr)", "[either][constexpr]")
                              "incididunt ut labore et dolore magna aliqua";
       const std::vector l2{9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
 
-      Either e1{frt::create_right, r1};
-      Either e2{frt::create_left, l2};
+      Either e1{frt::in_place_right, r1};
+      Either e2{frt::in_place_left, l2};
 
       using std::swap;
       swap(e1, e2);

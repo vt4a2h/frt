@@ -21,7 +21,7 @@ TEMPLATE_TEST_CASE_SIG("Hashable concept", "[either]", ((class T, bool Hashable)
 TEMPLATE_TEST_CASE("Hashable left", "[either]", int, test::helpers::Hashable)
 {
   const TestType testValue{42};
-  const frt::either<TestType, std::string> either{frt::create_left, testValue};
+  const frt::either<TestType, std::string> either{frt::in_place_left, testValue};
 
   const auto actualHash = std::hash<frt::either<TestType, std::string>>{}(either);
   const auto expectedHash = std::hash<TestType>{}(testValue);
@@ -32,7 +32,7 @@ TEMPLATE_TEST_CASE("Hashable left", "[either]", int, test::helpers::Hashable)
 TEMPLATE_TEST_CASE("Hashable right", "[either]", int, test::helpers::Hashable)
 {
   const TestType testValue{42};
-  const frt::either<std::string, TestType> either{frt::create_right, testValue};
+  const frt::either<std::string, TestType> either{frt::in_place_right, testValue};
 
   const auto actualHash = std::hash<frt::either<std::string, TestType>>{}(either);
   const auto expectedHash = std::hash<TestType>{}(testValue);
@@ -50,11 +50,11 @@ TEST_CASE("Use as a key for unordered_map left", "[either]")
                            std::pair{test::helpers::Hashable{3}, "3"s}};
 
   for (const auto &p : data) {
-    map[frt::either<test::helpers::Hashable, int>{frt::create_left, p.first}] = p.second;
+    map[frt::either<test::helpers::Hashable, int>{frt::in_place_left, p.first}] = p.second;
   }
 
   const auto allInserted = std::ranges::all_of(data, [&map](const auto &d) {
-    return map.find(frt::either<test::helpers::Hashable, int>{frt::create_left, d.first}) != std::end(map);
+    return map.find(frt::either<test::helpers::Hashable, int>{frt::in_place_left, d.first}) != std::end(map);
   });
 
   REQUIRE(allInserted);
@@ -70,11 +70,11 @@ TEST_CASE("Use as a key for unordered_map right", "[either]")
                            std::pair{test::helpers::Hashable{3}, "3"s}};
 
   for (const auto &p : data) {
-    map[frt::either<int, test::helpers::Hashable>{frt::create_right, p.first}] = p.second;
+    map[frt::either<int, test::helpers::Hashable>{frt::in_place_right, p.first}] = p.second;
   }
 
   const auto allInserted = std::ranges::all_of(data, [&map](const auto &d) {
-    return map.find(frt::either<int, test::helpers::Hashable>{frt::create_right, d.first}) != std::end(map);
+    return map.find(frt::either<int, test::helpers::Hashable>{frt::in_place_right, d.first}) != std::end(map);
   });
 
   REQUIRE(allInserted);

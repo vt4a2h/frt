@@ -16,8 +16,8 @@ TEST_CASE("Observers (is_*)", "[either]")
 {
   SECTION("is_left")
   {
-    const Either left{frt::create_left, expectedLeftValue};
-    const Either right{frt::create_right, expectedRightValue};
+    const Either left{frt::in_place_left, expectedLeftValue};
+    const Either right{frt::in_place_right, expectedRightValue};
 
     SECTION("returns true for left") { REQUIRE(left.is_left()); }
     SECTION("returns false for right") { REQUIRE_FALSE(right.is_left()); }
@@ -25,8 +25,8 @@ TEST_CASE("Observers (is_*)", "[either]")
 
   SECTION("is_right")
   {
-    const Either left{frt::create_left, expectedLeftValue};
-    const Either right{frt::create_right, expectedRightValue};
+    const Either left{frt::in_place_left, expectedLeftValue};
+    const Either right{frt::in_place_right, expectedRightValue};
 
     SECTION("returns false for left") { REQUIRE_FALSE(left.is_right()); }
     SECTION("returns true for right") { REQUIRE(right.is_right()); }
@@ -37,7 +37,7 @@ TEST_CASE("Observers (left/right)", "[either]")
 {
   SECTION("left")
   {
-    Either either{frt::create_left, expectedLeftValue};
+    Either either{frt::in_place_left, expectedLeftValue};
 
     SECTION("returns reference to left (const)")
     {
@@ -64,7 +64,7 @@ TEST_CASE("Observers (left/right)", "[either]")
   {
     const std::string modifiedRightValue = "Modified string value";
 
-    Either either{frt::create_right, expectedRightValue};
+    Either either{frt::in_place_right, expectedRightValue};
 
     SECTION("returns reference to right (const)")
     {
@@ -96,25 +96,25 @@ TEST_CASE("Observers (*_or)", "[either]")
 
     SECTION("returns left value if present (const &)")
     {
-      const Either either{frt::create_left, expectedLeftValue};
+      const Either either{frt::in_place_left, expectedLeftValue};
       REQUIRE(either.left_or(defaultLeftValue) == expectedLeftValue);
     }
 
     SECTION("returns default value if right value present (const &)")
     {
-      const Either either{frt::create_right, expectedRightValue};
+      const Either either{frt::in_place_right, expectedRightValue};
       REQUIRE(either.left_or(defaultLeftValue) == defaultLeftValue);
     }
 
     SECTION("returns left value if present (&&)")
     {
-      Either either{frt::create_left, expectedLeftValue};
+      Either either{frt::in_place_left, expectedLeftValue};
       REQUIRE(std::move(either).left_or(defaultLeftValue) == expectedLeftValue);
     }
 
     SECTION("returns default value if right value present (&&)")
     {
-      Either either{frt::create_right, expectedRightValue};
+      Either either{frt::in_place_right, expectedRightValue};
       REQUIRE(std::move(either).left_or(defaultLeftValue) == defaultLeftValue);
     }
   }
@@ -125,25 +125,25 @@ TEST_CASE("Observers (*_or)", "[either]")
 
     SECTION("returns right value if present (const &)")
     {
-      const Either either{frt::create_right, expectedRightValue};
+      const Either either{frt::in_place_right, expectedRightValue};
       REQUIRE(either.right_or(defaultRightValue) == expectedRightValue);
     }
 
     SECTION("returns default value if left value present (const &)")
     {
-      const Either either{frt::create_left, expectedLeftValue};
+      const Either either{frt::in_place_left, expectedLeftValue};
       REQUIRE(either.right_or(defaultRightValue) == defaultRightValue);
     }
 
     SECTION("returns right value if present (&&)")
     {
-      Either either{frt::create_right, expectedRightValue};
+      Either either{frt::in_place_right, expectedRightValue};
       REQUIRE(std::move(either).right_or(defaultRightValue) == expectedRightValue);
     }
 
     SECTION("returns default value if left value present (&&)")
     {
-      Either either{frt::create_left, expectedLeftValue};
+      Either either{frt::in_place_left, expectedLeftValue};
       REQUIRE(std::move(either).right_or(defaultRightValue) == defaultRightValue);
     }
   }

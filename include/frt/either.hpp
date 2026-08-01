@@ -110,12 +110,6 @@ using in_place_right_t = detail::either_::InPlaceRightTag;
 inline constexpr in_place_left_t in_place_left = {};
 inline constexpr in_place_right_t in_place_right = {};
 
-using create_left_t = detail::either_::CreateLeftTag;
-using create_right_t = detail::either_::CreateRightTag;
-
-inline constexpr create_left_t create_left = {};
-inline constexpr create_right_t create_right = {};
-
 /*!
  * \brief This is the monad "Either".
  *
@@ -169,22 +163,6 @@ struct either
     initFrom(std::move(src));
 
     return *this;
-  }
-
-  //! Create from the left alternative.
-  template <detail::either_::ValidConstructableFrom<left_t> U>
-  constexpr either(create_left_t, U &&u) noexcept(std::is_nothrow_constructible_v<left_t, U>)
-  {
-    std::construct_at(std::addressof(left_), std::forward<U>(u));
-    is_left_ = true;
-  }
-
-  //! Create from the right alternative.
-  template <detail::either_::ValidConstructableFrom<right_t> U>
-  constexpr either(create_right_t, U &&u) noexcept(std::is_nothrow_constructible_v<right_t, U>)
-  {
-    std::construct_at(std::addressof(right_), std::forward<U>(u));
-    is_left_ = false;
   }
 
   //! Create from the left alternative in-place (with arguments).
@@ -451,14 +429,6 @@ struct either<void, Right>
     return *this;
   }
 
-  //! Create from the right alternative.
-  template <detail::either_::ValidConstructableFrom<right_t> U>
-  constexpr either(create_right_t, U &&u) noexcept(std::is_nothrow_constructible_v<right_t, U>)
-  {
-    std::construct_at(std::addressof(right_), std::forward<U>(u));
-    is_left_ = false;
-  }
-
   //! Create from the right alternative in-place (with arguments).
   template <class... Args>
     requires(std::constructible_from<right_t, Args...>)
@@ -644,14 +614,6 @@ struct either<Left, void>
     return *this;
   }
 
-  //! Create from the right alternative.
-  template <detail::either_::ValidConstructableFrom<left_t> U>
-  constexpr either(create_left_t, U &&u) noexcept(std::is_nothrow_constructible_v<left_t, U>)
-  {
-    std::construct_at(std::addressof(left_), std::forward<U>(u));
-    is_left_ = false;
-  }
-
   //! Create from the right alternative in-place (with arguments).
   template <class... Args>
     requires(std::constructible_from<left_t, Args...>)
@@ -826,12 +788,6 @@ struct either<void, void>
 
   //! Assign from another `either` by move.
   constexpr either &operator=(either &&src) noexcept = default;
-
-  //! Create from the left alternative.
-  constexpr either(create_left_t) noexcept : is_left_(true) {}
-
-  //! Create from the right alternative.
-  constexpr either(create_right_t) noexcept : is_left_(false) {}
 
   //! Create from the left alternative in-place (with arguments).
   constexpr either(in_place_left_t) noexcept : is_left_(true) {}

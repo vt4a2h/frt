@@ -20,7 +20,7 @@ TEST_CASE("Emplace", "[either]")
 
   SECTION("emplaceLeft on empty (is_left)")
   {
-    Either either{frt::create_left, std::vector<int>{}};
+    Either either{frt::in_place_left, std::vector<int>{}};
     either.emplaceLeft(expectedLeftValue);
 
     REQUIRE(either.is_left());
@@ -28,7 +28,7 @@ TEST_CASE("Emplace", "[either]")
 
   SECTION("emplaceLeft on empty (value)")
   {
-    Either either{frt::create_left, std::vector<int>{}};
+    Either either{frt::in_place_left, std::vector<int>{}};
     either.emplaceLeft(expectedLeftValue);
 
     REQUIRE(either.left() == expectedLeftValue);
@@ -36,7 +36,7 @@ TEST_CASE("Emplace", "[either]")
 
   SECTION("emplaceLeft on left (is_left)")
   {
-    Either either{frt::create_left, std::vector{1, 2, 3}};
+    Either either{frt::in_place_left, std::vector{1, 2, 3}};
     either.emplaceLeft(expectedLeftValue);
 
     REQUIRE(either.is_left());
@@ -44,7 +44,7 @@ TEST_CASE("Emplace", "[either]")
 
   SECTION("emplaceLeft on left (value)")
   {
-    Either either{frt::create_left, std::vector{1, 2, 3}};
+    Either either{frt::in_place_left, std::vector{1, 2, 3}};
     either.emplaceLeft(expectedLeftValue);
 
     REQUIRE(either.left() == expectedLeftValue);
@@ -52,7 +52,7 @@ TEST_CASE("Emplace", "[either]")
 
   SECTION("emplaceLeft on right (is_left)")
   {
-    Either either{frt::create_right, "original"s};
+    Either either{frt::in_place_right, "original"s};
     either.emplaceLeft(expectedLeftValue);
 
     REQUIRE(either.is_left());
@@ -60,7 +60,7 @@ TEST_CASE("Emplace", "[either]")
 
   SECTION("emplaceLeft on right (value)")
   {
-    Either either{frt::create_right, "original"s};
+    Either either{frt::in_place_right, "original"s};
     either.emplaceLeft(expectedLeftValue);
 
     REQUIRE(either.left() == expectedLeftValue);
@@ -68,7 +68,7 @@ TEST_CASE("Emplace", "[either]")
 
   SECTION("emplaceRight on empty (is_right)")
   {
-    Either either{frt::create_left, std::vector<int>{}};
+    Either either{frt::in_place_left, std::vector<int>{}};
     either.emplaceRight(expectedRightValue);
 
     REQUIRE(either.is_right());
@@ -76,7 +76,7 @@ TEST_CASE("Emplace", "[either]")
 
   SECTION("emplaceRight on empty (value)")
   {
-    Either either{frt::create_left, std::vector<int>{}};
+    Either either{frt::in_place_left, std::vector<int>{}};
     either.emplaceRight(expectedRightValue);
 
     REQUIRE(either.right() == expectedRightValue);
@@ -84,7 +84,7 @@ TEST_CASE("Emplace", "[either]")
 
   SECTION("emplaceRight on left (is_right)")
   {
-    Either either{frt::create_left, std::vector<int>{1, 2, 3}};
+    Either either{frt::in_place_left, std::vector<int>{1, 2, 3}};
     either.emplaceRight(expectedRightValue);
 
     REQUIRE(either.is_right());
@@ -92,7 +92,7 @@ TEST_CASE("Emplace", "[either]")
 
   SECTION("emplaceRight on left (value)")
   {
-    Either either{frt::create_left, std::vector<int>{1, 2, 3}};
+    Either either{frt::in_place_left, std::vector<int>{1, 2, 3}};
     either.emplaceRight(expectedRightValue);
 
     REQUIRE(either.right() == expectedRightValue);
@@ -100,7 +100,7 @@ TEST_CASE("Emplace", "[either]")
 
   SECTION("emplaceRight on right (is_right)")
   {
-    Either either{frt::create_right, "original"s};
+    Either either{frt::in_place_right, "original"s};
     either.emplaceRight(expectedRightValue);
 
     REQUIRE(either.is_right());
@@ -108,7 +108,7 @@ TEST_CASE("Emplace", "[either]")
 
   SECTION("emplaceRight on right (value)")
   {
-    Either either{frt::create_right, "original"s};
+    Either either{frt::in_place_right, "original"s};
     either.emplaceRight(expectedRightValue);
 
     REQUIRE(either.right() == expectedRightValue);
@@ -117,7 +117,7 @@ TEST_CASE("Emplace", "[either]")
   SECTION("emplaceLeft (Args...)")
   {
     using EitherFoo = frt::either<TestArgsIl, std::string>;
-    EitherFoo either{frt::create_right, ""s};
+    EitherFoo either{frt::in_place_right, ""s};
     either.emplaceLeft(1, 2.0);
 
     REQUIRE(either.left() == TestArgsIl{1, 2.0});
@@ -126,7 +126,7 @@ TEST_CASE("Emplace", "[either]")
   SECTION("emplaceLeft (initializer_list, Args...)")
   {
     using EitherFoo = frt::either<TestArgsIl, std::string>;
-    EitherFoo either{frt::create_right, ""s};
+    EitherFoo either{frt::in_place_right, ""s};
     either.emplaceLeft({"a"s, "b"s}, 1, 2.0);
 
     REQUIRE(either.left() == TestArgsIl{{"a"s, "b"s}, 1, 2.0});
@@ -135,7 +135,7 @@ TEST_CASE("Emplace", "[either]")
   SECTION("emplaceRight (Args...)")
   {
     using EitherFoo = frt::either<std::string, TestArgsIl>;
-    EitherFoo either{frt::create_left, ""s};
+    EitherFoo either{frt::in_place_left, ""s};
     either.emplaceRight(1, 2.0);
 
     REQUIRE(either.right() == TestArgsIl{1, 2.0});
@@ -144,7 +144,7 @@ TEST_CASE("Emplace", "[either]")
   SECTION("emplaceRight (initializer_list, Args...)")
   {
     using EitherFoo = frt::either<std::string, TestArgsIl>;
-    EitherFoo either{frt::create_left, ""s};
+    EitherFoo either{frt::in_place_left, ""s};
     either.emplaceRight({"a"s, "b"s}, 1, 2.0);
 
     REQUIRE(either.right() == TestArgsIl{{"a"s, "b"s}, 1, 2.0});

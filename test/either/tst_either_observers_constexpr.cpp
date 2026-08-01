@@ -21,7 +21,7 @@ TEST_CASE("Observers (is_*) constexpr", "[either][constexpr]")
     SECTION("returns true for left")
     {
       constexpr auto valid = [] {
-        const Either left{frt::create_left, makeExpectedLeft()};
+        const Either left{frt::in_place_left, makeExpectedLeft()};
         return left.is_left();
       }();
       STATIC_REQUIRE(valid);
@@ -30,7 +30,7 @@ TEST_CASE("Observers (is_*) constexpr", "[either][constexpr]")
     SECTION("returns false for right")
     {
       constexpr auto valid = [] {
-        const Either right{frt::create_right, makeExpectedRight()};
+        const Either right{frt::in_place_right, makeExpectedRight()};
         return !right.is_left();
       }();
       STATIC_REQUIRE(valid);
@@ -42,7 +42,7 @@ TEST_CASE("Observers (is_*) constexpr", "[either][constexpr]")
     SECTION("returns false for left")
     {
       constexpr auto valid = [] {
-        const Either left{frt::create_left, makeExpectedLeft()};
+        const Either left{frt::in_place_left, makeExpectedLeft()};
         return !left.is_right();
       }();
       STATIC_REQUIRE(valid);
@@ -51,7 +51,7 @@ TEST_CASE("Observers (is_*) constexpr", "[either][constexpr]")
     SECTION("returns true for right")
     {
       constexpr auto valid = [] {
-        const Either right{frt::create_right, makeExpectedRight()};
+        const Either right{frt::in_place_right, makeExpectedRight()};
         return right.is_right();
       }();
       STATIC_REQUIRE(valid);
@@ -66,7 +66,7 @@ TEST_CASE("Observers (left/right) constexpr", "[either][constexpr]")
     SECTION("returns reference to left (const)")
     {
       constexpr auto valid = [] {
-        const Either either{frt::create_left, makeExpectedLeft()};
+        const Either either{frt::in_place_left, makeExpectedLeft()};
         return either.left() == makeExpectedLeft();
       }();
       STATIC_REQUIRE(valid);
@@ -75,7 +75,7 @@ TEST_CASE("Observers (left/right) constexpr", "[either][constexpr]")
     SECTION("returns reference to left (non-const)")
     {
       constexpr auto valid = [] {
-        Either either{frt::create_left, makeExpectedLeft()};
+        Either either{frt::in_place_left, makeExpectedLeft()};
         return either.left() == makeExpectedLeft();
       }();
       STATIC_REQUIRE(valid);
@@ -83,7 +83,7 @@ TEST_CASE("Observers (left/right) constexpr", "[either][constexpr]")
       SECTION("allows modification")
       {
         constexpr auto modifiedValid = [] {
-          Either either{frt::create_left, makeExpectedLeft()};
+          Either either{frt::in_place_left, makeExpectedLeft()};
           either.left().clear();
           return either.left().empty();
         }();
@@ -94,7 +94,7 @@ TEST_CASE("Observers (left/right) constexpr", "[either][constexpr]")
     SECTION("returns reference to left (rvalue)")
     {
       constexpr auto valid = [] {
-        Either either{frt::create_left, makeExpectedLeft()};
+        Either either{frt::in_place_left, makeExpectedLeft()};
         return std::move(either).left() == makeExpectedLeft();
       }();
       STATIC_REQUIRE(valid);
@@ -106,7 +106,7 @@ TEST_CASE("Observers (left/right) constexpr", "[either][constexpr]")
     SECTION("returns reference to right (const)")
     {
       constexpr auto valid = [] {
-        const Either either{frt::create_right, makeExpectedRight()};
+        const Either either{frt::in_place_right, makeExpectedRight()};
         return either.right() == makeExpectedRight();
       }();
       STATIC_REQUIRE(valid);
@@ -115,7 +115,7 @@ TEST_CASE("Observers (left/right) constexpr", "[either][constexpr]")
     SECTION("returns reference to right (non-const)")
     {
       constexpr auto valid = [] {
-        Either either{frt::create_right, makeExpectedRight()};
+        Either either{frt::in_place_right, makeExpectedRight()};
         return either.right() == makeExpectedRight();
       }();
       STATIC_REQUIRE(valid);
@@ -123,7 +123,7 @@ TEST_CASE("Observers (left/right) constexpr", "[either][constexpr]")
       SECTION("allows modification")
       {
         constexpr auto modifiedValid = [] {
-          Either either{frt::create_right, makeExpectedRight()};
+          Either either{frt::in_place_right, makeExpectedRight()};
           either.right().clear();
           return either.right().empty();
         }();
@@ -134,7 +134,7 @@ TEST_CASE("Observers (left/right) constexpr", "[either][constexpr]")
     SECTION("returns reference to right (rvalue)")
     {
       constexpr auto valid = [] {
-        Either either{frt::create_right, makeExpectedRight()};
+        Either either{frt::in_place_right, makeExpectedRight()};
         return std::move(either).right() == makeExpectedRight();
       }();
       STATIC_REQUIRE(valid);
@@ -151,7 +151,7 @@ TEST_CASE("Observers (*_or) constexpr", "[either][constexpr]")
     SECTION("returns left value if present (const &)")
     {
       constexpr auto valid = [makeDefaultLeft] {
-        const Either either{frt::create_left, makeExpectedLeft()};
+        const Either either{frt::in_place_left, makeExpectedLeft()};
         return either.left_or(makeDefaultLeft()) == makeExpectedLeft();
       }();
       STATIC_REQUIRE(valid);
@@ -160,7 +160,7 @@ TEST_CASE("Observers (*_or) constexpr", "[either][constexpr]")
     SECTION("returns default value if right value present (const &)")
     {
       constexpr auto valid = [makeDefaultLeft] {
-        const Either either{frt::create_right, makeExpectedRight()};
+        const Either either{frt::in_place_right, makeExpectedRight()};
         return either.left_or(makeDefaultLeft()) == makeDefaultLeft();
       }();
       STATIC_REQUIRE(valid);
@@ -169,7 +169,7 @@ TEST_CASE("Observers (*_or) constexpr", "[either][constexpr]")
     SECTION("returns left value if present (&&)")
     {
       constexpr auto valid = [makeDefaultLeft] {
-        Either either{frt::create_left, makeExpectedLeft()};
+        Either either{frt::in_place_left, makeExpectedLeft()};
         return std::move(either).left_or(makeDefaultLeft()) == makeExpectedLeft();
       }();
       STATIC_REQUIRE(valid);
@@ -178,7 +178,7 @@ TEST_CASE("Observers (*_or) constexpr", "[either][constexpr]")
     SECTION("returns default value if right value present (&&)")
     {
       constexpr auto valid = [makeDefaultLeft] {
-        Either either{frt::create_right, makeExpectedRight()};
+        Either either{frt::in_place_right, makeExpectedRight()};
         return std::move(either).left_or(makeDefaultLeft()) == makeDefaultLeft();
       }();
       STATIC_REQUIRE(valid);
@@ -192,7 +192,7 @@ TEST_CASE("Observers (*_or) constexpr", "[either][constexpr]")
     SECTION("returns right value if present (const &)")
     {
       constexpr auto valid = [makeDefaultRight] {
-        const Either either{frt::create_right, makeExpectedRight()};
+        const Either either{frt::in_place_right, makeExpectedRight()};
         return either.right_or(makeDefaultRight()) == makeExpectedRight();
       }();
       STATIC_REQUIRE(valid);
@@ -201,7 +201,7 @@ TEST_CASE("Observers (*_or) constexpr", "[either][constexpr]")
     SECTION("returns default value if left value present (const &)")
     {
       constexpr auto valid = [makeDefaultRight] {
-        const Either either{frt::create_left, makeExpectedLeft()};
+        const Either either{frt::in_place_left, makeExpectedLeft()};
         return either.right_or(makeDefaultRight()) == makeDefaultRight();
       }();
       STATIC_REQUIRE(valid);
@@ -210,7 +210,7 @@ TEST_CASE("Observers (*_or) constexpr", "[either][constexpr]")
     SECTION("returns right value if present (&&)")
     {
       constexpr auto valid = [makeDefaultRight] {
-        Either either{frt::create_right, makeExpectedRight()};
+        Either either{frt::in_place_right, makeExpectedRight()};
         return std::move(either).right_or(makeDefaultRight()) == makeExpectedRight();
       }();
       STATIC_REQUIRE(valid);
@@ -219,7 +219,7 @@ TEST_CASE("Observers (*_or) constexpr", "[either][constexpr]")
     SECTION("returns default value if left value present (&&)")
     {
       constexpr auto valid = [makeDefaultRight] {
-        Either either{frt::create_left, makeExpectedLeft()};
+        Either either{frt::in_place_left, makeExpectedLeft()};
         return std::move(either).right_or(makeDefaultRight()) == makeDefaultRight();
       }();
       STATIC_REQUIRE(valid);
