@@ -225,6 +225,7 @@ public:
 
   //! Get the left alternative. Pre-condition: it must contain the left alternative.
   template <class Self>
+    requires(detail::either_::IsNotVoid<left_t>)
   [[nodiscard]] constexpr auto &&left(this Self &&self)
   {
     expects(self.is_left());
@@ -233,7 +234,8 @@ public:
 
   //! Returns the left alternative or \p default value if the object contains the right alternative.
   template <class U = left_internal_t>
-    requires(std::is_copy_constructible_v<left_internal_t> && std::is_convertible_v<U, left_internal_t>)
+    requires(std::is_copy_constructible_v<left_internal_t> && std::is_convertible_v<U, left_internal_t> &&
+             detail::either_::IsNotVoid<left_t>)
   [[nodiscard]] constexpr left_internal_t left_or(U &&default_value) const &
   {
     return is_left() ? left_ : static_cast<left_internal_t>(std::forward<U>(default_value));
@@ -241,7 +243,8 @@ public:
 
   //! Returns the left alternative or \p default value if the object contains the right alternative.
   template <class U = left_internal_t>
-    requires(std::is_move_constructible_v<left_internal_t> && std::is_convertible_v<U, left_internal_t>)
+    requires(std::is_move_constructible_v<left_internal_t> && std::is_convertible_v<U, left_internal_t> &&
+             detail::either_::IsNotVoid<left_t>)
   [[nodiscard]] constexpr left_internal_t left_or(U &&default_value) &&
   {
     return is_left() ? std::move(left_) : static_cast<left_internal_t>(std::forward<U>(default_value));
@@ -249,6 +252,7 @@ public:
 
   //! Get the right alternative. Pre-condition: it must contain the right alternative.
   template <class Self>
+    requires(detail::either_::IsNotVoid<right_t>)
   [[nodiscard]] constexpr auto &&right(this Self &&self)
   {
     expects(self.is_right());
@@ -257,7 +261,8 @@ public:
 
   //! Returns the right alternative or \p default value if the object contains the left alternative.
   template <class U = right_internal_t>
-    requires(std::is_copy_constructible_v<right_internal_t> && std::is_convertible_v<U, right_internal_t>)
+    requires(std::is_copy_constructible_v<right_internal_t> && std::is_convertible_v<U, right_internal_t> &&
+             detail::either_::IsNotVoid<right_t>)
   [[nodiscard]] constexpr right_internal_t right_or(U &&default_value) const &
   {
     return is_right() ? right_ : static_cast<right_internal_t>(std::forward<U>(default_value));
@@ -265,7 +270,8 @@ public:
 
   //! Returns the right alternative or \p default value if the object contains the left alternative.
   template <class U = right_internal_t>
-    requires(std::is_move_constructible_v<right_internal_t> && std::is_convertible_v<U, right_internal_t>)
+    requires(std::is_move_constructible_v<right_internal_t> && std::is_convertible_v<U, right_internal_t> &&
+             detail::either_::IsNotVoid<right_t>)
   [[nodiscard]] constexpr right_internal_t right_or(U &&default_value) &&
   {
     return is_right() ? std::move(right_) : static_cast<right_internal_t>(std::forward<U>(default_value));
