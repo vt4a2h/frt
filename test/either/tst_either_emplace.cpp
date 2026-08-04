@@ -150,3 +150,119 @@ TEST_CASE("Emplace", "[either]")
     REQUIRE(either.right() == TestArgsIl{{"a"s, "b"s}, 1, 2.0});
   }
 }
+
+TEST_CASE("Emplace <void, T>", "[either]")
+{
+  using namespace test::helpers;
+  using namespace std::literals;
+  using EitherVoidLeft = frt::either<void, std::string>;
+
+  const std::string expectedRightValue =
+      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor "
+      "incididunt ut labore et dolore magna aliqua";
+
+  SECTION("emplaceLeft on left (is_left)")
+  {
+    EitherVoidLeft either{frt::in_place_left};
+    either.emplaceLeft();
+
+    REQUIRE(either.is_left());
+  }
+
+  SECTION("emplaceLeft on right (is_left)")
+  {
+    EitherVoidLeft either{frt::in_place_right, "original"s};
+    either.emplaceLeft();
+
+    REQUIRE(either.is_left());
+  }
+
+  SECTION("emplaceRight on left (is_right)")
+  {
+    EitherVoidLeft either{frt::in_place_left};
+    either.emplaceRight(expectedRightValue);
+
+    REQUIRE(either.is_right());
+  }
+
+  SECTION("emplaceRight on left (value)")
+  {
+    EitherVoidLeft either{frt::in_place_left};
+    either.emplaceRight(expectedRightValue);
+
+    REQUIRE(either.right() == expectedRightValue);
+  }
+
+  SECTION("emplaceRight on right (is_right)")
+  {
+    EitherVoidLeft either{frt::in_place_right, "original"s};
+    either.emplaceRight(expectedRightValue);
+
+    REQUIRE(either.is_right());
+  }
+
+  SECTION("emplaceRight on right (value)")
+  {
+    EitherVoidLeft either{frt::in_place_right, "original"s};
+    either.emplaceRight(expectedRightValue);
+
+    REQUIRE(either.right() == expectedRightValue);
+  }
+}
+
+TEST_CASE("Emplace <T, void>", "[either]")
+{
+  using namespace test::helpers;
+  using namespace std::literals;
+  using EitherVoidRight = frt::either<std::vector<int>, void>;
+
+  const std::vector expectedLeftValue{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+
+  SECTION("emplaceLeft on left (is_left)")
+  {
+    EitherVoidRight either{frt::in_place_left, std::vector{1, 2, 3}};
+    either.emplaceLeft(expectedLeftValue);
+
+    REQUIRE(either.is_left());
+  }
+
+  SECTION("emplaceLeft on left (value)")
+  {
+    EitherVoidRight either{frt::in_place_left, std::vector{1, 2, 3}};
+    either.emplaceLeft(expectedLeftValue);
+
+    REQUIRE(either.left() == expectedLeftValue);
+  }
+
+  SECTION("emplaceLeft on right (is_left)")
+  {
+    EitherVoidRight either{frt::in_place_right};
+    either.emplaceLeft(expectedLeftValue);
+
+    REQUIRE(either.is_left());
+  }
+
+  SECTION("emplaceLeft on right (value)")
+  {
+    EitherVoidRight either{frt::in_place_right};
+    either.emplaceLeft(expectedLeftValue);
+
+    REQUIRE(either.left() == expectedLeftValue);
+  }
+
+  SECTION("emplaceRight on left (is_right)")
+  {
+    EitherVoidRight either{frt::in_place_left, std::vector{1, 2, 3}};
+    either.emplaceRight();
+
+    REQUIRE(either.is_right());
+  }
+
+  SECTION("emplaceRight on right (is_right)")
+  {
+    EitherVoidRight either{frt::in_place_right};
+    either.emplaceRight();
+
+    REQUIRE(either.is_right());
+  }
+}

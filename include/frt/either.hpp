@@ -335,7 +335,7 @@ public:
 
   //! Emplace left (from args)
   template <class... Args>
-    requires(std::constructible_from<left_internal_t, Args...>)
+    requires(std::constructible_from<left_internal_t, Args...> && detail::either_::IsNotVoid<left_t>)
   constexpr left_internal_t &
   emplaceLeft(Args &&...args) noexcept(std::is_nothrow_constructible_v<left_internal_t, Args...>)
   {
@@ -348,7 +348,8 @@ public:
 
   //! Emplace left (from an initializer list and args)
   template <class U, class... Args>
-    requires(std::constructible_from<left_internal_t, std::initializer_list<U> &, Args...>)
+    requires(std::constructible_from<left_internal_t, std::initializer_list<U> &, Args...> &&
+             detail::either_::IsNotVoid<left_t>)
   constexpr left_internal_t &emplaceLeft(std::initializer_list<U> ilist, Args &&...args) noexcept(
       std::is_nothrow_constructible_v<left_internal_t, std::initializer_list<U> &, Args...>)
   {
@@ -359,9 +360,18 @@ public:
     return left_;
   }
 
+  //! Emplace left (void specialization)
+  constexpr void emplaceLeft() noexcept
+    requires(detail::either_::IsVoid<left_t>)
+  {
+    destroy();
+    std::construct_at(std::addressof(left_));
+    is_left_ = true;
+  }
+
   //! Emplace right (from args)
   template <class... Args>
-    requires(std::constructible_from<right_internal_t, Args...>)
+    requires(std::constructible_from<right_internal_t, Args...> && detail::either_::IsNotVoid<right_t>)
   constexpr right_internal_t &
   emplaceRight(Args &&...args) noexcept(std::is_nothrow_constructible_v<right_internal_t, Args...>)
   {
@@ -374,7 +384,8 @@ public:
 
   //! Emplace right (from an initializer list and args)
   template <class U, class... Args>
-    requires(std::constructible_from<right_internal_t, std::initializer_list<U> &, Args...>)
+    requires(std::constructible_from<right_internal_t, std::initializer_list<U> &, Args...> &&
+             detail::either_::IsNotVoid<right_t>)
   constexpr right_internal_t &emplaceRight(std::initializer_list<U> ilist, Args &&...args) noexcept(
       std::is_nothrow_constructible_v<right_internal_t, std::initializer_list<U> &, Args...>)
   {
@@ -383,6 +394,15 @@ public:
     is_left_ = false;
 
     return right_;
+  }
+
+  //! Emplace right (void specialization)
+  constexpr void emplaceRight() noexcept
+    requires(detail::either_::IsVoid<right_t>)
+  {
+    destroy();
+    std::construct_at(std::addressof(right_));
+    is_left_ = false;
   }
 
 private:

@@ -197,3 +197,149 @@ TEST_CASE("Emplace constexpr", "[either][constexpr]")
     STATIC_REQUIRE(valid);
   }
 }
+
+TEST_CASE("Emplace <void, T> constexpr", "[either][constexpr]")
+{
+  using namespace test::helpers;
+  using namespace std::literals;
+  using EitherVoidLeft = frt::either<void, std::string>;
+
+  SECTION("emplaceLeft on left (is_left)")
+  {
+    constexpr auto valid = [] {
+      EitherVoidLeft either{frt::in_place_left};
+      either.emplaceLeft();
+      return either.is_left();
+    }();
+
+    STATIC_REQUIRE(valid);
+  }
+
+  SECTION("emplaceLeft on right (is_left)")
+  {
+    constexpr auto valid = [] {
+      EitherVoidLeft either{frt::in_place_right, "original"s};
+      either.emplaceLeft();
+      return either.is_left();
+    }();
+
+    STATIC_REQUIRE(valid);
+  }
+
+  SECTION("emplaceRight on left (is_right)")
+  {
+    constexpr auto valid = [] {
+      EitherVoidLeft either{frt::in_place_left};
+      either.emplaceRight(makeExpectedRightValue());
+      return either.is_right();
+    }();
+
+    STATIC_REQUIRE(valid);
+  }
+
+  SECTION("emplaceRight on left (value)")
+  {
+    constexpr auto valid = [] {
+      EitherVoidLeft either{frt::in_place_left};
+      either.emplaceRight(makeExpectedRightValue());
+      return either.right() == makeExpectedRightValue();
+    }();
+
+    STATIC_REQUIRE(valid);
+  }
+
+  SECTION("emplaceRight on right (is_right)")
+  {
+    constexpr auto valid = [] {
+      EitherVoidLeft either{frt::in_place_right, "original"s};
+      either.emplaceRight(makeExpectedRightValue());
+      return either.is_right();
+    }();
+
+    STATIC_REQUIRE(valid);
+  }
+
+  SECTION("emplaceRight on right (value)")
+  {
+    constexpr auto valid = [] {
+      EitherVoidLeft either{frt::in_place_right, "original"s};
+      either.emplaceRight(makeExpectedRightValue());
+      return either.right() == makeExpectedRightValue();
+    }();
+
+    STATIC_REQUIRE(valid);
+  }
+}
+
+TEST_CASE("Emplace <T, void> constexpr", "[either][constexpr]")
+{
+  using namespace test::helpers;
+  using namespace std::literals;
+  using EitherVoidRight = frt::either<std::vector<int>, void>;
+
+  SECTION("emplaceLeft on left (is_left)")
+  {
+    constexpr auto valid = [] {
+      EitherVoidRight either{frt::in_place_left, std::vector{1, 2, 3}};
+      either.emplaceLeft(makeExpectedLeftValue());
+      return either.is_left();
+    }();
+
+    STATIC_REQUIRE(valid);
+  }
+
+  SECTION("emplaceLeft on left (value)")
+  {
+    constexpr auto valid = [] {
+      EitherVoidRight either{frt::in_place_left, std::vector{1, 2, 3}};
+      either.emplaceLeft(makeExpectedLeftValue());
+      return either.left() == makeExpectedLeftValue();
+    }();
+
+    STATIC_REQUIRE(valid);
+  }
+
+  SECTION("emplaceLeft on right (is_left)")
+  {
+    constexpr auto valid = [] {
+      EitherVoidRight either{frt::in_place_right};
+      either.emplaceLeft(makeExpectedLeftValue());
+      return either.is_left();
+    }();
+
+    STATIC_REQUIRE(valid);
+  }
+
+  SECTION("emplaceLeft on right (value)")
+  {
+    constexpr auto valid = [] {
+      EitherVoidRight either{frt::in_place_right};
+      either.emplaceLeft(makeExpectedLeftValue());
+      return either.left() == makeExpectedLeftValue();
+    }();
+
+    STATIC_REQUIRE(valid);
+  }
+
+  SECTION("emplaceRight on left (is_right)")
+  {
+    constexpr auto valid = [] {
+      EitherVoidRight either{frt::in_place_left, std::vector{1, 2, 3}};
+      either.emplaceRight();
+      return either.is_right();
+    }();
+
+    STATIC_REQUIRE(valid);
+  }
+
+  SECTION("emplaceRight on right (is_right)")
+  {
+    constexpr auto valid = [] {
+      EitherVoidRight either{frt::in_place_right};
+      either.emplaceRight();
+      return either.is_right();
+    }();
+
+    STATIC_REQUIRE(valid);
+  }
+}
