@@ -6,5 +6,5 @@ TEMPLATE_TEST_CASE_SIG("Is either", "[either]", ((class T, bool Valid), T, Valid
                        (frt::either<int, double>, true), (const frt::either<int, double>, true),
                        (frt::either<int, double> &, true), (std::vector<int>, false))
 {
-  STATIC_REQUIRE(frt::detail::either_::IsEither<T> == Valid);
+  STATIC_REQUIRE(frt::IsEither<T> == Valid);
 }

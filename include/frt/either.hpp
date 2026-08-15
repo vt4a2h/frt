@@ -10,6 +10,7 @@
  */
 #pragma once
 
+#include <functional>
 #include <type_traits>
 #include <utility>
 
@@ -58,9 +59,6 @@ template <ValidType L, ValidType R>
 inline constexpr bool is_either_<either<L, R>> = true;
 
 template <class T>
-concept IsEither = is_either_<bare_t<T>>;
-
-template <class T>
 concept IsNotEither = !is_either_<bare_t<T>>;
 
 struct InPlaceLeftTag
@@ -79,6 +77,15 @@ struct InPlaceRightTag
     constexpr Secret() noexcept = default;
   };
   constexpr explicit InPlaceRightTag(Secret) noexcept {}
+};
+
+struct UnwrappedTag
+{
+  struct Secret
+  {
+    constexpr Secret() noexcept = default;
+  };
+  constexpr explicit UnwrappedTag(Secret) noexcept {}
 };
 
 template <class T>
@@ -107,13 +114,101 @@ inline constexpr std::size_t void_hash{};
 template <class T>
 using SelectedType = std::conditional_t<IsVoid<T>, Void, bare_t<T>>;
 
+template <class T>
+inline constexpr bool is_unwrapped = std::same_as<std::remove_cvref_t<T>, UnwrappedTag>;
+
+template <class... Args>
+constexpr inline std::size_t unwrapped_count = (std::size_t{} + ... + static_cast<std::size_t>(is_unwrapped<Args>));
+
+template <class... Args>
+constexpr inline bool single_arg_is_unwrapped = sizeof...(Args) == 1 && unwrapped_count<Args...> == 1;
+
+template <class... Args>
+constexpr inline bool contains_zero_or_one_unwrapped = unwrapped_count<Args...> <= 1;
+
+template <class... Args>
+inline constexpr bool contains_unwrapped = (... || is_unwrapped<Args>);
+
+template <class F, class T, class... Args>
+constexpr inline bool is_invocable_with_extra_args = std::is_invocable_v<F, T, Args...>;
+
+template <class F, class T, class... Args>
+  requires(contains_unwrapped<Args...>)
+constexpr inline bool is_invocable_with_extra_args<F, T, Args...> =
+    std::is_invocable_v<F, std::conditional_t<is_unwrapped<Args>, T, Args>...>;
+
+template <class F, class T, class... Args>
+constexpr inline bool is_nothrow_invocable_with_extra_args = std::is_nothrow_invocable_v<F, T, Args...>;
+
+template <class F, class T, class... Args>
+  requires(contains_unwrapped<Args...>)
+constexpr inline bool is_nothrow_invocable_with_extra_args<F, T, Args...> =
+    std::is_nothrow_invocable_v<F, std::conditional_t<is_unwrapped<Args>, T, Args>...>;
+
+template <class F, class T, class... Args>
+struct invoke_result
+{
+  using type = std::invoke_result_t<F, T, Args...>;
+};
+
+template <class F, class T, class... Args>
+  requires(contains_unwrapped<Args...>)
+struct invoke_result<F, T, Args...>
+{
+  static_assert(is_invocable_with_extra_args<F, T, Args...>);
+
+  using type = std::invoke_result_t<F, std::conditional_t<is_unwrapped<Args>, T, Args>...>;
+};
+
+template <class F, class T, class... Args>
+using invoke_result_t = invoke_result<F, T, Args...>::type;
+
+template <class F, class T, class... Args>
+[[nodiscard]] constexpr auto
+invoke_with_extra_args(F &&f, T &&t, Args &&...args) noexcept(is_nothrow_invocable_with_extra_args<F, T, Args...>)
+{
+  return std::invoke(f, std::forward<T>(t), std::forward<Args>(args)...);
+}
+
+template <class T, class Arg>
+constexpr auto &&forward(T &&t, Arg &&arg) noexcept
+{
+  // We can have only 0 or 1 unwrapped argument. Hence, it will be forwarded only once
+  if constexpr (is_unwrapped<Arg>) {
+    return std::forward<T>(t);
+  } else {
+    return std::forward<Arg>(arg);
+  }
+}
+
+template <class F, class T, class... Args>
+  requires(contains_unwrapped<Args...>)
+[[nodiscard]] constexpr auto
+invoke_with_extra_args(F &&f, T &&t, Args &&...args) noexcept(is_nothrow_invocable_with_extra_args<F, T, Args...>)
+{
+  return std::invoke(f, forward(std::forward<T>(t), std::forward<Args>(args))...);
+}
+
+template <class E1, class E2>
+constexpr inline bool same_right_alternative =
+    std::same_as<typename std::remove_cvref_t<E1>::right_t, typename std::remove_cvref_t<E2>::right_t>;
+
+template <class E1, class E2>
+constexpr inline bool same_left_alternative =
+    std::same_as<typename std::remove_cvref_t<E1>::left_t, typename std::remove_cvref_t<E2>::left_t>;
+
 } // namespace detail::either_
 
 using in_place_left_t = detail::either_::InPlaceLeftTag;
 using in_place_right_t = detail::either_::InPlaceRightTag;
+using unwrapped_t = detail::either_::UnwrappedTag;
 
 inline constexpr in_place_left_t in_place_left{in_place_left_t::Secret{}};
 inline constexpr in_place_right_t in_place_right{in_place_right_t::Secret{}};
+inline constexpr unwrapped_t unwrapped{unwrapped_t::Secret{}};
+
+template <class T>
+concept IsEither = detail::either_::is_either_<detail::either_::bare_t<T>>;
 
 /*!
  * \brief This is the monad "Either".
@@ -403,6 +498,118 @@ public:
     destroy();
     std::construct_at(std::addressof(right_));
     is_left_ = false;
+  }
+
+  /*!
+   * \brief Applies \p f to the left alternative and returns the result.
+   *
+   * Has no effect if either contains the right alternative.
+   *
+   * This is possible to supply a pack of arguments to the function \p f. All arguments are not stored and simple
+   * forwarded to the function \p f keeping the same value category and constness.
+   *
+   * \code{.cpp}
+   * auto f(left, a, b, c) -> either;
+   *
+   * // Equivalent to f(left, a, b, c)
+   * eitherObj.and_then_left(f, a, b, c);
+   *
+   * // Equivalent to f(a, left, b, c)
+   * either.and_then_left(f, a, frt::unwrapped, b, c);
+   * \endcode
+   *
+   * The \p frt::unwrapped will be simply replaced with the left alternative. The pack must contain zero or one
+   * frt::unwrapped object. If it's a single-argument pack, then this argument must not be \p frt::unwrapped.
+   *
+   * The function \f must be invocable with the final combination of arguments and return \c frt::either<L, R>. The \p L
+   * type can be changed, but the \p R type must remain the same.
+   *
+   * \param f is a function to apply.
+   *
+   * \param args is an optional pack of arguments to supply to the function \p f.
+   */
+  template <class Self, class F, class... Args>
+    requires(detail::either_::IsNotVoid<left_t>)
+  [[nodiscard]] constexpr auto and_then_left(this Self &&self, F &&f, Args &&...args) noexcept(
+      detail::either_::is_nothrow_invocable_with_extra_args<
+          F, decltype(std::forward_like<Self>(std::declval<left_t>())), Args...>)
+  {
+    using fwd_t = decltype(std::forward_like<Self>(std::declval<left_t>()));
+
+    static_assert(!detail::either_::single_arg_is_unwrapped<Args...>,
+                  "The trailing argument pack of a single argument must not contain std::unwrapped.");
+    static_assert(detail::either_::contains_zero_or_one_unwrapped<Args...>,
+                  "The trailing argument pack must contain zero or one std::unwrapped.");
+    static_assert(detail::either_::is_invocable_with_extra_args<F, fwd_t, Args...>,
+                  "The function must be invocable with a value type and all extra arguments. "
+                  "Consider using frt::unwrapped if an argument of a value type shouldn't go first.");
+
+    using ret_t = detail::either_::invoke_result_t<F, fwd_t, Args...>;
+
+    static_assert(IsEither<ret_t>, "The function must return an either");
+    static_assert(detail::either_::same_right_alternative<either, ret_t>,
+                  "The function must return an either with the same right alternative");
+
+    if (self.is_left()) [[likely]] {
+      return detail::either_::invoke_with_extra_args(std::forward<F>(f), std::forward<Self>(self).left(),
+                                                     std::forward<Args>(args)...);
+    } else {
+      if constexpr (detail::either_::IsVoid<right_t>) {
+        return ret_t{in_place_right};
+      } else {
+        return ret_t{in_place_right, std::forward<Self>(self).right()};
+      }
+    }
+  }
+
+  /*!
+   * \brief The specialization of \c and_then_left() when the left alternative is \p void.
+   *
+   * Has no effect if either contains the right alternative.
+   * Using \p frt::unwrapped as an argument to this function is prohibited.
+   *
+   * This is possible to supply a pack of arguments to the function \p f. All arguments are not stored and simple
+   * forwarded to the function \p f keeping the same value category and constness.
+   *
+   * \code{.cpp}
+   * auto f(a, b, c) -> either;
+   *
+   * // Equivalent to f(a, b, c)
+   * eitherObj.and_then_left(f, a, b, c);
+   *
+   * \endcode
+   *
+   * The function \p f must be invocable with all passed arguments and return \c frt::either<L, R>. The \p L type can
+   * be changed, but the \p R type must remain the same.
+   *
+   * \param f is a function to apply.
+   *
+   * \param args is an optional pack of arguments to supply to the function \p f.
+   */
+  template <class Self, class F, class... Args>
+    requires(detail::either_::IsVoid<left_t>)
+  [[nodiscard]] constexpr auto and_then_left(this Self &&self, F &&f,
+                                             Args &&...args) noexcept(std::is_nothrow_invocable_v<F, Args...>)
+  {
+    static_assert(!detail::either_::contains_unwrapped<Args...>,
+                  "The trailing argument pack must not contain the frt::unwrapped if value_type is void");
+    static_assert(std::is_invocable_v<F, Args...>, "The function must be invocable with all extra arguments.");
+
+    using ret_t = std::invoke_result_t<F, Args...>;
+
+    static_assert(IsEither<ret_t>, "The function must return an either");
+    static_assert(detail::either_::same_right_alternative<either, ret_t>,
+                  "The function must return an either with the same right alternative");
+
+    if (self.is_left()) [[likely]] {
+      return std::invoke(std::forward<F>(f), std::forward<Args>(args)...);
+    } else {
+      if constexpr (detail::either_::IsVoid<right_t>) {
+        return ret_t{in_place_right};
+      } else {
+        return ret_t{in_place_right, std::forward<Self>(self).right()};
+      }
+    }
   }
 
 private:
