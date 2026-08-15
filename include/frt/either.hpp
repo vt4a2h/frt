@@ -612,6 +612,118 @@ public:
     }
   }
 
+  /*!
+   * \brief Applies \p f to the right alternative and returns the result.
+   *
+   * Has no effect if either contains the left alternative.
+   *
+   * This is possible to supply a pack of arguments to the function \p f. All arguments are not stored and simple
+   * forwarded to the function \p f keeping the same value category and constness.
+   *
+   * \code{.cpp}
+   * auto f(right, a, b, c) -> either;
+   *
+   * // Equivalent to f(right, a, b, c)
+   * eitherObj.and_then_right(f, a, b, c);
+   *
+   * // Equivalent to f(a, right, b, c)
+   * either.and_then_right(f, a, frt::unwrapped, b, c);
+   * \endcode
+   *
+   * The \p frt::unwrapped will be simply replaced with the right alternative. The pack must contain zero or one
+   * frt::unwrapped object. If it's a single-argument pack, then this argument must not be \p frt::unwrapped.
+   *
+   * The function \p f must be invocable with the final combination of arguments and return \c frt::either<L, R>. The \p
+   * R type can be changed, but the \p L type must remain the same.
+   *
+   * \param f is a function to apply.
+   *
+   * \param args is an optional pack of arguments to supply to the function \p f.
+   */
+  template <class Self, class F, class... Args>
+    requires(detail::either_::IsNotVoid<right_t>)
+  [[nodiscard]] constexpr auto and_then_right(this Self &&self, F &&f, Args &&...args) noexcept(
+      detail::either_::is_nothrow_invocable_with_extra_args<
+          F, decltype(std::forward_like<Self>(std::declval<right_t>())), Args...>)
+  {
+    using fwd_t = decltype(std::forward_like<Self>(std::declval<right_t>()));
+
+    static_assert(!detail::either_::single_arg_is_unwrapped<Args...>,
+                  "The trailing argument pack of a single argument must not contain std::unwrapped.");
+    static_assert(detail::either_::contains_zero_or_one_unwrapped<Args...>,
+                  "The trailing argument pack must contain zero or one std::unwrapped.");
+    static_assert(detail::either_::is_invocable_with_extra_args<F, fwd_t, Args...>,
+                  "The function must be invocable with a value type and all extra arguments. "
+                  "Consider using frt::unwrapped if an argument of a value type shouldn't go first.");
+
+    using ret_t = detail::either_::invoke_result_t<F, fwd_t, Args...>;
+
+    static_assert(IsEither<ret_t>, "The function must return an either");
+    static_assert(detail::either_::same_left_alternative<either, ret_t>,
+                  "The function must return an either with the same left alternative");
+
+    if (self.is_right()) [[likely]] {
+      return detail::either_::invoke_with_extra_args(std::forward<F>(f), std::forward<Self>(self).right(),
+                                                     std::forward<Args>(args)...);
+    } else {
+      if constexpr (detail::either_::IsVoid<left_t>) {
+        return ret_t{in_place_left};
+      } else {
+        return ret_t{in_place_left, std::forward<Self>(self).left()};
+      }
+    }
+  }
+
+  /*!
+   * \brief The specialization of \c and_then_right() when the right alternative is \p void.
+   *
+   * Has no effect if either contains the left alternative.
+   * Using \p frt::unwrapped as an argument to this function is prohibited.
+   *
+   * This is possible to supply a pack of arguments to the function \p f. All arguments are not stored and simple
+   * forwarded to the function \p f keeping the same value category and constness.
+   *
+   * \code{.cpp}
+   * auto f(a, b, c) -> either;
+   *
+   * // Equivalent to f(a, b, c)
+   * eitherObj.and_then_right(f, a, b, c);
+   *
+   * \endcode
+   *
+   * The function \p f must be invocable with all passed arguments and return \c frt::either<L, R>. The \p R type can
+   * be changed, but the \p L type must remain the same.
+   *
+   * \param f is a function to apply.
+   *
+   * \param args is an optional pack of arguments to supply to the function \p f.
+   */
+  template <class Self, class F, class... Args>
+    requires(detail::either_::IsVoid<right_t>)
+  [[nodiscard]] constexpr auto and_then_right(this Self &&self, F &&f,
+                                              Args &&...args) noexcept(std::is_nothrow_invocable_v<F, Args...>)
+  {
+    static_assert(!detail::either_::contains_unwrapped<Args...>,
+                  "The trailing argument pack must not contain the frt::unwrapped if value_type is void");
+    static_assert(std::is_invocable_v<F, Args...>, "The function must be invocable with all extra arguments.");
+
+    using ret_t = std::invoke_result_t<F, Args...>;
+
+    static_assert(IsEither<ret_t>, "The function must return an either");
+    static_assert(detail::either_::same_left_alternative<either, ret_t>,
+                  "The function must return an either with the same left alternative");
+
+    if (self.is_right()) [[likely]] {
+      return std::invoke(std::forward<F>(f), std::forward<Args>(args)...);
+    } else {
+      if constexpr (detail::either_::IsVoid<left_t>) {
+        return ret_t{in_place_left};
+      } else {
+        return ret_t{in_place_left, std::forward<Self>(self).left()};
+      }
+    }
+  }
+
 private:
   constexpr void destroy()
   {

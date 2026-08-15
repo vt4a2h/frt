@@ -311,3 +311,18 @@ TEMPLATE_TEST_CASE_SIG("same_right_alternative", "[either]", ((class E1, class E
 {
   STATIC_REQUIRE(frt::detail::either_::same_right_alternative<E1, E2> == Valid);
 }
+
+TEMPLATE_TEST_CASE_SIG("same_left_alternative", "[either]", ((class E1, class E2, bool Valid), E1, E2, Valid),
+                       (frt::either<int, double>, frt::either<int, double>, true),
+                       (frt::either<int, double>, frt::either<int, std::string>, true),
+                       (frt::either<int, double>, const frt::either<int, std::vector<double>> &, true),
+                       (frt::either<int, double> &, frt::either<int, void> &&, true),
+                       (frt::either<void, int>, frt::either<void, std::string>, true),
+                       (frt::either<void, void>, frt::either<void, int>, true),
+                       (frt::either<int, double>, frt::either<double, double>, false),
+                       (frt::either<int, double>, frt::either<std::string, double>, false),
+                       (frt::either<void, int>, frt::either<int, int>, false),
+                       (frt::either<int, double>, frt::either<void, double>, false))
+{
+  STATIC_REQUIRE(frt::detail::either_::same_left_alternative<E1, E2> == Valid);
+}
