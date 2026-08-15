@@ -2,13 +2,13 @@
 
 ## Project overview
 
-- Read README.md at the root of the repository.
+- Read `README.md` at the root of the repository.
 
 ## Building
 
 - Use cmake for building.
-- Available presets are located at the root of the repository in the CMakePresets.json file.
-- Prefer using `host-clang` preset.
+- Available presets are located at the root of the repository in the `CMakePresets.json` file.
+- Use `host-clang` preset. Don't use other presets.
 - Prefer building all targets (`--target all`).
 - Add `-- -v` flag for verbose output.
 
@@ -41,7 +41,7 @@
   The number of sections must be the same. Ignore this rule if this is technically impossible due to the language
   limitations or similar.
 - More complicated types like `std::vector` or `std::string` must be used for constexpr tests as well.
-- Common functions and variables used by more than one `TEST_CASE` in scope of the same file can be placed above the
+- Common functions and variables used by more than one `TEST_CASE` in the scope of the same file can be placed above the
   first `TEST_CASE`.
 - The default values, expected values, and similar should be placed as close as possible to the place when they are
   used.
