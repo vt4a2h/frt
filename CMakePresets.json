@@ -18,8 +18,18 @@
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
         "CMAKE_CXX_SCAN_FOR_MODULES": "OFF",
         "FRT_ENABLE_TESTING": "ON",
+        "FRT_ENABLE_BENCHMARKING": "OFF",
         "FRT_DEV_MODE": "ON",
         "FRT_DEPENDENCIES_FROM_CPM": "OFF"
+      }
+    },
+    {
+      "name": "base-ci",
+      "hidden": true,
+      "inherits": "base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "FRT_ENABLE_BENCHMARKING": "ON"
       }
     },
     {
@@ -50,7 +60,7 @@
       "name": "linux-gcc-16",
       "displayName": "Linux GCC 16",
       "description": "Configuring for Linux with GCC 16",
-      "inherits": "base",
+      "inherits": "base-ci",
       "cacheVariables": {
         "CMAKE_C_COMPILER": "gcc-16",
         "CMAKE_CXX_COMPILER": "g++-16"
@@ -69,7 +79,7 @@
       "name": "linux-clang-22",
       "displayName": "Linux Clang 22",
       "description": "Configuring for Linux with Clang 22",
-      "inherits": "base",
+      "inherits": "base-ci",
       "cacheVariables": {
         "CMAKE_C_COMPILER": "/usr/bin/clang-22",
         "CMAKE_CXX_COMPILER": "/usr/bin/clang++-22",
@@ -92,7 +102,7 @@
       "name": "mac-clang",
       "displayName": "Mac Clang",
       "description": "Configuring for macOS with Clang",
-      "inherits": "base",
+      "inherits": "base-ci",
       "cacheVariables": {
         "CMAKE_C_COMPILER": "clang",
         "CMAKE_CXX_COMPILER": "clang++"
@@ -111,7 +121,7 @@
       "name": "windows-clang",
       "displayName": "Windows Clang",
       "description": "Configuring for Windows with Clang (clang-cl)",
-      "inherits": "base",
+      "inherits": "base-ci",
       "cacheVariables": {
         "CMAKE_C_COMPILER": "clang-cl",
         "CMAKE_CXX_COMPILER": "clang-cl"
@@ -126,7 +136,7 @@
       "name": "windows-msvc",
       "displayName": "Windows MSVC",
       "description": "Configuring for Windows with MSVC",
-      "inherits": "base",
+      "inherits": "base-ci",
       "cacheVariables": {
         "CMAKE_CXX_STANDARD": "23",
         "CMAKE_CXX_FLAGS": "/std:c++latest /EHsc"
