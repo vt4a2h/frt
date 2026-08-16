@@ -64,7 +64,7 @@ constexpr Expected addOneBenchExpected() noexcept
 
 } // namespace
 
-TEST_CASE("and_then_left", "[either]")
+TEST_CASE("Benchmark and_then_left", "[either]")
 {
   BENCHMARK("either::and_then_left simple chain") { return addOneBenchEither(); };
   BENCHMARK("expected::and_then simple chain") { return addOneBenchExpected(); };
