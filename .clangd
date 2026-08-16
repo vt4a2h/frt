@@ -2,6 +2,8 @@ If:
   PathMatch: [
     # For test files only
     .*tst_.*\.cpp,
+    # ...and benchamrks
+    .*bench_.*\.cpp,
   ]
 CompileFlags:
   Add: [
