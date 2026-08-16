@@ -223,7 +223,7 @@ concept IsEither = detail::either_::is_either_<detail::either_::bare_t<T>>;
  * contract.
  */
 template <detail::either_::ValidType Left, detail::either_::ValidType Right>
-struct either
+struct [[nodiscard]] either
 {
 private:
   using left_internal_t = detail::either_::SelectedType<Left>;
