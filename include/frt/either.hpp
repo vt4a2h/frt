@@ -521,8 +521,8 @@ public:
    * The \p frt::unwrapped will be simply replaced with the left alternative. The pack must contain zero or one
    * frt::unwrapped object. If it's a single-argument pack, then this argument must not be \p frt::unwrapped.
    *
-   * The function \f must be invocable with the final combination of arguments and return \c frt::either<L, R>. The \p L
-   * type can be changed, but the \p R type must remain the same.
+   * The function \p f must be invocable with the final combination of arguments and return \c frt::either<L, R>. The \p
+   * L type can be changed, but the \p R type must remain the same.
    *
    * \param f is a function to apply.
    *
@@ -541,8 +541,8 @@ public:
     static_assert(detail::either_::contains_zero_or_one_unwrapped<Args...>,
                   "The trailing argument pack must contain zero or one std::unwrapped.");
     static_assert(detail::either_::is_invocable_with_extra_args<F, fwd_t, Args...>,
-                  "The function must be invocable with a value type and all extra arguments. "
-                  "Consider using frt::unwrapped if an argument of a value type shouldn't go first.");
+                  "The function must be invocable with a value of left_t and all extra arguments. "
+                  "Consider using frt::unwrapped if an argument of left_t shouldn't go first.");
 
     using ret_t = detail::either_::invoke_result_t<F, fwd_t, Args...>;
 
@@ -592,7 +592,7 @@ public:
                                              Args &&...args) noexcept(std::is_nothrow_invocable_v<F, Args...>)
   {
     static_assert(!detail::either_::contains_unwrapped<Args...>,
-                  "The trailing argument pack must not contain the frt::unwrapped if value_type is void");
+                  "The trailing argument pack must not contain the frt::unwrapped if left_t is void");
     static_assert(std::is_invocable_v<F, Args...>, "The function must be invocable with all extra arguments.");
 
     using ret_t = std::invoke_result_t<F, Args...>;
@@ -653,8 +653,8 @@ public:
     static_assert(detail::either_::contains_zero_or_one_unwrapped<Args...>,
                   "The trailing argument pack must contain zero or one std::unwrapped.");
     static_assert(detail::either_::is_invocable_with_extra_args<F, fwd_t, Args...>,
-                  "The function must be invocable with a value type and all extra arguments. "
-                  "Consider using frt::unwrapped if an argument of a value type shouldn't go first.");
+                  "The function must be invocable with a value of right_t and all extra arguments. "
+                  "Consider using frt::unwrapped if an argument of right_t shouldn't go first.");
 
     using ret_t = detail::either_::invoke_result_t<F, fwd_t, Args...>;
 
@@ -704,7 +704,7 @@ public:
                                               Args &&...args) noexcept(std::is_nothrow_invocable_v<F, Args...>)
   {
     static_assert(!detail::either_::contains_unwrapped<Args...>,
-                  "The trailing argument pack must not contain the frt::unwrapped if value_type is void");
+                  "The trailing argument pack must not contain the frt::unwrapped if right_t is void");
     static_assert(std::is_invocable_v<F, Args...>, "The function must be invocable with all extra arguments.");
 
     using ret_t = std::invoke_result_t<F, Args...>;
