@@ -550,7 +550,7 @@ public:
     static_assert(detail::either_::same_right_alternative<either, ret_t>,
                   "The function must return an either with the same right alternative");
 
-    if (self.is_left()) [[likely]] {
+    if (self.is_left()) {
       return detail::either_::invoke_with_extra_args(std::forward<F>(f), std::forward<Self>(self).left(),
                                                      std::forward<Args>(args)...);
     } else {
@@ -601,7 +601,7 @@ public:
     static_assert(detail::either_::same_right_alternative<either, ret_t>,
                   "The function must return an either with the same right alternative");
 
-    if (self.is_left()) [[likely]] {
+    if (self.is_left()) {
       return std::invoke(std::forward<F>(f), std::forward<Args>(args)...);
     } else {
       if constexpr (detail::either_::IsVoid<right_t>) {
@@ -662,7 +662,7 @@ public:
     static_assert(detail::either_::same_left_alternative<either, ret_t>,
                   "The function must return an either with the same left alternative");
 
-    if (self.is_right()) [[likely]] {
+    if (self.is_right()) {
       return detail::either_::invoke_with_extra_args(std::forward<F>(f), std::forward<Self>(self).right(),
                                                      std::forward<Args>(args)...);
     } else {
@@ -713,7 +713,7 @@ public:
     static_assert(detail::either_::same_left_alternative<either, ret_t>,
                   "The function must return an either with the same left alternative");
 
-    if (self.is_right()) [[likely]] {
+    if (self.is_right()) {
       return std::invoke(std::forward<F>(f), std::forward<Args>(args)...);
     } else {
       if constexpr (detail::either_::IsVoid<left_t>) {
