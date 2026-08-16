@@ -554,11 +554,7 @@ public:
       return detail::either_::invoke_with_extra_args(std::forward<F>(f), std::forward<Self>(self).left(),
                                                      std::forward<Args>(args)...);
     } else {
-      if constexpr (detail::either_::IsVoid<right_t>) {
-        return ret_t{in_place_right};
-      } else {
-        return ret_t{in_place_right, std::forward<Self>(self).right()};
-      }
+      return std::forward<Self>(self).template forwardRight<ret_t>();
     }
   }
 
@@ -604,11 +600,7 @@ public:
     if (self.is_left()) {
       return std::invoke(std::forward<F>(f), std::forward<Args>(args)...);
     } else {
-      if constexpr (detail::either_::IsVoid<right_t>) {
-        return ret_t{in_place_right};
-      } else {
-        return ret_t{in_place_right, std::forward<Self>(self).right()};
-      }
+      return std::forward<Self>(self).template forwardRight<ret_t>();
     }
   }
 
@@ -666,11 +658,7 @@ public:
       return detail::either_::invoke_with_extra_args(std::forward<F>(f), std::forward<Self>(self).right(),
                                                      std::forward<Args>(args)...);
     } else {
-      if constexpr (detail::either_::IsVoid<left_t>) {
-        return ret_t{in_place_left};
-      } else {
-        return ret_t{in_place_left, std::forward<Self>(self).left()};
-      }
+      return std::forward<Self>(self).template forwardLeft<ret_t>();
     }
   }
 
@@ -716,11 +704,7 @@ public:
     if (self.is_right()) {
       return std::invoke(std::forward<F>(f), std::forward<Args>(args)...);
     } else {
-      if constexpr (detail::either_::IsVoid<left_t>) {
-        return ret_t{in_place_left};
-      } else {
-        return ret_t{in_place_left, std::forward<Self>(self).left()};
-      }
+      return std::forward<Self>(self).template forwardLeft<ret_t>();
     }
   }
 
@@ -785,11 +769,7 @@ public:
                                                              std::forward<Args>(args)...)};
       }
     } else {
-      if constexpr (detail::either_::IsVoid<right_t>) {
-        return ret_t{in_place_right};
-      } else {
-        return ret_t{in_place_right, std::forward<Self>(self).right()};
-      }
+      return std::forward<Self>(self).template forwardRight<ret_t>();
     }
   }
 
@@ -839,11 +819,7 @@ public:
         return ret_t{in_place_left, std::invoke(std::forward<F>(f), std::forward<Args>(args)...)};
       }
     } else {
-      if constexpr (detail::either_::IsVoid<right_t>) {
-        return ret_t{in_place_right};
-      } else {
-        return ret_t{in_place_right, std::forward<Self>(self).right()};
-      }
+      return std::forward<Self>(self).template forwardRight<ret_t>();
     }
   }
 
@@ -908,11 +884,7 @@ public:
                                                              std::forward<Args>(args)...)};
       }
     } else {
-      if constexpr (detail::either_::IsVoid<left_t>) {
-        return ret_t{in_place_left};
-      } else {
-        return ret_t{in_place_left, std::forward<Self>(self).left()};
-      }
+      return std::forward<Self>(self).template forwardLeft<ret_t>();
     }
   }
 
@@ -962,11 +934,7 @@ public:
         return ret_t{in_place_right, std::invoke(std::forward<F>(f), std::forward<Args>(args)...)};
       }
     } else {
-      if constexpr (detail::either_::IsVoid<left_t>) {
-        return ret_t{in_place_left};
-      } else {
-        return ret_t{in_place_left, std::forward<Self>(self).left()};
-      }
+      return std::forward<Self>(self).template forwardLeft<ret_t>();
     }
   }
 
@@ -990,6 +958,26 @@ private:
     }
 
     is_left_ = data.is_left_;
+  }
+
+  template <class Ret, class Self>
+  constexpr auto forwardLeft(this Self &&self) noexcept
+  {
+    if constexpr (detail::either_::IsVoid<left_t>) {
+      return Ret{in_place_left};
+    } else {
+      return Ret{in_place_left, std::forward<Self>(self).left()};
+    }
+  }
+
+  template <class Ret, class Self>
+  constexpr auto forwardRight(this Self &&self) noexcept
+  {
+    if constexpr (detail::either_::IsVoid<right_t>) {
+      return Ret{in_place_right};
+    } else {
+      return Ret{in_place_right, std::forward<Self>(self).right()};
+    }
   }
 
   union
