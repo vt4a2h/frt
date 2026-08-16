@@ -724,6 +724,129 @@ public:
     }
   }
 
+  /*!
+   * \brief Applies \p f to the left alternative and returns the result.
+   *
+   * Has no effect if either contains the right alternative.
+   *
+   * This is possible to supply a pack of arguments to the function \p f. All arguments are not stored and simple
+   * forwarded to the function \p f keeping the same value category and constness.
+   *
+   * \code{.cpp}
+   * auto f(left, a, b, c) -> T;
+   *
+   * // Equivalent to frt::either<T, R>{frt::in_place_left, f(left, a, b, c)}
+   * // Note that the type for the left alternative may differ from the original one
+   * frt::either<L, R> eitherObj = ...;
+   * frt::either<T, R> result = eitherObj.transform_left(f, a, b, c);
+   *
+   * // Equivalent to f(a, left, b, c)
+   * eitherObj.transform_left(f, a, frt::unwrapped, b, c);
+   * \endcode
+   *
+   * The \p frt::unwrapped will be simply replaced with the left alternative. The pack must contain zero or one
+   * frt::unwrapped object. If it's a single-argument pack, then this argument must not be \p frt::unwrapped.
+   *
+   * The function \p f must be invocable with the final combination of arguments. The return value will automatically be
+   * wrapped into \c frt::either<T, R>, where T is the return type of \p f. The type \c T may differ from the original
+   * \c L. If the function \p f returns nothing, then the type for the left alternative is \c void.
+   *
+   * \param f is a function to apply.
+   *
+   * \param args is an optional pack of arguments to supply to the function \p f.
+   */
+  template <class Self, class F, class... Args>
+    requires(detail::either_::IsNotVoid<left_t>)
+  [[nodiscard]] constexpr auto transform_left(this Self &&self, F &&f, Args &&...args) noexcept(
+      detail::either_::is_nothrow_invocable_with_extra_args<
+          F, decltype(std::forward_like<Self>(std::declval<left_t>())), Args...>)
+  {
+    using fwd_t = decltype(std::forward_like<Self>(std::declval<left_t>()));
+
+    static_assert(!detail::either_::single_arg_is_unwrapped<Args...>,
+                  "The trailing argument pack of a single argument must not contain std::unwrapped.");
+    static_assert(detail::either_::contains_zero_or_one_unwrapped<Args...>,
+                  "The trailing argument pack must contain zero or one std::unwrapped.");
+    static_assert(detail::either_::is_invocable_with_extra_args<F, fwd_t, Args...>,
+                  "The function must be invocable with a value of left_t and all extra arguments. "
+                  "Consider using frt::unwrapped if an argument of left_t shouldn't go first.");
+
+    using func_ret_t = detail::either_::invoke_result_t<F, fwd_t, Args...>;
+    using ret_t = either<std::remove_cvref_t<func_ret_t>, right_t>;
+
+    if (self.is_left()) {
+      if constexpr (detail::either_::IsVoid<func_ret_t>) {
+        detail::either_::invoke_with_extra_args(std::forward<F>(f), std::forward<Self>(self).left(),
+                                                std::forward<Args>(args)...);
+        return ret_t{in_place_left};
+      } else {
+        return ret_t{in_place_left,
+                     detail::either_::invoke_with_extra_args(std::forward<F>(f), std::forward<Self>(self).left(),
+                                                             std::forward<Args>(args)...)};
+      }
+    } else {
+      if constexpr (detail::either_::IsVoid<right_t>) {
+        return ret_t{in_place_right};
+      } else {
+        return ret_t{in_place_right, std::forward<Self>(self).right()};
+      }
+    }
+  }
+
+  /*!
+   * \brief The specialization of \c transform_left() when the left alternative is \p void.
+   *
+   * Has no effect if either contains the right alternative.
+   * Using \p frt::unwrapped as an argument to this function is prohibited.
+   *
+   * This is possible to supply a pack of arguments to the function \p f. All arguments are not stored and simple
+   * forwarded to the function \p f keeping the same value category and constness.
+   *
+   * \code{.cpp}
+   * auto f(a, b, c) -> T;
+   *
+   * // Equivalent to frt::either<T, R>{frt::in_place_left, f(a, b, c)}
+   * // Note that the type for the left alternative may differ from the original one
+   * frt::either<L, R> eitherObj = ...;
+   * frt::either<T, R> result = eitherObj.transform_left(f, a, b, c);
+   * \endcode
+   *
+   * The function \p f must be invocable with the final combination of arguments. The return value will automatically be
+   * wrapped into \c frt::either<T, R>, where T is the return type of \p f. The type \c T may differ from the original
+   * \c L. If the function \p f returns nothing, then the type for the left alternative is \c void.
+   *
+   * \param f is a function to apply.
+   *
+   * \param args is an optional pack of arguments to supply to the function \p f.
+   */
+  template <class Self, class F, class... Args>
+    requires(detail::either_::IsVoid<left_t>)
+  [[nodiscard]] constexpr auto transform_left(this Self &&self, F &&f,
+                                              Args &&...args) noexcept(std::is_nothrow_invocable_v<F, Args...>)
+  {
+    static_assert(!detail::either_::contains_unwrapped<Args...>,
+                  "The trailing argument pack must not contain the frt::unwrapped if left_t is void");
+    static_assert(std::is_invocable_v<F, Args...>, "The function must be invocable with all extra arguments.");
+
+    using func_ret_t = std::invoke_result_t<F, Args...>;
+    using ret_t = either<std::remove_cvref_t<func_ret_t>, right_t>;
+
+    if (self.is_left()) {
+      if constexpr (detail::either_::IsVoid<func_ret_t>) {
+        std::invoke(std::forward<F>(f), std::forward<Args>(args)...);
+        return ret_t{in_place_left};
+      } else {
+        return ret_t{in_place_left, std::invoke(std::forward<F>(f), std::forward<Args>(args)...)};
+      }
+    } else {
+      if constexpr (detail::either_::IsVoid<right_t>) {
+        return ret_t{in_place_right};
+      } else {
+        return ret_t{in_place_right, std::forward<Self>(self).right()};
+      }
+    }
+  }
+
 private:
   constexpr void destroy()
   {
