@@ -16,6 +16,7 @@
 #include <cstdio>
 #include <exception>
 #include <format>
+#include <iostream>
 #include <print>
 #include <source_location>
 #include <string_view>
@@ -51,7 +52,7 @@ constexpr void expects(const Condition &condition, [[maybe_unused]] std::string_
 
     const auto msg = std::vformat("Expected to be true: {} ({} {}:{}:{})",
                                   std::make_format_args(message, func_name, file_name, line, column));
-    std::println(stderr, "{}", msg);
+    std::cerr << msg << std::endl;
 
     std::abort();
   }
