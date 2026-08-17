@@ -1143,7 +1143,7 @@ struct std::hash<frt::detail::either_::Void>
   }
 };
 
-//! Hasher for the `frt::either<L, R>` alternative. The result is either hash of the left or of the right alternative.
+//! Hasher for `frt::either<L, R>`. The result is either hash of the left or of the right alternative.
 template <class Left, class Right>
   requires(frt::detail::either_::IsHashable<frt::detail::either_::SelectedType<Left>> &&
            frt::detail::either_::IsHashable<frt::detail::either_::SelectedType<Right>>)
