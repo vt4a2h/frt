@@ -1,5 +1,6 @@
 #include <catch2/catch_all.hpp>
 
+#include <format>
 #include <string>
 #include <vector>
 
@@ -446,4 +447,22 @@ TEST_CASE("SameReturnType", "[either]")
     STATIC_REQUIRE_FALSE(
         frt::detail::either_::SameReturnType<CallableReturnVoidOneArg, int, CallableReturnIntOneArg, int>);
   }
+}
+
+TEMPLATE_TEST_CASE_SIG("FormattableAlternative", "[either]", ((class T, bool Valid), T, Valid), (int, true),
+                       (double, true), (std::string, true), (void, true), (const void, true), (IncompatibleType, false))
+{
+  STATIC_REQUIRE(frt::detail::either_::FormattableAlternative<T, char> == Valid);
+}
+
+TEMPLATE_TEST_CASE_SIG("std::formattable for either", "[either]", ((class T, bool Valid), T, Valid),
+                       (frt::either<int, double>, true), (frt::either<int, std::string>, true),
+                       (frt::either<void, std::string>, true), (frt::either<int, void>, true),
+                       (frt::either<void, void>, true), (frt::either<IncompatibleType, int>, false),
+                       (frt::either<int, IncompatibleType>, false),
+                       (frt::either<IncompatibleType, IncompatibleType>, false),
+                       (frt::either<frt::either<int, double>, std::string>, true),
+                       (frt::either<frt::either<IncompatibleType, double>, std::string>, false))
+{
+  STATIC_REQUIRE(std::formattable<T, char> == Valid);
 }

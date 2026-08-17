@@ -22,3 +22,5 @@ frt_add_test(either_transform_right)
 frt_add_test(either_transform_right_constexpr)
 frt_add_test(either_fold)
 frt_add_test(either_fold_constexpr)
+frt_add_test(either_format)
+

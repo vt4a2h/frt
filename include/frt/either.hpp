@@ -235,6 +235,9 @@ struct ForwardAlternative<Self, void>
 template <class Self, class T>
 using ForwardAlternativeT = ForwardAlternative<Self, T>::type;
 
+template <class T, class CharT>
+concept FormattableAlternative = IsVoid<T> || std::formattable<T, CharT>;
+
 } // namespace detail::either_
 
 using in_place_left_t = detail::either_::InPlaceLeftTag;
@@ -1155,6 +1158,36 @@ struct std::hash<frt::either<Left, Right>>
       return std::hash<frt::detail::either_::bare_t<Left>>{}(e.left());
     } else {
       return std::hash<frt::detail::either_::bare_t<Right>>{}(e.right());
+    }
+  }
+};
+
+//! Formatter for `frt::either<L, R>`.
+template <frt::detail::either_::FormattableAlternative<char> Left,
+          frt::detail::either_::FormattableAlternative<char> Right>
+struct std::formatter<frt::either<Left, Right>, char> : private std::formatter<std::string>
+{
+  template <class ParseContext>
+  constexpr auto parse(ParseContext &ctx)
+  {
+    return std::formatter<std::string>::parse(ctx);
+  }
+
+  template <class FmtContext>
+  constexpr auto format(const frt::either<Left, Right> &e, FmtContext &ctx) const
+  {
+    if (e.is_left()) {
+      if constexpr (frt::detail::either_::IsVoid<Left>) {
+        return formatter<string>::format("either{left: void}", ctx);
+      } else {
+        return formatter<string>::format(std::format("either{{left: {}}}", e.left()), ctx);
+      }
+    } else {
+      if constexpr (frt::detail::either_::IsVoid<Right>) {
+        return formatter<string>::format("either{right: void}", ctx);
+      } else {
+        return formatter<string>::format(std::format("either{{right: {}}}", e.right()), ctx);
+      }
     }
   }
 };
