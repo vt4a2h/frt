@@ -32,6 +32,13 @@ if (FRT_DEV_MODE)
     )
 endif ()
 
+target_compile_options(frt INTERFACE
+    # MSVC
+    $<$<CXX_COMPILER_ID:MSVC>:
+    /Zc:preprocessor # For __VA_OPT__
+    >
+)
+
 option(FRT_DEPENDENCIES_FROM_CPM "Use CPM for obtaining 3rd-party dependencies" OFF)
 if (FRT_DEPENDENCIES_FROM_CPM)
     if (NOT EXISTS "${CMAKE_CURRENT_BINARY_DIR}/cmake/CPM.cmake")
