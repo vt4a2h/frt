@@ -939,6 +939,7 @@ public:
   }
 
 private:
+  // Destroy the contained alternative
   constexpr void destroy()
   {
     if (is_left_) {
@@ -948,6 +949,7 @@ private:
     }
   }
 
+  // Construct an alternative from \p data
   template <class D>
   constexpr void initFrom(D &&data)
   {
@@ -960,6 +962,7 @@ private:
     is_left_ = data.is_left_;
   }
 
+  // Forward the left alternative of \p self as \p Ret
   template <class Ret, class Self>
   constexpr auto forwardLeft(this Self &&self) noexcept
   {
@@ -970,6 +973,7 @@ private:
     }
   }
 
+  // Forward the right alternative of \p self as \p Ret
   template <class Ret, class Self>
   constexpr auto forwardRight(this Self &&self) noexcept
   {
