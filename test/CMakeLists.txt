@@ -25,4 +25,6 @@ endfunction()
 
 add_subdirectory(helpers)
 add_subdirectory(either)
-add_subdirectory(expects)
+if (FRT_HARDENED)
+    add_subdirectory(expects)
+endif ()

@@ -60,3 +60,8 @@ if (FRT_ENABLE_BENCHMARKING)
     enable_testing()
     add_subdirectory(benchmark)
 endif ()
+
+OPTION(FRT_HARDENED "Contract violations terminate a program" ON)
+if (FRT_HARDENED)
+    target_compile_definitions(frt INTERFACE FRT_HARDENED=1)
+endif ()

@@ -10,41 +10,54 @@
  */
 #pragma once
 
+#ifdef FRT_HARDENED
+
 #include <concepts>
+#include <cstdio>
+#include <exception>
 #include <print>
 #include <source_location>
+#include <string_view>
 
-namespace frt {
-
-namespace detail {
+namespace frt::detail
+{
 
 template <class B>
 concept bool_testable = requires(const B &b) {
   { !!b } -> std::same_as<bool>;
 };
 
-} // namespace detail
-
-template <detail::bool_testable Condition>
-constexpr void expects(const Condition &condition,
+template <bool_testable Condition>
+constexpr void expects(const Condition &condition, std::string_view message = "",
                        [[maybe_unused]] std::source_location loc = std::source_location::current()) noexcept
 {
-  if (condition) {
+  if (condition) [[likely]] {
     return;
   }
 
-  if (std::is_constant_evaluated()) {
+  if consteval {
     try {
       throw "Expected to be true";
     } catch (...) {
-      // Workaround to mark the function noexcept
+      auto eptr = std::current_exception();
+      std::rethrow_exception(eptr);
     }
   } else {
-    // TODO: make an extension point
-    std::println(stderr, "Expected to be true ({} {}:{}:{})", loc.function_name(), loc.file_name(), loc.line(),
-                 loc.column());
+    std::println(stderr, "Expected to be true: {} ({} {}:{}:{})", message, loc.function_name(), loc.file_name(),
+                 loc.line(), loc.column());
     std::abort();
   }
 }
 
-} // namespace frt
+} // namespace frt::detail
+
+#define FRT_INTERNAL_ASSERT(condition, ...)                                                                            \
+  do {                                                                                                                 \
+    frt::detail::expects(condition __VA_OPT__(, ) __VA_ARGS__);                                                        \
+  } while (false)
+#else
+#define FRT_INTERNAL_ASSERT(condition, ...)                                                                            \
+  do {                                                                                                                 \
+    (void)sizeof(condition);                                                                                           \
+  } while (false)
+#endif

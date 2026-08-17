@@ -10,6 +10,7 @@
  */
 #pragma once
 
+#include <format>
 #include <functional>
 #include <type_traits>
 #include <utility>
@@ -361,7 +362,7 @@ public:
     requires(detail::either_::IsNotVoid<left_t>)
   [[nodiscard]] constexpr auto &&left(this Self &&self)
   {
-    expects(self.is_left());
+    FRT_INTERNAL_ASSERT(self.is_left(), "must contain left alternative");
     return std::forward_like<Self>(self.left_);
   }
 
@@ -388,7 +389,7 @@ public:
     requires(detail::either_::IsNotVoid<right_t>)
   [[nodiscard]] constexpr auto &&right(this Self &&self)
   {
-    expects(self.is_right());
+    FRT_INTERNAL_ASSERT(self.is_right(), "must contain right alternative");
     return std::forward_like<Self>(self.right_);
   }
 
