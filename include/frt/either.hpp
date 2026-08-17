@@ -252,16 +252,13 @@ template <class T>
 concept IsEither = detail::either_::is_either_<detail::either_::bare_t<T>>;
 
 /*!
- * \brief This is the monad "Either".
+ * \brief An object of this type can contain a value of either Left or Right type.
  *
- * This is a simple tagged union with two distinct tags, `Left` and `Right`. The closest analog from the standard
- * library is `std::variant<L, R>`. This is a generic version of `frt::expected<E, U>` that should be used when tags do
- * not necessarily represent expected or unexpected results.
+ * This is a simple tagged union with two distinct tags, `Left` and `Right`. The closest analogue from the standard
+ * library is `std::variant<Left, Right>`. This is a generic version of `frt::expected<Expected, Unexpected>` that
+ * should be used when tags are semantically neutral or are not tied to "expected"/"unexpected" result.
  *
  * The underlying types must not be references or arrays.
- *
- * The `frt::expects` is used to ensure the invariant. By default, the program is terminated upon the violation of the
- * contract.
  */
 template <detail::either_::ValidType Left, detail::either_::ValidType Right>
 struct [[nodiscard]] either
