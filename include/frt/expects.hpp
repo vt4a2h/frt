@@ -15,6 +15,7 @@
 #include <concepts>
 #include <cstdio>
 #include <exception>
+#include <format>
 #include <print>
 #include <source_location>
 #include <string_view>
@@ -28,7 +29,7 @@ concept bool_testable = requires(const B &b) {
 };
 
 template <bool_testable Condition>
-constexpr void expects(const Condition &condition, std::string_view message = "",
+constexpr void expects(const Condition &condition, [[maybe_unused]] std::string_view message = "",
                        [[maybe_unused]] std::source_location loc = std::source_location::current()) noexcept
 {
   if (condition) [[likely]] {
@@ -43,8 +44,15 @@ constexpr void expects(const Condition &condition, std::string_view message = ""
       std::rethrow_exception(eptr);
     }
   } else {
-    std::println(stderr, "Expected to be true: {} ({} {}:{}:{})", message, loc.function_name(), loc.file_name(),
-                 loc.line(), loc.column());
+    const auto *func_name = loc.function_name();
+    const auto *file_name = loc.file_name();
+    const auto line = loc.line();
+    const auto column = loc.column();
+
+    const auto msg = std::vformat("Expected to be true: {} ({} {}:{}:{})",
+                                  std::make_format_args(message, func_name, file_name, line, column));
+    std::println(stderr, "{}", msg);
+
     std::abort();
   }
 }
