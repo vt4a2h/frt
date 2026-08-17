@@ -43,6 +43,46 @@ struct ThrowingCallableThreeArgs
   void operator()(std::string, int, std::vector<int>) noexcept(false);
 };
 
+struct CallableZeroArgs
+{
+  void operator()() const;
+};
+
+struct NothrowCallableZeroArgs
+{
+  void operator()() noexcept;
+};
+
+struct ThrowingCallableZeroArgs
+{
+  void operator()() noexcept(false);
+};
+
+struct CallableReturnIntOneArg
+{
+  int operator()(int) const;
+};
+
+struct CallableReturnIntZeroArgs
+{
+  int operator()() const;
+};
+
+struct CallableReturnDoubleOneArg
+{
+  double operator()(int) const;
+};
+
+struct CallableReturnDoubleZeroArgs
+{
+  double operator()() const;
+};
+
+struct CallableReturnVoidOneArg
+{
+  void operator()(int) const;
+};
+
 struct IncompatibleType
 {
 };
@@ -325,4 +365,85 @@ TEMPLATE_TEST_CASE_SIG("same_left_alternative", "[either]", ((class E1, class E2
                        (frt::either<int, double>, frt::either<void, double>, false))
 {
   STATIC_REQUIRE(frt::detail::either_::same_left_alternative<E1, E2> == Valid);
+}
+
+TEST_CASE("InvocableV", "[either]")
+{
+  SECTION("invocable with non-void arg") { STATIC_REQUIRE(frt::detail::either_::InvocableV<CallableOneArg, int>); }
+  SECTION("not invocable with incompatible arg")
+  {
+    STATIC_REQUIRE_FALSE(frt::detail::either_::InvocableV<CallableOneArg, std::string>);
+  }
+  SECTION("not invocable with void when expecting arg")
+  {
+    STATIC_REQUIRE_FALSE(frt::detail::either_::InvocableV<CallableOneArg, void>);
+  }
+  SECTION("invocable with void arg") { STATIC_REQUIRE(frt::detail::either_::InvocableV<CallableZeroArgs, void>); }
+  SECTION("not invocable with non-void when expecting zero args")
+  {
+    STATIC_REQUIRE_FALSE(frt::detail::either_::InvocableV<CallableZeroArgs, int>);
+  }
+  SECTION("non-callable type is not invocable")
+  {
+    STATIC_REQUIRE_FALSE(frt::detail::either_::InvocableV<IncompatibleType, int>);
+  }
+}
+
+TEST_CASE("NothrowInvocableV", "[either]")
+{
+  SECTION("nothrow invocable with non-void arg")
+  {
+    STATIC_REQUIRE(frt::detail::either_::NothrowInvocableV<NothrowCallableOneArg, int>);
+  }
+  SECTION("throwing with non-void arg")
+  {
+    STATIC_REQUIRE_FALSE(frt::detail::either_::NothrowInvocableV<ThrowingCallableOneArg, int>);
+  }
+  SECTION("nothrow invocable with void arg")
+  {
+    STATIC_REQUIRE(frt::detail::either_::NothrowInvocableV<NothrowCallableZeroArgs, void>);
+  }
+  SECTION("throwing with void arg")
+  {
+    STATIC_REQUIRE_FALSE(frt::detail::either_::NothrowInvocableV<ThrowingCallableZeroArgs, void>);
+  }
+  SECTION("not invocable is not nothrow invocable")
+  {
+    STATIC_REQUIRE_FALSE(frt::detail::either_::NothrowInvocableV<NothrowCallableOneArg, std::string>);
+  }
+}
+
+TEST_CASE("SameReturnType", "[either]")
+{
+  SECTION("both non-void args returning same type")
+  {
+    STATIC_REQUIRE(frt::detail::either_::SameReturnType<CallableReturnIntOneArg, int, CallableReturnIntOneArg, int>);
+  }
+  SECTION("both non-void args returning different types")
+  {
+    STATIC_REQUIRE_FALSE(
+        frt::detail::either_::SameReturnType<CallableReturnIntOneArg, int, CallableReturnDoubleOneArg, int>);
+  }
+  SECTION("left void arg and right non-void arg returning same type")
+  {
+    STATIC_REQUIRE(frt::detail::either_::SameReturnType<CallableReturnIntZeroArgs, void, CallableReturnIntOneArg, int>);
+  }
+  SECTION("left non-void arg and right void arg returning same type")
+  {
+    STATIC_REQUIRE(frt::detail::either_::SameReturnType<CallableReturnIntOneArg, int, CallableReturnIntZeroArgs, void>);
+  }
+  SECTION("both void args returning same type")
+  {
+    STATIC_REQUIRE(
+        frt::detail::either_::SameReturnType<CallableReturnIntZeroArgs, void, CallableReturnIntZeroArgs, void>);
+  }
+  SECTION("both returning void")
+  {
+    STATIC_REQUIRE(frt::detail::either_::SameReturnType<CallableReturnVoidOneArg, int, CallableZeroArgs, void>);
+  }
+  SECTION("one returning void and other returning non-void")
+  {
+    STATIC_REQUIRE_FALSE(
+        frt::detail::either_::SameReturnType<CallableReturnVoidOneArg, int, CallableReturnIntOneArg, int>);
+  }
 }

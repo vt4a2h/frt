@@ -197,6 +197,44 @@ template <class E1, class E2>
 constexpr inline bool same_left_alternative =
     std::same_as<typename std::remove_cvref_t<E1>::left_t, typename std::remove_cvref_t<E2>::left_t>;
 
+template <class F, class Arg>
+concept InvocableV = (IsVoid<Arg> && std::invocable<F>) || std::invocable<F, Arg>;
+
+template <class F, class Arg>
+concept NothrowInvocableV = (IsVoid<Arg> && std::is_nothrow_invocable_v<F>) || std::is_nothrow_invocable_v<F, Arg>;
+
+template <class F, class Arg>
+struct InvocableResult : std::invoke_result<F, Arg>
+{
+};
+
+template <class F>
+struct InvocableResult<F, void> : std::invoke_result<F>
+{
+};
+
+template <class F, class Arg>
+using InvocableResultT = InvocableResult<F, Arg>::type;
+
+template <class FL, class ArgL, class FR, class ArgR>
+concept SameReturnType = InvocableV<FL, ArgL> && InvocableV<FR, ArgR> &&
+                         std::same_as<InvocableResultT<FL, ArgL>, InvocableResultT<FR, ArgR>>;
+
+template <class Self, class T>
+struct ForwardAlternative
+{
+  using type = decltype(std::forward_like<Self>(std::declval<T>()));
+};
+
+template <class Self>
+struct ForwardAlternative<Self, void>
+{
+  using type = void;
+};
+
+template <class Self, class T>
+using ForwardAlternativeT = ForwardAlternative<Self, T>::type;
+
 } // namespace detail::either_
 
 using in_place_left_t = detail::either_::InPlaceLeftTag;
@@ -935,6 +973,108 @@ public:
       }
     } else {
       return std::forward<Self>(self).template forwardLeft<ret_t>();
+    }
+  }
+
+  /*!
+   * \brief Invoke \p lf for the left alternative or \p rf for the right alternative and return the result.
+   *
+   * This function works similarly to pattern matching. It takes into account the value category and constness of the
+   * `either` object. It means, for example, that both \p lf and \p rf can modify contained values and accept them by
+   * rvalue reference.
+   *
+   * The \p lf function must be invocable for the left alternative. If the left alternative has type \c void, then \p lf
+   * must accept no arguments.
+   * The \p rf function must be invocable for the right alternative. If the right alternative has type \c void, then \p
+   * rf must accept no arguments.
+   *
+   * Both functions \p lf and \p rf must have the same return type.
+   *
+   * \param lf is a function to apply to the left alternative.
+   * \param rf is a function to apply to the right alternative.
+   */
+  template <class Self, class LeftFunc, class RightFunc>
+    requires(!detail::either_::IsVoid<
+             detail::either_::InvocableResultT<LeftFunc, detail::either_::ForwardAlternativeT<Self, left_t>>>)
+  [[nodiscard]] constexpr decltype(auto) fold(this Self &&self, LeftFunc &&lf, RightFunc &&rf) noexcept(
+      detail::either_::NothrowInvocableV<LeftFunc, detail::either_::ForwardAlternativeT<Self, left_t>> &&
+      detail::either_::NothrowInvocableV<RightFunc, detail::either_::ForwardAlternativeT<Self, right_t>>)
+  {
+    using fwd_left_t = detail::either_::ForwardAlternativeT<Self, left_t>;
+    using fwd_right_t = detail::either_::ForwardAlternativeT<Self, right_t>;
+
+    static_assert(detail::either_::InvocableV<LeftFunc, fwd_left_t>,
+                  "The left function must be invocable for the left alternative. If the alternative has type void, "
+                  "then the left function must take no arguments.");
+    static_assert(detail::either_::InvocableV<RightFunc, fwd_right_t>,
+                  "The right function must be invocable for the right alternative. If the alternative has type void, "
+                  "then the right function must take no arguments.");
+    static_assert(detail::either_::SameReturnType<LeftFunc, fwd_left_t, RightFunc, fwd_right_t>,
+                  "Both left and right functions must have the same return type.");
+
+    if (self.is_left()) {
+      if constexpr (detail::either_::IsVoid<left_t>) {
+        return std::invoke(std::forward<LeftFunc>(lf));
+      } else {
+        return std::invoke(std::forward<LeftFunc>(lf), std::forward<Self>(self).left());
+      }
+    } else {
+      if constexpr (detail::either_::IsVoid<right_t>) {
+        return std::invoke(std::forward<RightFunc>(rf));
+      } else {
+        return std::invoke(std::forward<RightFunc>(rf), std::forward<Self>(self).right());
+      }
+    }
+  }
+
+  /*!
+   * \brief Invoke \p lf for the left alternative or \p rf for the right alternative.
+   *
+   * This function works similarly to pattern matching. It takes into account the value category and constness of the
+   * `either` object. It means, for example, that both \p lf and \p rf can modify contained values and accept them by
+   * rvalue reference.
+   *
+   * The \p lf function must be invocable for the left alternative. If the left alternative has type \c void, then \p lf
+   * must accept no arguments.
+   * The \p rf function must be invocable for the right alternative. If the right alternative has type \c void, then \p
+   * rf must accept no arguments.
+   *
+   * Both functions \p lf and \p rf must not return.
+   *
+   * \param lf is a function to apply to the left alternative.
+   * \param rf is a function to apply to the right alternative.
+   */
+  template <class Self, class LeftFunc, class RightFunc>
+    requires(detail::either_::IsVoid<
+             detail::either_::InvocableResultT<LeftFunc, detail::either_::ForwardAlternativeT<Self, left_t>>>)
+  constexpr void fold(this Self &&self, LeftFunc &&lf, RightFunc &&rf) noexcept(
+      detail::either_::NothrowInvocableV<LeftFunc, detail::either_::ForwardAlternativeT<Self, left_t>> &&
+      detail::either_::NothrowInvocableV<RightFunc, detail::either_::ForwardAlternativeT<Self, right_t>>)
+  {
+    using fwd_left_t = detail::either_::ForwardAlternativeT<Self, left_t>;
+    using fwd_right_t = detail::either_::ForwardAlternativeT<Self, right_t>;
+
+    static_assert(detail::either_::InvocableV<LeftFunc, fwd_left_t>,
+                  "The left function must be invocable for the left alternative. If the alternative has type void, "
+                  "then the left function must take no arguments.");
+    static_assert(detail::either_::InvocableV<RightFunc, fwd_right_t>,
+                  "The right function must be invocable for the right alternative. If the alternative has type void, "
+                  "then the right function must take no arguments.");
+    static_assert(detail::either_::SameReturnType<LeftFunc, fwd_left_t, RightFunc, fwd_right_t>,
+                  "Both left and right functions must not return.");
+
+    if (self.is_left()) {
+      if constexpr (detail::either_::IsVoid<left_t>) {
+        std::invoke(std::forward<LeftFunc>(lf));
+      } else {
+        std::invoke(std::forward<LeftFunc>(lf), std::forward<Self>(self).left());
+      }
+    } else {
+      if constexpr (detail::either_::IsVoid<right_t>) {
+        std::invoke(std::forward<RightFunc>(rf));
+      } else {
+        std::invoke(std::forward<RightFunc>(rf), std::forward<Self>(self).right());
+      }
     }
   }
 
