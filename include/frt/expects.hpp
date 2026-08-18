@@ -12,12 +12,16 @@
 
 #ifdef FRT_HARDENED
 
+#if defined(_MSC_VER)
+#include <iostream>
+#else
+#include <print>
+#endif
+
 #include <concepts>
 #include <cstdio>
 #include <exception>
 #include <format>
-#include <iostream>
-#include <print>
 #include <source_location>
 #include <string_view>
 
@@ -45,6 +49,7 @@ constexpr void expects(const Condition &condition, [[maybe_unused]] std::string_
       std::rethrow_exception(eptr);
     }
   } else {
+#if defined(_MSC_VER)
     const auto *func_name = loc.function_name();
     const auto *file_name = loc.file_name();
     const auto line = loc.line();
@@ -53,6 +58,10 @@ constexpr void expects(const Condition &condition, [[maybe_unused]] std::string_
     const auto msg = std::vformat("Expected to be true: {} ({} {}:{}:{})",
                                   std::make_format_args(message, func_name, file_name, line, column));
     std::cerr << msg << std::endl;
+#else
+    std::println(stderr, "Expected to be true: {} ({} {}:{}:{})", message, loc.function_name(), loc.file_name(),
+                 loc.line(), loc.column());
+#endif
 
     std::abort();
   }
