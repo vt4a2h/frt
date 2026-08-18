@@ -999,7 +999,7 @@ public:
   template <class Self, class LeftFunc, class RightFunc>
     requires(!detail::either_::IsVoid<
              detail::either_::InvocableResultT<LeftFunc, detail::either_::ForwardAlternativeT<Self, left_t>>>)
-  [[nodiscard]] constexpr decltype(auto) fold(this Self &&self, LeftFunc &&lf, RightFunc &&rf) noexcept(
+  [[nodiscard]] constexpr decltype(auto) fold(this Self &&self, LeftFunc lf, RightFunc rf) noexcept(
       detail::either_::NothrowInvocableV<LeftFunc, detail::either_::ForwardAlternativeT<Self, left_t>> &&
       detail::either_::NothrowInvocableV<RightFunc, detail::either_::ForwardAlternativeT<Self, right_t>>)
   {
@@ -1017,15 +1017,15 @@ public:
 
     if (self.is_left()) {
       if constexpr (detail::either_::IsVoid<left_t>) {
-        return std::invoke(std::forward<LeftFunc>(lf));
+        return std::invoke(lf);
       } else {
-        return std::invoke(std::forward<LeftFunc>(lf), std::forward<Self>(self).left());
+        return std::invoke(lf, std::forward<Self>(self).left());
       }
     } else {
       if constexpr (detail::either_::IsVoid<right_t>) {
-        return std::invoke(std::forward<RightFunc>(rf));
+        return std::invoke(rf);
       } else {
-        return std::invoke(std::forward<RightFunc>(rf), std::forward<Self>(self).right());
+        return std::invoke(rf, std::forward<Self>(self).right());
       }
     }
   }
@@ -1050,7 +1050,7 @@ public:
   template <class Self, class LeftFunc, class RightFunc>
     requires(detail::either_::IsVoid<
              detail::either_::InvocableResultT<LeftFunc, detail::either_::ForwardAlternativeT<Self, left_t>>>)
-  constexpr void fold(this Self &&self, LeftFunc &&lf, RightFunc &&rf) noexcept(
+  constexpr void fold(this Self &&self, LeftFunc lf, RightFunc rf) noexcept(
       detail::either_::NothrowInvocableV<LeftFunc, detail::either_::ForwardAlternativeT<Self, left_t>> &&
       detail::either_::NothrowInvocableV<RightFunc, detail::either_::ForwardAlternativeT<Self, right_t>>)
   {
@@ -1068,17 +1068,65 @@ public:
 
     if (self.is_left()) {
       if constexpr (detail::either_::IsVoid<left_t>) {
-        std::invoke(std::forward<LeftFunc>(lf));
+        std::invoke(lf);
       } else {
-        std::invoke(std::forward<LeftFunc>(lf), std::forward<Self>(self).left());
+        std::invoke(lf, std::forward<Self>(self).left());
       }
     } else {
       if constexpr (detail::either_::IsVoid<right_t>) {
-        std::invoke(std::forward<RightFunc>(rf));
+        std::invoke(rf);
       } else {
-        std::invoke(std::forward<RightFunc>(rf), std::forward<Self>(self).right());
+        std::invoke(rf, std::forward<Self>(self).right());
       }
     }
+  }
+
+  /*!
+   * \brief Invoke \p f for the left alternative or for the right alternative and return the result.
+   *
+   * The function \p f must be invocable for both alternatives. This function is implemented in terms of a fold that
+   * accepts two functions, but in this case, the function is the same, i.e. fold(f, f).
+   *
+   * This function has the same contract as fold that accepts two functions. See its description for more details.
+   *
+   * This function is useful when it's required to access the same interface of two distinct objects. E.g.
+   * \code{.cpp}
+   * auto str = either.fold([](const std::formattable<char> auto& obj) { return std::format("{}", obj); }
+   * \endcode
+   */
+  template <class Self, class Func>
+    requires(!detail::either_::IsVoid<
+             detail::either_::InvocableResultT<Func, detail::either_::ForwardAlternativeT<Self, left_t>>>)
+  [[nodiscard]] constexpr decltype(auto)
+  fold(this Self &&self,
+       Func f) noexcept(detail::either_::NothrowInvocableV<Func, detail::either_::ForwardAlternativeT<Self, left_t>> &&
+                        detail::either_::NothrowInvocableV<Func, detail::either_::ForwardAlternativeT<Self, right_t>>)
+  {
+    return std::forward<Self>(self).fold(f, f);
+  }
+
+  /*!
+   * \brief Invoke \p f for the left alternative or for the right alternative.
+   *
+   * The function \p f must be invocable for both alternatives and must not return. This function is implemented in
+   * terms of a fold that accepts two functions, but in this case, the function is the same, i.e. fold(f, f).
+   *
+   * This function has the same contract as fold that accepts two functions. See its description for more details.
+   *
+   * This function is useful when it's required to access the same interface of two distinct objects. E.g.
+   * \code{.cpp}
+   * either.fold([](const std::formattable<char> auto& obj) { std::println("{}", obj); }
+   * \endcode
+   */
+  template <class Self, class Func>
+    requires(detail::either_::IsVoid<
+             detail::either_::InvocableResultT<Func, detail::either_::ForwardAlternativeT<Self, left_t>>>)
+  constexpr void
+  fold(this Self &&self,
+       Func f) noexcept(detail::either_::NothrowInvocableV<Func, detail::either_::ForwardAlternativeT<Self, left_t>> &&
+                        detail::either_::NothrowInvocableV<Func, detail::either_::ForwardAlternativeT<Self, right_t>>)
+  {
+    std::forward<Self>(self).fold(f, f);
   }
 
 private:

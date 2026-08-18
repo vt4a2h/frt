@@ -1,3 +1,5 @@
+#include "test/helpers/types.hpp"
+
 #include <catch2/catch_all.hpp>
 
 #include <string>
@@ -647,5 +649,34 @@ TEST_CASE("fold (void void)", "[either]")
   {
     REQUIRE_FALSE(
         noexcept(std::declval<EitherVoidVoid>().fold(NothrowVoidReturnVoidLeftFn{}, ThrowingVoidReturnVoidRightFn{})));
+  }
+}
+
+TEST_CASE("Fold with generic function for both alternatives", "[either]")
+{
+  using namespace test::helpers;
+
+  constexpr auto width = 10;
+  constexpr auto height = 20;
+
+  frt::either<Widget, Window> eitherWindow{frt::in_place_right, Window{.width = width, .height = height}};
+  frt::either<Widget, Window> eitherWidget{frt::in_place_left, Widget{.width = width, .height = height}};
+
+  SECTION("generic square function")
+  {
+    auto square = [](const HasWidthAndHeight auto &obj) { return obj.width * obj.height; };
+
+    REQUIRE(eitherWindow.fold(square) == eitherWidget.fold(square));
+  }
+
+  SECTION("generic height modifier")
+  {
+    constexpr auto scaleFactor = 2;
+    auto scaleHeight = [](HasWidthAndHeight auto &obj) { obj.height *= scaleFactor; };
+
+    eitherWindow.fold(scaleHeight);
+    eitherWidget.fold(scaleHeight);
+
+    REQUIRE(eitherWindow.right().height == eitherWidget.left().height);
   }
 }

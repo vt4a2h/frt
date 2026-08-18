@@ -6,6 +6,8 @@
 
 #include <frt/either.hpp>
 
+#include <test/helpers/types.hpp>
+
 namespace
 {
 
@@ -893,5 +895,46 @@ TEST_CASE("fold (void void) constexpr", "[either][constexpr]")
     constexpr auto valid =
         noexcept(std::declval<EitherVoidVoid>().fold(NothrowVoidReturnVoidLeftFn{}, ThrowingVoidReturnVoidRightFn{}));
     STATIC_REQUIRE_FALSE(valid);
+  }
+}
+
+TEST_CASE("Fold with generic function for both alternatives constexpr", "[either][constexpr]")
+{
+  using namespace test::helpers;
+
+  constexpr auto width = 10;
+  constexpr auto height = 20;
+
+  SECTION("generic square function")
+  {
+    constexpr auto valid = [] {
+      const frt::either<Widget, Window> eitherWindow{frt::in_place_right, Window{.width = width, .height = height}};
+      const frt::either<Widget, Window> eitherWidget{frt::in_place_left, Widget{.width = width, .height = height}};
+
+      auto square = [](const HasWidthAndHeight auto &obj) { return obj.width * obj.height; };
+
+      return eitherWindow.fold(square) == eitherWidget.fold(square);
+    }();
+
+    STATIC_REQUIRE(valid);
+  }
+
+  SECTION("generic height modifier")
+  {
+    constexpr auto valid = [] {
+      constexpr auto scaleFactor = 2;
+
+      frt::either<Widget, Window> eitherWindow{frt::in_place_right, Window{.width = width, .height = height}};
+      frt::either<Widget, Window> eitherWidget{frt::in_place_left, Widget{.width = width, .height = height}};
+
+      auto scaleHeight = [](HasWidthAndHeight auto &obj) { obj.height *= scaleFactor; };
+
+      eitherWindow.fold(scaleHeight);
+      eitherWidget.fold(scaleHeight);
+
+      return eitherWindow.right().height == eitherWidget.left().height;
+    }();
+
+    STATIC_REQUIRE(valid);
   }
 }

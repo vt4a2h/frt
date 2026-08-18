@@ -57,6 +57,24 @@ struct Hashable
   int v_{};
 };
 
+struct Widget
+{
+  int width{};
+  int height{};
+};
+
+struct Window
+{
+  int width{};
+  int height{};
+};
+
+template <class T>
+concept HasWidthAndHeight = requires(T t) {
+  t.width;
+  t.height;
+};
+
 } // namespace test::helpers
 
 template <>
