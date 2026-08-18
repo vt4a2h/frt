@@ -14,6 +14,8 @@
 
 ## Testing
 
+- Read in-code documentation.
+- Cover preferred usage scenarios from the in-code documentation.
 - All tests are located in the `test` directory.
 - Tests for each large feature are located at the respective subdirectories. For example, `test/either`.
 - The test file name should follow this pattern: `tst_feature_name_functionality.cpp`. For example,
