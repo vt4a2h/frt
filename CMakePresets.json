@@ -67,7 +67,7 @@
       },
       "environment": {
         "CC": "gcc-16",
-        "CXX": "gcc-16"
+        "CXX": "g++-16"
       },
       "condition": {
         "type": "equals",
