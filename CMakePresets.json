@@ -76,6 +76,26 @@
       }
     },
     {
+      "name": "linux-gcc-16-non-hardened",
+      "displayName": "Linux GCC 16",
+      "description": "Configuring for Linux with GCC 16",
+      "inherits": "base-ci",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "gcc-16",
+        "CMAKE_CXX_COMPILER": "g++-16",
+        "FRT_HARDENED": "OFF"
+      },
+      "environment": {
+        "CC": "gcc-16",
+        "CXX": "g++-16"
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
+    },
+    {
       "name": "linux-clang-22",
       "displayName": "Linux Clang 22",
       "description": "Configuring for Linux with Clang 22",
@@ -162,6 +182,10 @@
       "configurePreset": "linux-gcc-16"
     },
     {
+      "name": "linux-gcc-16-non-hardened",
+      "configurePreset": "linux-gcc-16-non-hardened"
+    },
+    {
       "name": "linux-clang-22",
       "configurePreset": "linux-clang-22"
     },
@@ -202,6 +226,16 @@
     {
       "name": "linux-gcc-16",
       "configurePreset": "linux-gcc-16",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error"
+      }
+    },
+    {
+      "name": "linux-gcc-16-non-hardened",
+      "configurePreset": "linux-gcc-16-non-hardened",
       "output": {
         "outputOnFailure": true
       },
