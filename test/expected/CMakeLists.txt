@@ -1,0 +1,1 @@
+frt_add_test(expected_create)
