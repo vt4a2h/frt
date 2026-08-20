@@ -74,6 +74,6 @@ TEST_CASE("Observers", "[unexpected]")
   SECTION("error for vector (const rvalue)")
   {
     const frt::unexpected u{expectedVectorValue};
-    REQUIRE(static_cast<const frt::unexpected<std::string> &&>(u).error() == expectedVectorValue);
+    REQUIRE(static_cast<const frt::unexpected<std::vector<int>> &&>(u).error() == expectedVectorValue);
   }
 }

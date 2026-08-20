@@ -110,7 +110,7 @@ TEST_CASE("Observers constexpr", "[unexpected][constexpr]")
   {
     constexpr auto valid = [] {
       const frt::unexpected u{makeExpectedVector()};
-      return static_cast<const frt::unexpected<std::string> &&>(u).error() == makeExpectedVector();
+      return static_cast<const frt::unexpected<std::vector<int>> &&>(u).error() == makeExpectedVector();
     }();
     STATIC_REQUIRE(valid);
   }
