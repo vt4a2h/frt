@@ -19,6 +19,8 @@
 - Cover preferred usage scenarios from the in-code documentation.
 - All tests are located in the `test` directory.
 - Tests for each large feature are located at the respective subdirectories. For example, `test/either`.
+- Tests for auxiliary classes are located in the same subdirectory as tests for the main class. For example, test for
+  `frt::unexpected` can be placed insied `test/expected`.
 - The test file name should follow this pattern: `tst_feature_name_functionality.cpp`. For example,
   `tst_either_create.cpp`. Where `tst_` is a prefix, `either` is a `feature_name`, `create` is a
   `functionality`, and `cpp` is a file extension.
