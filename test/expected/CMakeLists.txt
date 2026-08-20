@@ -1,1 +1,12 @@
 frt_add_test(expected_create)
+frt_add_test(expected_concepts)
+
+frt_add_test(unexpected_concepts)
+frt_add_test(unexpected_create)
+frt_add_test(unexpected_create_constexpr)
+frt_add_test(unexpected_observers)
+frt_add_test(unexpected_observers_constexpr)
+frt_add_test(unexpected_swap)
+frt_add_test(unexpected_swap_constexpr)
+frt_add_test(unexpected_compare)
+frt_add_test(unexpected_compare_constexpr)
