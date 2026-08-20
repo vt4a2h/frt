@@ -1,8 +1,9 @@
-# Agents configuration for the project
+# Agents’ configuration for the project
 
 ## Project overview
 
 - Read `README.md` at the root of the repository.
+- The project is written in C++26.
 
 ## Building
 
