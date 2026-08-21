@@ -238,6 +238,7 @@ struct [[nodiscard]] expected
 
   using value_type = T;
   using error_type = E;
+  using unexpected_type = unexpected<E>;
 
   //! Get value. Pre-condition: it must contain value.
   template <class Self>
