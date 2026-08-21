@@ -25,6 +25,9 @@ using either_::bare_t;
 using either_::IsNotVoid;
 using either_::IsVoid;
 
+struct InPlaceExpectedTag;
+struct InPlaceUnexpectedTag;
+
 template <class T>
 inline constexpr bool is_unexpected_ = false;
 
@@ -32,14 +35,25 @@ template <class E>
 inline constexpr bool is_unexpected_<unexpected<E>> = true;
 
 template <class T>
-concept ValidUnexpectedType = std::is_object_v<T> && !std::is_array_v<T> && !is_unexpected_<bare_t<T>> &&
-                              !std::is_const_v<T> && !std::is_volatile_v<T>;
+concept IsInplaceExpectedTag = std::same_as<bare_t<T>, InPlaceExpectedTag>;
+
+template <class T>
+concept IsInplaceUnexpectedTag = std::same_as<bare_t<T>, InPlaceUnexpectedTag>;
+
+template <class T>
+concept ValidUnexpectedType =
+    std::is_object_v<T> && !std::is_array_v<T> && !is_unexpected_<bare_t<T>> && !std::is_const_v<T> &&
+    !std::is_volatile_v<T> && !IsInplaceExpectedTag<T> && !IsInplaceUnexpectedTag<T> && !std::is_function_v<bare_t<T>>;
 
 template <class T>
 concept ValidValueType = requires {
   requires std::destructible<bare_t<T>> || IsVoid<T>;
   requires !std::is_reference_v<T>;
   requires !std::is_array_v<bare_t<T>>;
+  requires !is_unexpected_<bare_t<T>>;
+  requires !std::is_function_v<bare_t<T>>;
+  requires !IsInplaceExpectedTag<T>;
+  requires !IsInplaceUnexpectedTag<T>;
 };
 
 template <class T>
@@ -234,13 +248,16 @@ unexpected(E) -> unexpected<E>;
 template <class T, class E>
 struct [[nodiscard]] expected
 {
-  static_assert(detail::expected_::ValidValueType<T>,
-                "The type of the expected value. The type must either be (possibly cv-qualified) void, or meet the "
-                "Destructible requirements (in particular, array and reference types are not allowed).");
+  static_assert(
+      detail::expected_::ValidValueType<T>,
+      "The type of the expected value. The type must either be (possibly cv-qualified) void, or meet the "
+      "Destructible requirements (in particular, array and reference types are not allowed). It's also must "
+      "not be a function, frt::in_place_expected_t type, frt::in_place_unexpected_t type, or frt::unexpected<E> type.");
   static_assert(detail::expected_::ValidErrorType<E>,
                 "The type of the unexpected value. The type must meet the Destructible requirements, and must "
                 "be a valid template argument for frt::unexpected (in particular, arrays, non-object types, and "
-                "cv-qualified types are not allowed).");
+                "cv-qualified types are not allowed). It's also must not be a function, frt::in_place_expected_t type, "
+                "frt::in_place_unexpected_t type, or frt::unexpected<E> type.");
   static_assert(detail::expected_::DifferentTypes<T, E>, "Value and error types must be different.");
 
   using value_type = T;
