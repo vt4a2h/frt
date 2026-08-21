@@ -263,7 +263,7 @@ struct [[nodiscard]] expected
   [[nodiscard]] constexpr bool has_value() const noexcept { return data_.is_left(); }
 
 private:
-  either<T, E> data_;
+  either<value_type, error_type> data_;
 };
 
 } // namespace frt
