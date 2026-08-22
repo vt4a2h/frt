@@ -10,7 +10,6 @@
  */
 #pragma once
 
-#include <c++/16/expected>
 #include <frt/either.hpp>
 
 namespace frt
@@ -101,6 +100,81 @@ struct InPlaceUnexpectedTag
 template <class Err, class E>
 concept ValidUnexpectedError = !std::same_as<bare_t<Err>, unexpected<E>> &&
                                !std::same_as<bare_t<Err>, InPlaceExpectedTag> && std::constructible_from<E, Err>;
+
+template <class T>
+using c_l_ref_t = std::add_lvalue_reference_t<std::add_const_t<bare_t<T>>>;
+
+template <class E, class U, class G>
+concept UnexConstructableFromExpected = std::is_constructible_v<unexpected<E>, expected<U, G> &> ||
+                                        std::is_constructible_v<unexpected<E>, expected<U, G>> ||
+                                        std::is_constructible_v<unexpected<E>, const expected<U, G> &> ||
+                                        std::is_constructible_v<unexpected<E>, const expected<U, G>>;
+
+template <class T, class U, class G>
+concept ConstructableFromExpected =
+    std::is_constructible_v<T, expected<U, G> &> || std::is_constructible_v<T, expected<U, G>> ||
+    std::is_constructible_v<T, const expected<U, G> &> || std::is_constructible_v<T, const expected<U, G>>;
+
+template <class T, class U, class G>
+concept ExpectedConvertableTo =
+    std::is_convertible_v<expected<U, G> &, T> || std::is_convertible_v<expected<U, G>, T> ||
+    std::is_convertible_v<const expected<U, G> &, T> || std::is_convertible_v<const expected<U, G>, T>;
+
+template <class T, class U>
+concept ConstructableFrom = (detail::either_::IsVoid<T> && detail::either_::IsVoid<U>) || std::is_constructible_v<T, U>;
+
+template <class T, class E, class U, class G>
+concept constructable_from_another_expected_impl = // NOTE: directly copied from the doc. Can be simplified
+
+    ConstructableFrom<T, U> &&
+
+    std::is_constructible_v<E, G> &&
+
+    (std::same_as<T, bool> || !(ConstructableFromExpected<T, U, G> || ExpectedConvertableTo<T, U, G>)) &&
+
+    !UnexConstructableFromExpected<E, U, G>;
+
+template <class T, class E, class U, class G>
+concept ConstructableFomAnotherExpectedCref =
+    constructable_from_another_expected_impl<T, E, c_l_ref_t<U>, c_l_ref_t<G>>;
+
+template <class T, class E, class U, class G>
+concept ConstructableFomAnotherExpected = constructable_from_another_expected_impl<T, E, bare_t<U>, bare_t<G>>;
+
+template <class T, class E, class U, class G>
+concept noexcept_from_another_impl =
+    (detail::either_::IsVoid<T> || std::is_nothrow_constructible_v<either<T, E>, in_place_left_t, U>) &&
+    std::is_nothrow_constructible_v<either<T, E>, in_place_right_t, bare_t<G>>;
+
+template <class T, class E, class U, class G>
+concept NoexceptFromaAnotherCref = noexcept_from_another_impl<T, E, c_l_ref_t<U>, G>;
+
+template <class T, class E, class U, class G>
+concept NoexceptFromAnother = noexcept_from_another_impl<T, E, bare_t<U>, G>;
+
+template <class T, class E, class U, class G>
+concept explicit_from_another_impl = !std::is_convertible_v<U, T> || !std::is_convertible_v<G, E>;
+
+template <class T, class E, class U, class G>
+concept ExplicitFromAnotherCref = explicit_from_another_impl<T, E, c_l_ref_t<U>, c_l_ref_t<G>>;
+
+template <class T, class E, class U, class G>
+concept ExplicitFromAnother = explicit_from_another_impl<T, E, bare_t<U>, bare_t<G>>;
+
+// NOTE: it might be nice to have an appropriate ctor in either for this scenario
+template <class T, class E, IsEither Other>
+auto fromOther(Other &&other) -> either<T, E>
+{
+  if (!other.has_value()) {
+    return {in_place_right, std::forward<Other>(other).error()};
+  } else {
+    if constexpr (IsVoid<T> && IsVoid<typename bare_t<Other>::left_t>) {
+      return {in_place_left};
+    } else {
+      return {in_place_left, std::forward<Other>(other).value()};
+    }
+  }
+}
 
 } // namespace detail::expected_
 
@@ -238,11 +312,14 @@ template <class E>
 unexpected(E) -> unexpected<E>;
 
 /*!
- * \brief The class template \p frt::expected<T, E> provides a way to represent either of two values: an expected value
- * of type \p T, or an unexpected value of type \p E. expected is never valueless.
+ * \brief The class template \c frt::expected<T, E> provides a way to represent either of two values: an expected value
+ * of type \p T, or an unexpected value of type \p E. \c frt::expected is never valueless.
  *
- * This class is std::expected<T, E> with extended monadic operations and some extra methods. It's implemented based on
- * frt::either<T, E>.
+ * Further in the documentation, "value" is used as a synonym of the "value of expected type" and "error" as a synonym
+ * of the "value of unexpected type".
+ *
+ * This class is \c std::expected<T, E> with extended monadic operations and some extra methods. It's implemented based
+ * on \c frt::either<T, E>.
  *
  * Read the official documentation for more info: https://en.cppreference.com/cpp/utility/expected.
  */
@@ -271,6 +348,109 @@ struct [[nodiscard]] expected
   template <class U>
   using rebind_error_type = expected<T, U>;
 
+  /*!
+   * \brief The default constructor creates expected with a value.
+   *
+   * The \c value_type must be \c void or be default constructable.
+   */
+  constexpr expected() noexcept(detail::either_::IsVoid<T> || std::is_nothrow_default_constructible_v<T>)
+    requires(detail::either_::IsVoid<T> || std::is_default_constructible_v<T>)
+      : data_(in_place_left)
+  {
+  }
+
+  constexpr expected(const expected &) noexcept(std::is_nothrow_copy_constructible_v<either<T, E>>)
+    requires(std::is_copy_constructible_v<either<T, E>>)
+  = default;
+
+  constexpr expected(expected &&) noexcept(std::is_nothrow_move_constructible_v<either<T, E>>)
+    requires(std::is_move_constructible_v<either<T, E>>)
+  = default;
+
+  template <class U, class G>
+  constexpr explicit(detail::expected_::ExplicitFromAnotherCref<T, E, U, G>)
+      expected(const expected<U, G> &other) noexcept(detail::expected_::NoexceptFromaAnotherCref<T, E, U, G>)
+    requires(detail::expected_::ConstructableFomAnotherExpectedCref<T, E, U, G>)
+      : data_(detail::expected_::fromOther<T, E>(other))
+  {
+  }
+
+  template <class U, class G>
+  constexpr explicit(detail::expected_::ExplicitFromAnother<T, E, U, G>)
+      expected(expected<U, G> &&other) noexcept(detail::expected_::NoexceptFromaAnotherCref<T, E, U, G>)
+    requires(detail::expected_::ConstructableFomAnotherExpected<T, E, U, G>)
+      : data_(detail::expected_::fromOther<T, E>(std::move(other)))
+  {
+  }
+
+  template <class U = std::remove_cv_t<T>>
+    requires(detail::either_::IsNotVoid<T> && !std::same_as<detail::either_::bare_t<U>, in_place_expected_t> &&
+             !std::same_as<detail::either_::bare_t<U>, expected> && std::is_constructible_v<T, U> && !IsUnexpected<U> &&
+             (!std::same_as<value_type, bool> || !IsExpected<U>))
+  constexpr explicit(!std::is_convertible_v<U, T>)
+      expected(U &&v) noexcept(std::is_nothrow_constructible_v<either<T, E>, in_place_left_t, U>)
+      : data_(in_place_left, std::forward<U>(v))
+  {
+  }
+
+  template <class G>
+  constexpr explicit(!std::is_convertible_v<const G &, E>) expected(const unexpected<G> &e) noexcept(
+      std::is_nothrow_constructible_v<either<T, E>, in_place_right_t, const G &>)
+      : data_(in_place_right, e.error())
+  {
+  }
+
+  template <class G>
+  constexpr explicit(!std::is_convertible_v<G, E>)
+      expected(unexpected<G> &&e) noexcept(std::is_nothrow_constructible_v<either<T, E>, in_place_right_t, G &&>)
+      : data_(in_place_right, std::move(e).error())
+  {
+  }
+
+  template <class... Args>
+    requires(detail::either_::IsNotVoid<T>)
+  constexpr explicit expected(in_place_expected_t, Args &&...args) noexcept(
+      std::is_nothrow_constructible_v<either<T, E>, in_place_left_t, Args...>)
+      : data_(in_place_left, std::forward<Args>(args)...)
+  {
+  }
+
+  template <class U, class... Args>
+    requires(detail::either_::IsNotVoid<T>)
+  constexpr explicit expected(in_place_expected_t, std::initializer_list<U> ilist, Args &&...args) noexcept(
+      std::is_nothrow_constructible_v<either<T, E>, in_place_left_t, std::initializer_list<U> &, Args...>)
+      : data_(in_place_left, ilist, std::forward<Args>(args)...)
+  {
+  }
+
+  constexpr explicit expected(in_place_expected_t) noexcept(
+      std::is_nothrow_constructible_v<either<T, E>, in_place_left_t>)
+    requires(detail::either_::IsVoid<T>)
+      : data_(in_place_left)
+  {
+  }
+
+  template <class... Args>
+  constexpr explicit expected(in_place_unexpected_t, Args &&...args) noexcept(
+      std::is_nothrow_constructible_v<either<T, E>, in_place_right_t, Args...>)
+      : data_(in_place_right, std::forward<Args>(args)...)
+  {
+  }
+
+  template <class U, class... Args>
+  constexpr explicit expected(in_place_unexpected_t, std::initializer_list<U> ilist, Args &&...args) noexcept(
+      std::is_nothrow_constructible_v<either<T, E>, in_place_right_t, std::initializer_list<U> &, Args...>)
+      : data_(in_place_right, ilist, std::forward<Args>(args)...)
+  {
+  }
+
+  expected &operator=(const expected &) noexcept(std::is_nothrow_copy_assignable_v<either<T, E>>)
+    requires(std::is_copy_assignable_v<either<T, E>>)
+  = default;
+  expected &operator=(expected &&) noexcept(std::is_nothrow_move_assignable_v<either<T, E>>)
+    requires(std::is_move_assignable_v<either<T, E>>)
+  = default;
+
   //! Get value. Pre-condition: it must contain value.
   template <class Self>
     requires(detail::expected_::IsNotVoid<value_type>)
@@ -294,7 +474,7 @@ struct [[nodiscard]] expected
   [[nodiscard]] constexpr bool has_value() const noexcept { return data_.is_left(); }
 
 private:
-  either<value_type, error_type> data_;
+  either<T, E> data_;
 };
 
 } // namespace frt
