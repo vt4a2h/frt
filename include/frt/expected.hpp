@@ -10,6 +10,7 @@
  */
 #pragma once
 
+#include <c++/16/expected>
 #include <frt/either.hpp>
 
 namespace frt
@@ -263,6 +264,12 @@ struct [[nodiscard]] expected
   using value_type = T;
   using error_type = E;
   using unexpected_type = unexpected<E>;
+
+  template <class U>
+  using rebind_value_type = expected<U, E>;
+
+  template <class U>
+  using rebind_error_type = expected<T, U>;
 
   //! Get value. Pre-condition: it must contain value.
   template <class Self>
