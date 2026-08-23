@@ -359,14 +359,17 @@ struct [[nodiscard]] expected
   {
   }
 
+  //! Create from another `expected` by copy.
   constexpr expected(const expected &) noexcept(std::is_nothrow_copy_constructible_v<either<T, E>>)
     requires(std::is_copy_constructible_v<either<T, E>>)
   = default;
 
+  //! Create from another `expected` by move.
   constexpr expected(expected &&) noexcept(std::is_nothrow_move_constructible_v<either<T, E>>)
     requires(std::is_move_constructible_v<either<T, E>>)
   = default;
 
+  //! Create from another `expected` by copy.
   template <class U, class G>
   constexpr explicit(detail::expected_::ExplicitFromAnotherCref<T, E, U, G>)
       expected(const expected<U, G> &other) noexcept(detail::expected_::NoexceptFromaAnotherCref<T, E, U, G>)
@@ -375,6 +378,7 @@ struct [[nodiscard]] expected
   {
   }
 
+  //! Create from another `expected` by move.
   template <class U, class G>
   constexpr explicit(detail::expected_::ExplicitFromAnother<T, E, U, G>)
       expected(expected<U, G> &&other) noexcept(detail::expected_::NoexceptFromaAnotherCref<T, E, U, G>)
@@ -383,6 +387,7 @@ struct [[nodiscard]] expected
   {
   }
 
+  //! Create from a value.
   template <class U = std::remove_cv_t<T>>
     requires(detail::either_::IsNotVoid<T> && !std::same_as<detail::either_::bare_t<U>, in_place_expected_t> &&
              !std::same_as<detail::either_::bare_t<U>, expected> && std::is_constructible_v<T, U> && !IsUnexpected<U> &&
@@ -393,6 +398,7 @@ struct [[nodiscard]] expected
   {
   }
 
+  //! Create from `unexpected` by copy.
   template <class G>
   constexpr explicit(!std::is_convertible_v<const G &, E>) expected(const unexpected<G> &e) noexcept(
       std::is_nothrow_constructible_v<either<T, E>, in_place_right_t, const G &>)
@@ -400,6 +406,7 @@ struct [[nodiscard]] expected
   {
   }
 
+  //! Create from `unexpected` by move.
   template <class G>
   constexpr explicit(!std::is_convertible_v<G, E>)
       expected(unexpected<G> &&e) noexcept(std::is_nothrow_constructible_v<either<T, E>, in_place_right_t, G &&>)
@@ -407,6 +414,7 @@ struct [[nodiscard]] expected
   {
   }
 
+  //! Create from the expected value in-place (with arguments).
   template <class... Args>
     requires(detail::either_::IsNotVoid<T>)
   constexpr explicit expected(in_place_expected_t, Args &&...args) noexcept(
@@ -415,6 +423,7 @@ struct [[nodiscard]] expected
   {
   }
 
+  //! Create from the expected value in-place (with an initializer list and arguments).
   template <class U, class... Args>
     requires(detail::either_::IsNotVoid<T>)
   constexpr explicit expected(in_place_expected_t, std::initializer_list<U> ilist, Args &&...args) noexcept(
@@ -423,6 +432,7 @@ struct [[nodiscard]] expected
   {
   }
 
+  //! Create from the expected value in-place (void specialization).
   constexpr explicit expected(in_place_expected_t) noexcept(
       std::is_nothrow_constructible_v<either<T, E>, in_place_left_t>)
     requires(detail::either_::IsVoid<T>)
@@ -430,6 +440,7 @@ struct [[nodiscard]] expected
   {
   }
 
+  //! Create from the unexpected value in-place (with arguments).
   template <class... Args>
   constexpr explicit expected(in_place_unexpected_t, Args &&...args) noexcept(
       std::is_nothrow_constructible_v<either<T, E>, in_place_right_t, Args...>)
@@ -437,6 +448,7 @@ struct [[nodiscard]] expected
   {
   }
 
+  //! Create from the unexpected value in-place (with an initializer list and arguments).
   template <class U, class... Args>
   constexpr explicit expected(in_place_unexpected_t, std::initializer_list<U> ilist, Args &&...args) noexcept(
       std::is_nothrow_constructible_v<either<T, E>, in_place_right_t, std::initializer_list<U> &, Args...>)
@@ -444,9 +456,12 @@ struct [[nodiscard]] expected
   {
   }
 
+  //! Assign from another `expected` by copy.
   expected &operator=(const expected &) noexcept(std::is_nothrow_copy_assignable_v<either<T, E>>)
     requires(std::is_copy_assignable_v<either<T, E>>)
   = default;
+
+  //! Assign from another `expected` by move.
   expected &operator=(expected &&) noexcept(std::is_nothrow_move_assignable_v<either<T, E>>)
     requires(std::is_move_assignable_v<either<T, E>>)
   = default;
