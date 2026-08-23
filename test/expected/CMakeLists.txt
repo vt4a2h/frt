@@ -1,4 +1,5 @@
 frt_add_test(expected_create)
+frt_add_test(expected_create_constexpr)
 frt_add_test(expected_concepts)
 
 frt_add_test(unexpected_concepts)

@@ -76,6 +76,12 @@ inline constexpr bool is_expected_ = false;
 template <class T, class E>
 inline constexpr bool is_expected_<expected<T, E>> = true;
 
+template <class T>
+concept IsExpected = is_expected_<bare_t<T>>;
+
+template <class T>
+concept IsUnexpected = is_unexpected_<bare_t<T>>;
+
 template <class T, class E>
 concept DifferentTypes = !std::same_as<bare_t<T>, bare_t<E>>;
 
@@ -105,23 +111,29 @@ template <class T>
 using c_l_ref_t = std::add_lvalue_reference_t<std::add_const_t<bare_t<T>>>;
 
 template <class E, class U, class G>
-concept UnexConstructableFromExpected = std::is_constructible_v<unexpected<E>, expected<U, G> &> ||
-                                        std::is_constructible_v<unexpected<E>, expected<U, G>> ||
-                                        std::is_constructible_v<unexpected<E>, const expected<U, G> &> ||
-                                        std::is_constructible_v<unexpected<E>, const expected<U, G>>;
+concept UnexConstructableFromExpected =
+    std::is_constructible_v<unexpected<bare_t<E>>, expected<bare_t<U>, bare_t<G>> &> ||
+    std::is_constructible_v<unexpected<bare_t<E>>, expected<bare_t<U>, bare_t<G>>> ||
+    std::is_constructible_v<unexpected<bare_t<E>>, const expected<bare_t<U>, bare_t<G>> &> ||
+    std::is_constructible_v<unexpected<bare_t<E>>, const expected<bare_t<U>, bare_t<G>>>;
 
 template <class T, class U, class G>
-concept ConstructableFromExpected =
-    std::is_constructible_v<T, expected<U, G> &> || std::is_constructible_v<T, expected<U, G>> ||
-    std::is_constructible_v<T, const expected<U, G> &> || std::is_constructible_v<T, const expected<U, G>>;
+concept ConstructableFromExpected = std::is_constructible_v<T, expected<bare_t<U>, bare_t<G>> &> ||
+                                    std::is_constructible_v<T, expected<bare_t<U>, bare_t<G>>> ||
+                                    std::is_constructible_v<T, const expected<bare_t<U>, bare_t<G>> &> ||
+                                    std::is_constructible_v<T, const expected<bare_t<U>, bare_t<G>>>;
 
 template <class T, class U, class G>
-concept ExpectedConvertableTo =
-    std::is_convertible_v<expected<U, G> &, T> || std::is_convertible_v<expected<U, G>, T> ||
-    std::is_convertible_v<const expected<U, G> &, T> || std::is_convertible_v<const expected<U, G>, T>;
+concept ExpectedConvertableTo = std::is_convertible_v<expected<bare_t<U>, bare_t<G>> &, T> ||
+                                std::is_convertible_v<expected<bare_t<U>, bare_t<G>>, T> ||
+                                std::is_convertible_v<const expected<bare_t<U>, bare_t<G>> &, T> ||
+                                std::is_convertible_v<const expected<bare_t<U>, bare_t<G>>, T>;
 
 template <class T, class U>
 concept ConstructableFrom = (detail::either_::IsVoid<T> && detail::either_::IsVoid<U>) || std::is_constructible_v<T, U>;
+
+template <class T, class U>
+concept ConvertibleTo = (detail::either_::IsVoid<T> && detail::either_::IsVoid<U>) || std::is_convertible_v<U, T>;
 
 template <class T, class E, class U, class G>
 concept constructable_from_another_expected_impl = // NOTE: directly copied from the doc. Can be simplified
@@ -135,25 +147,25 @@ concept constructable_from_another_expected_impl = // NOTE: directly copied from
     !UnexConstructableFromExpected<E, U, G>;
 
 template <class T, class E, class U, class G>
-concept ConstructableFomAnotherExpectedCref =
+concept ConstructableFromAnotherExpectedCref =
     constructable_from_another_expected_impl<T, E, c_l_ref_t<U>, c_l_ref_t<G>>;
 
 template <class T, class E, class U, class G>
-concept ConstructableFomAnotherExpected = constructable_from_another_expected_impl<T, E, bare_t<U>, bare_t<G>>;
+concept ConstructableFromAnotherExpected = constructable_from_another_expected_impl<T, E, bare_t<U>, bare_t<G>>;
 
 template <class T, class E, class U, class G>
 concept noexcept_from_another_impl =
     (detail::either_::IsVoid<T> || std::is_nothrow_constructible_v<either<T, E>, in_place_left_t, U>) &&
-    std::is_nothrow_constructible_v<either<T, E>, in_place_right_t, bare_t<G>>;
+    std::is_nothrow_constructible_v<either<T, E>, in_place_right_t, G>;
 
 template <class T, class E, class U, class G>
-concept NoexceptFromaAnotherCref = noexcept_from_another_impl<T, E, c_l_ref_t<U>, G>;
+concept NoexceptFromAnotherCref = noexcept_from_another_impl<T, E, c_l_ref_t<U>, c_l_ref_t<G>>;
 
 template <class T, class E, class U, class G>
 concept NoexceptFromAnother = noexcept_from_another_impl<T, E, bare_t<U>, G>;
 
 template <class T, class E, class U, class G>
-concept explicit_from_another_impl = !std::is_convertible_v<U, T> || !std::is_convertible_v<G, E>;
+concept explicit_from_another_impl = !ConvertibleTo<T, U> || !std::is_convertible_v<G, E>;
 
 template <class T, class E, class U, class G>
 concept ExplicitFromAnotherCref = explicit_from_another_impl<T, E, c_l_ref_t<U>, c_l_ref_t<G>>;
@@ -162,13 +174,13 @@ template <class T, class E, class U, class G>
 concept ExplicitFromAnother = explicit_from_another_impl<T, E, bare_t<U>, bare_t<G>>;
 
 // NOTE: it might be nice to have an appropriate ctor in either for this scenario
-template <class T, class E, IsEither Other>
-auto fromOther(Other &&other) -> either<T, E>
+template <class T, class E, IsExpected Other>
+constexpr auto fromOther(Other &&other) -> either<T, E>
 {
   if (!other.has_value()) {
     return {in_place_right, std::forward<Other>(other).error()};
   } else {
-    if constexpr (IsVoid<T> && IsVoid<typename bare_t<Other>::left_t>) {
+    if constexpr (IsVoid<T> && IsVoid<typename bare_t<Other>::value_type>) {
       return {in_place_left};
     } else {
       return {in_place_left, std::forward<Other>(other).value()};
@@ -187,10 +199,10 @@ inline constexpr detail::expected_::InPlaceUnexpectedTag in_place_unexpected{
     detail::expected_::InPlaceUnexpectedTag::Secret{}};
 
 template <class T>
-concept IsExpected = detail::expected_::is_expected_<detail::either_::bare_t<T>>;
+concept IsExpected = detail::expected_::IsExpected<T>;
 
 template <class T>
-concept IsUnexpected = detail::expected_::is_unexpected_<detail::either_::bare_t<T>>;
+concept IsUnexpected = detail::expected_::IsUnexpected<T>;
 
 /*!
  * \brief The class template frt::unexpected represents an unexpected value stored in frt::expected.
@@ -348,11 +360,7 @@ struct [[nodiscard]] expected
   template <class U>
   using rebind_error_type = expected<T, U>;
 
-  /*!
-   * \brief The default constructor creates expected with a value.
-   *
-   * The \c value_type must be \c void or be default constructable.
-   */
+  //! Create with a default value.
   constexpr expected() noexcept(detail::either_::IsVoid<T> || std::is_nothrow_default_constructible_v<T>)
     requires(detail::either_::IsVoid<T> || std::is_default_constructible_v<T>)
       : data_(in_place_left)
@@ -361,19 +369,19 @@ struct [[nodiscard]] expected
 
   //! Create from another `expected` by copy.
   constexpr expected(const expected &) noexcept(std::is_nothrow_copy_constructible_v<either<T, E>>)
-    requires(std::is_copy_constructible_v<either<T, E>>)
+    requires((detail::either_::IsVoid<T> || std::is_copy_constructible_v<T>) && std::is_copy_constructible_v<E>)
   = default;
 
   //! Create from another `expected` by move.
   constexpr expected(expected &&) noexcept(std::is_nothrow_move_constructible_v<either<T, E>>)
-    requires(std::is_move_constructible_v<either<T, E>>)
+    requires((detail::either_::IsVoid<T> || std::is_move_constructible_v<T>) && std::is_move_constructible_v<E>)
   = default;
 
   //! Create from another `expected` by copy.
   template <class U, class G>
   constexpr explicit(detail::expected_::ExplicitFromAnotherCref<T, E, U, G>)
-      expected(const expected<U, G> &other) noexcept(detail::expected_::NoexceptFromaAnotherCref<T, E, U, G>)
-    requires(detail::expected_::ConstructableFomAnotherExpectedCref<T, E, U, G>)
+      expected(const expected<U, G> &other) noexcept(detail::expected_::NoexceptFromAnotherCref<T, E, U, G>)
+    requires(detail::expected_::ConstructableFromAnotherExpectedCref<T, E, U, G>)
       : data_(detail::expected_::fromOther<T, E>(other))
   {
   }
@@ -381,8 +389,8 @@ struct [[nodiscard]] expected
   //! Create from another `expected` by move.
   template <class U, class G>
   constexpr explicit(detail::expected_::ExplicitFromAnother<T, E, U, G>)
-      expected(expected<U, G> &&other) noexcept(detail::expected_::NoexceptFromaAnotherCref<T, E, U, G>)
-    requires(detail::expected_::ConstructableFomAnotherExpected<T, E, U, G>)
+      expected(expected<U, G> &&other) noexcept(detail::expected_::NoexceptFromAnother<T, E, U, G>)
+    requires(detail::expected_::ConstructableFromAnotherExpected<T, E, U, G>)
       : data_(detail::expected_::fromOther<T, E>(std::move(other)))
   {
   }
@@ -399,7 +407,8 @@ struct [[nodiscard]] expected
   }
 
   //! Create from `unexpected` by copy.
-  template <class G>
+  template <class G = E>
+    requires(std::is_constructible_v<E, const G &>)
   constexpr explicit(!std::is_convertible_v<const G &, E>) expected(const unexpected<G> &e) noexcept(
       std::is_nothrow_constructible_v<either<T, E>, in_place_right_t, const G &>)
       : data_(in_place_right, e.error())
@@ -407,7 +416,8 @@ struct [[nodiscard]] expected
   }
 
   //! Create from `unexpected` by move.
-  template <class G>
+  template <class G = E>
+    requires(std::is_constructible_v<E, G>)
   constexpr explicit(!std::is_convertible_v<G, E>)
       expected(unexpected<G> &&e) noexcept(std::is_nothrow_constructible_v<either<T, E>, in_place_right_t, G &&>)
       : data_(in_place_right, std::move(e).error())
@@ -416,7 +426,7 @@ struct [[nodiscard]] expected
 
   //! Create from the expected value in-place (with arguments).
   template <class... Args>
-    requires(detail::either_::IsNotVoid<T>)
+    requires(detail::either_::IsNotVoid<T> && std::is_constructible_v<T, Args...>)
   constexpr explicit expected(in_place_expected_t, Args &&...args) noexcept(
       std::is_nothrow_constructible_v<either<T, E>, in_place_left_t, Args...>)
       : data_(in_place_left, std::forward<Args>(args)...)
@@ -425,7 +435,7 @@ struct [[nodiscard]] expected
 
   //! Create from the expected value in-place (with an initializer list and arguments).
   template <class U, class... Args>
-    requires(detail::either_::IsNotVoid<T>)
+    requires(detail::either_::IsNotVoid<T> && std::is_constructible_v<T, std::initializer_list<U> &, Args...>)
   constexpr explicit expected(in_place_expected_t, std::initializer_list<U> ilist, Args &&...args) noexcept(
       std::is_nothrow_constructible_v<either<T, E>, in_place_left_t, std::initializer_list<U> &, Args...>)
       : data_(in_place_left, ilist, std::forward<Args>(args)...)
@@ -442,6 +452,7 @@ struct [[nodiscard]] expected
 
   //! Create from the unexpected value in-place (with arguments).
   template <class... Args>
+    requires(std::is_constructible_v<E, Args...>)
   constexpr explicit expected(in_place_unexpected_t, Args &&...args) noexcept(
       std::is_nothrow_constructible_v<either<T, E>, in_place_right_t, Args...>)
       : data_(in_place_right, std::forward<Args>(args)...)
@@ -450,6 +461,7 @@ struct [[nodiscard]] expected
 
   //! Create from the unexpected value in-place (with an initializer list and arguments).
   template <class U, class... Args>
+    requires(std::is_constructible_v<E, std::initializer_list<U> &, Args...>)
   constexpr explicit expected(in_place_unexpected_t, std::initializer_list<U> ilist, Args &&...args) noexcept(
       std::is_nothrow_constructible_v<either<T, E>, in_place_right_t, std::initializer_list<U> &, Args...>)
       : data_(in_place_right, ilist, std::forward<Args>(args)...)
