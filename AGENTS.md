@@ -59,6 +59,8 @@
 - Use long strings as test data. For example, "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod
   tempor incididunt ut labore et dolore magna aliqua".
 - Always build and run all tests.
+- Ensure const-correctness. All local variables that are not modified must be marked as `const`.
+- When a type can be deduced suing CTAD, don't add the type explicitly.
 
 ## Formatting
 
