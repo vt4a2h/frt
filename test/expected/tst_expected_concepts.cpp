@@ -183,6 +183,30 @@ TEMPLATE_TEST_CASE_SIG("NoexceptFromAnother", "[expected]",
   STATIC_REQUIRE(frt::detail::expected_::NoexceptFromAnother<T, E, U, G> == Valid);
 }
 
+TEMPLATE_TEST_CASE_SIG("same_error_type", "[expected]", ((class E1, class E2, bool Valid), E1, E2, Valid),
+                       (frt::expected<int, double>, frt::expected<int, double>, true),
+                       (frt::expected<int, double>, frt::expected<std::string, double>, true),
+                       (frt::expected<int, double>, const frt::expected<std::vector<int>, double> &, true),
+                       (frt::expected<int, double> &, frt::expected<void, double> &&, true),
+                       (frt::expected<int, double>, frt::expected<std::string, int>, false),
+                       (frt::expected<int, double>, frt::expected<int, std::string>, false))
+{
+  STATIC_REQUIRE(frt::detail::expected_::same_error_type<E1, E2> == Valid);
+}
+
+TEMPLATE_TEST_CASE_SIG("same_value_type", "[expected]", ((class E1, class E2, bool Valid), E1, E2, Valid),
+                       (frt::expected<int, double>, frt::expected<int, double>, true),
+                       (frt::expected<int, double>, frt::expected<int, std::string>, true),
+                       (frt::expected<int, double>, const frt::expected<int, std::vector<double>> &, true),
+                       (frt::expected<void, int>, frt::expected<void, std::string>, true),
+                       (frt::expected<int, double>, frt::expected<short, double>, false),
+                       (frt::expected<int, double>, frt::expected<std::string, double>, false),
+                       (frt::expected<void, int>, frt::expected<int, std::string>, false),
+                       (frt::expected<int, double>, frt::expected<void, double>, false))
+{
+  STATIC_REQUIRE(frt::detail::expected_::same_value_type<E1, E2> == Valid);
+}
+
 TEST_CASE("expected constructors and concepts", "[expected]")
 {
   SECTION("default constructible for int value")

@@ -21,7 +21,7 @@
 namespace frt
 {
 
-namespace detail::either_
+namespace detail::common_
 {
 
 template <class T>
@@ -40,47 +40,6 @@ concept IsVoid = std::is_void_v<bare_t<T>>;
 template <class T>
 concept IsNotVoid = !IsVoid<T>;
 
-template <class T>
-concept ValidType = requires {
-  requires std::destructible<bare_t<T>> || IsVoid<T>;
-  requires !std::is_reference_v<T>;
-  requires !std::is_array_v<bare_t<T>>;
-};
-
-} // namespace detail::either_
-
-template <detail::either_::ValidType Left, detail::either_::ValidType Right>
-struct either;
-
-namespace detail::either_
-{
-template <class T>
-inline constexpr bool is_either_ = false;
-
-template <ValidType L, ValidType R>
-inline constexpr bool is_either_<either<L, R>> = true;
-
-template <class T>
-concept IsNotEither = !is_either_<bare_t<T>>;
-
-struct InPlaceLeftTag
-{
-  struct Secret
-  {
-    constexpr Secret() noexcept = default;
-  };
-  constexpr explicit InPlaceLeftTag(Secret) noexcept {}
-};
-
-struct InPlaceRightTag
-{
-  struct Secret
-  {
-    constexpr Secret() noexcept = default;
-  };
-  constexpr explicit InPlaceRightTag(Secret) noexcept {}
-};
-
 struct UnwrappedTag
 {
   struct Secret
@@ -91,33 +50,7 @@ struct UnwrappedTag
 };
 
 template <class T>
-concept is_tag_ = std::same_as<T, InPlaceLeftTag> || std::same_as<T, InPlaceRightTag>;
-
-template <class U, class T>
-concept ValidConstructableFrom = requires {
-  requires std::constructible_from<T, U>;
-  requires !is_either_<bare_t<U>>;
-  requires !is_tag_<bare_t<U>>;
-};
-
-template <class T>
-concept IsHashable = requires(T v) {
-  { std::hash<T>{}(v) } -> std::same_as<std::size_t>;
-};
-
-template <class L1, class R1, class L2, class R2>
-concept EqualityComparable = std::equality_comparable_with<L1, L2> && std::equality_comparable_with<R1, R2>;
-
-template <class L1, class R1, class L2, class R2>
-concept ThreeWayComparable = std::three_way_comparable_with<L1, L2> && std::three_way_comparable_with<R1, R2>;
-
-inline constexpr std::size_t void_hash{};
-
-template <class T>
-using SelectedType = std::conditional_t<IsVoid<T>, Void, bare_t<T>>;
-
-template <class T>
-inline constexpr bool is_unwrapped = std::same_as<std::remove_cvref_t<T>, UnwrappedTag>;
+inline constexpr bool is_unwrapped = std::same_as<bare_t<T>, UnwrappedTag>;
 
 template <class... Args>
 constexpr inline std::size_t unwrapped_count = (std::size_t{} + ... + static_cast<std::size_t>(is_unwrapped<Args>));
@@ -165,13 +98,6 @@ struct invoke_result<F, T, Args...>
 template <class F, class T, class... Args>
 using invoke_result_t = invoke_result<F, T, Args...>::type;
 
-template <class F, class T, class... Args>
-[[nodiscard]] constexpr auto
-invoke_with_extra_args(F &&f, T &&t, Args &&...args) noexcept(is_nothrow_invocable_with_extra_args<F, T, Args...>)
-{
-  return std::invoke(f, std::forward<T>(t), std::forward<Args>(args)...);
-}
-
 template <class T, class Arg>
 constexpr auto &&forward(T &&t, Arg &&arg) noexcept
 {
@@ -184,20 +110,19 @@ constexpr auto &&forward(T &&t, Arg &&arg) noexcept
 }
 
 template <class F, class T, class... Args>
+[[nodiscard]] constexpr auto
+invoke_with_extra_args(F &&f, T &&t, Args &&...args) noexcept(is_nothrow_invocable_with_extra_args<F, T, Args...>)
+{
+  return std::invoke(f, std::forward<T>(t), std::forward<Args>(args)...);
+}
+
+template <class F, class T, class... Args>
   requires(contains_unwrapped<Args...>)
 [[nodiscard]] constexpr auto
 invoke_with_extra_args(F &&f, T &&t, Args &&...args) noexcept(is_nothrow_invocable_with_extra_args<F, T, Args...>)
 {
   return std::invoke(f, forward(std::forward<T>(t), std::forward<Args>(args))...);
 }
-
-template <class E1, class E2>
-constexpr inline bool same_right_alternative =
-    std::same_as<typename std::remove_cvref_t<E1>::right_t, typename std::remove_cvref_t<E2>::right_t>;
-
-template <class E1, class E2>
-constexpr inline bool same_left_alternative =
-    std::same_as<typename std::remove_cvref_t<E1>::left_t, typename std::remove_cvref_t<E2>::left_t>;
 
 template <class F, class Arg>
 concept InvocableV = (IsVoid<Arg> && std::invocable<F>) || std::invocable<F, Arg>;
@@ -237,6 +162,86 @@ struct ForwardAlternative<Self, void>
 template <class Self, class T>
 using ForwardAlternativeT = ForwardAlternative<Self, T>::type;
 
+} // namespace detail::common_
+
+namespace detail::either_
+{
+
+using namespace detail::common_;
+
+template <class T>
+concept ValidType = requires {
+  requires std::destructible<bare_t<T>> || IsVoid<T>;
+  requires !std::is_reference_v<T>;
+  requires !std::is_array_v<bare_t<T>>;
+};
+
+} // namespace detail::either_
+
+template <detail::either_::ValidType Left, detail::either_::ValidType Right>
+struct either;
+
+namespace detail::either_
+{
+template <class T>
+inline constexpr bool is_either_ = false;
+
+template <ValidType L, ValidType R>
+inline constexpr bool is_either_<either<L, R>> = true;
+
+template <class T>
+concept IsNotEither = !is_either_<bare_t<T>>;
+
+struct InPlaceLeftTag
+{
+  struct Secret
+  {
+    constexpr Secret() noexcept = default;
+  };
+  constexpr explicit InPlaceLeftTag(Secret) noexcept {}
+};
+
+struct InPlaceRightTag
+{
+  struct Secret
+  {
+    constexpr Secret() noexcept = default;
+  };
+  constexpr explicit InPlaceRightTag(Secret) noexcept {}
+};
+
+template <class T>
+concept is_tag_ = std::same_as<T, InPlaceLeftTag> || std::same_as<T, InPlaceRightTag>;
+
+template <class U, class T>
+concept ValidConstructableFrom = requires {
+  requires std::constructible_from<T, U>;
+  requires !is_either_<bare_t<U>>;
+  requires !is_tag_<bare_t<U>>;
+};
+
+template <class T>
+concept IsHashable = requires(T v) {
+  { std::hash<T>{}(v) } -> std::same_as<std::size_t>;
+};
+
+template <class L1, class R1, class L2, class R2>
+concept EqualityComparable = std::equality_comparable_with<L1, L2> && std::equality_comparable_with<R1, R2>;
+
+template <class L1, class R1, class L2, class R2>
+concept ThreeWayComparable = std::three_way_comparable_with<L1, L2> && std::three_way_comparable_with<R1, R2>;
+
+inline constexpr std::size_t void_hash{};
+
+template <class T>
+using SelectedType = std::conditional_t<IsVoid<T>, Void, bare_t<T>>;
+
+template <class E1, class E2>
+constexpr inline bool same_right_alternative = std::same_as<typename bare_t<E1>::right_t, typename bare_t<E2>::right_t>;
+
+template <class E1, class E2>
+constexpr inline bool same_left_alternative = std::same_as<typename bare_t<E1>::left_t, typename bare_t<E2>::left_t>;
+
 template <class T, class CharT>
 concept FormattableAlternative = IsVoid<T> || std::formattable<T, CharT>;
 
@@ -244,7 +249,7 @@ concept FormattableAlternative = IsVoid<T> || std::formattable<T, CharT>;
 
 using in_place_left_t = detail::either_::InPlaceLeftTag;
 using in_place_right_t = detail::either_::InPlaceRightTag;
-using unwrapped_t = detail::either_::UnwrappedTag;
+using unwrapped_t = detail::common_::UnwrappedTag;
 
 inline constexpr in_place_left_t in_place_left{in_place_left_t::Secret{}};
 inline constexpr in_place_right_t in_place_right{in_place_right_t::Secret{}};
@@ -796,7 +801,7 @@ public:
                   "Consider using frt::unwrapped if an argument of left_t shouldn't go first.");
 
     using func_ret_t = detail::either_::invoke_result_t<F, fwd_t, Args...>;
-    using ret_t = either<std::remove_cvref_t<func_ret_t>, right_t>;
+    using ret_t = either<detail::common_::bare_t<func_ret_t>, right_t>;
 
     if (self.is_left()) {
       if constexpr (detail::either_::IsVoid<func_ret_t>) {
@@ -849,7 +854,7 @@ public:
     static_assert(std::is_invocable_v<F, Args...>, "The function must be invocable with all extra arguments.");
 
     using func_ret_t = std::invoke_result_t<F, Args...>;
-    using ret_t = either<std::remove_cvref_t<func_ret_t>, right_t>;
+    using ret_t = either<detail::common_::bare_t<func_ret_t>, right_t>;
 
     if (self.is_left()) {
       if constexpr (detail::either_::IsVoid<func_ret_t>) {
@@ -911,7 +916,7 @@ public:
                   "Consider using frt::unwrapped if an argument of right_t shouldn't go first.");
 
     using func_ret_t = detail::either_::invoke_result_t<F, fwd_t, Args...>;
-    using ret_t = either<left_t, std::remove_cvref_t<func_ret_t>>;
+    using ret_t = either<left_t, detail::common_::bare_t<func_ret_t>>;
 
     if (self.is_right()) {
       if constexpr (detail::either_::IsVoid<func_ret_t>) {
@@ -964,7 +969,7 @@ public:
     static_assert(std::is_invocable_v<F, Args...>, "The function must be invocable with all extra arguments.");
 
     using func_ret_t = std::invoke_result_t<F, Args...>;
-    using ret_t = either<left_t, std::remove_cvref_t<func_ret_t>>;
+    using ret_t = either<left_t, detail::common_::bare_t<func_ret_t>>;
 
     if (self.is_right()) {
       if constexpr (detail::either_::IsVoid<func_ret_t>) {

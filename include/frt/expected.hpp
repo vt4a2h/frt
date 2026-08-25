@@ -21,9 +21,13 @@ struct unexpected;
 namespace detail::expected_
 {
 
-using either_::bare_t;
-using either_::IsNotVoid;
-using either_::IsVoid;
+using namespace detail::common_;
+
+template <class E1, class E2>
+constexpr inline bool same_error_type = std::same_as<typename bare_t<E1>::error_type, typename bare_t<E2>::error_type>;
+
+template <class E1, class E2>
+constexpr inline bool same_value_type = std::same_as<typename bare_t<E1>::value_type, typename bare_t<E2>::value_type>;
 
 struct InPlaceExpectedTag;
 struct InPlaceUnexpectedTag;
@@ -478,29 +482,588 @@ struct [[nodiscard]] expected
     requires(std::is_move_assignable_v<either<T, E>>)
   = default;
 
-  //! Get value. Pre-condition: it must contain value.
-  template <class Self>
-    requires(detail::expected_::IsNotVoid<value_type>)
-  [[nodiscard]] constexpr auto &&value(this Self &&self)
+  //! Access the contained value through a pointer. Pre-condition: it must contain a value.
+  [[nodiscard]] constexpr const T *operator->() const noexcept
+    requires(detail::expected_::IsNotVoid<T>)
   {
+    FRT_INTERNAL_ASSERT(has_value(), "must contain value");
+    return std::addressof(data_.left());
+  }
+
+  //! Access the contained value through a pointer. Pre-condition: it must contain a value.
+  [[nodiscard]] constexpr T *operator->() noexcept
+    requires(detail::expected_::IsNotVoid<T>)
+  {
+    FRT_INTERNAL_ASSERT(has_value(), "must contain value");
+    return std::addressof(data_.left());
+  }
+
+  //! Access the contained value. Pre-condition: it must contain a value.
+  template <class Self>
+    requires(detail::expected_::IsNotVoid<T>)
+  [[nodiscard]] constexpr auto &&operator*(this Self &&self) noexcept
+  {
+    FRT_INTERNAL_ASSERT(self.has_value(), "must contain value");
     return std::forward_like<Self>(self.data_).left();
   }
 
-  //! Get error. Pre-condition: it must contain error.
+  //! Access the contained value (void specialization). Pre-condition: it must contain a value.
+  constexpr void operator*() const noexcept
+    requires(detail::expected_::IsVoid<T>)
+  {
+    FRT_INTERNAL_ASSERT(has_value(), "must contain value");
+  }
+
+  //! Get value. Pre-condition: it must contain a value.
+  template <class Self>
+    requires(detail::expected_::IsNotVoid<T>)
+  [[nodiscard]] constexpr auto &&value(this Self &&self) noexcept
+  {
+    FRT_INTERNAL_ASSERT(self.has_value(), "must contain value");
+    return std::forward_like<Self>(self.data_).left();
+  }
+
+  //! Returns the contained value or \p default_value if the object contains an error.
+  template <class U = std::remove_cv_t<T>>
+    requires(detail::expected_::IsNotVoid<T> && std::is_copy_constructible_v<T> && std::is_convertible_v<U, T>)
+  [[nodiscard]] constexpr T value_or(U &&default_value) const & noexcept(std::is_nothrow_copy_constructible_v<T> &&
+                                                                         std::is_nothrow_convertible_v<U, T>)
+  {
+    return has_value() ? **this : static_cast<T>(std::forward<U>(default_value));
+  }
+
+  //! Returns the contained value or \p default_value if the object contains an error.
+  template <class U = std::remove_cv_t<T>>
+    requires(detail::expected_::IsNotVoid<T> && std::is_move_constructible_v<T> && std::is_convertible_v<U, T>)
+  [[nodiscard]] constexpr T value_or(U &&default_value) && noexcept(std::is_nothrow_move_constructible_v<T> &&
+                                                                    std::is_nothrow_convertible_v<U, T>)
+  {
+    return has_value() ? std::move(**this) : static_cast<T>(std::forward<U>(default_value));
+  }
+
+  //! Get error. Pre-condition: it must contain an error.
   template <class Self>
     requires(detail::expected_::IsNotVoid<error_type>)
-  [[nodiscard]] constexpr auto &&error(this Self &&self)
+  [[nodiscard]] constexpr auto &&error(this Self &&self) noexcept
   {
+    FRT_INTERNAL_ASSERT(!self.has_value(), "must contain error");
     return std::forward_like<Self>(self.data_).right();
   }
 
-  //! Checks whether object contains an expected value.
-  constexpr explicit operator bool() const noexcept { return has_value(); }
+  //! Returns the contained error or \p default_value if the object contains a value.
+  template <class G = E>
+    requires(std::is_copy_constructible_v<E> && std::is_convertible_v<G, E>)
+  [[nodiscard]] constexpr E error_or(G &&default_value) const & noexcept(std::is_nothrow_copy_constructible_v<E> &&
+                                                                         std::is_nothrow_convertible_v<G, E>)
+  {
+    return has_value() ? std::forward<G>(default_value) : error();
+  }
 
-  //! Checks whether object contains an expected value.
+  //! Returns the contained error or \p default_value if the object contains a value.
+  template <class G = E>
+    requires(std::is_move_constructible_v<E> && std::is_convertible_v<G, E>)
+  [[nodiscard]] constexpr E error_or(G &&default_value) && noexcept(std::is_nothrow_move_constructible_v<E> &&
+                                                                    std::is_nothrow_convertible_v<G, E>)
+  {
+    return has_value() ? std::forward<G>(default_value) : std::move(error());
+  }
+
+  //! Checks whether the object contains an expected value.
+  [[nodiscard]] constexpr explicit operator bool() const noexcept { return has_value(); }
+
+  //! Checks whether the object contains an expected value.
   [[nodiscard]] constexpr bool has_value() const noexcept { return data_.is_left(); }
 
+  /*!
+   * \brief Applies \p f to the contained value and returns the result.
+   *
+   * Has no effect if expected contains an error.
+   *
+   * This is possible to supply a pack of arguments to the function \p f. All arguments are not stored and simply
+   * forwarded to the function \p f keeping the same value category and constness.
+   *
+   * \code{.cpp}
+   * auto f(val, a, b, c) -> expected;
+   *
+   * // Equivalent to f(val, a, b, c)
+   * expectedObj.and_then(f, a, b, c);
+   *
+   * // Equivalent to f(a, val, b, c)
+   * expectedObj.and_then(f, a, frt::unwrapped, b, c);
+   * \endcode
+   *
+   * The \p frt::unwrapped will be simply replaced with the contained value. The pack must contain zero or one
+   * frt::unwrapped object. If it's a single-argument pack, then this argument must not be \p frt::unwrapped.
+   *
+   * The function \p f must be invocable with the final combination of arguments and return \c frt::expected<U, E>. The
+   * \p U type can be changed, but the \p E type must remain the same.
+   *
+   * \param f is a function to apply.
+   *
+   * \param args is an optional pack of arguments to supply to the function \p f.
+   */
+  template <class Self, class F, class... Args>
+    requires(detail::expected_::IsNotVoid<value_type>)
+  [[nodiscard]] constexpr auto and_then(this Self &&self, F &&f, Args &&...args) noexcept(
+      detail::common_::is_nothrow_invocable_with_extra_args<
+          F, decltype(std::forward_like<Self>(std::declval<value_type>())), Args...>)
+  {
+    using fwd_t = decltype(std::forward_like<Self>(std::declval<value_type>()));
+
+    static_assert(!detail::common_::single_arg_is_unwrapped<Args...>,
+                  "The trailing argument pack of a single argument must not contain std::unwrapped.");
+    static_assert(detail::common_::contains_zero_or_one_unwrapped<Args...>,
+                  "The trailing argument pack must contain zero or one std::unwrapped.");
+    static_assert(detail::common_::is_invocable_with_extra_args<F, fwd_t, Args...>,
+                  "The function must be invocable with a value of value_type and all extra arguments. "
+                  "Consider using frt::unwrapped if an argument of value_type shouldn't go first.");
+
+    using ret_t = detail::common_::invoke_result_t<F, fwd_t, Args...>;
+
+    static_assert(IsExpected<ret_t>, "The function must return an expected");
+    static_assert(detail::expected_::same_error_type<expected, ret_t>,
+                  "The function must return an expected with the same error type");
+
+    if (self.has_value()) {
+      return detail::common_::invoke_with_extra_args(std::forward<F>(f), std::forward<Self>(self).value(),
+                                                     std::forward<Args>(args)...);
+    } else {
+      return std::forward<Self>(self).template forwardError<ret_t>();
+    }
+  }
+
+  /*!
+   * \brief The specialization of \c and_then() when the value is \p void.
+   *
+   * Has no effect if expected contains an error.
+   * Using \p frt::unwrapped as an argument to this function is prohibited.
+   *
+   * This is possible to supply a pack of arguments to the function \p f. All arguments are not stored and simply
+   * forwarded to the function \p f keeping the same value category and constness.
+   *
+   * \code{.cpp}
+   * auto f(a, b, c) -> expected;
+   *
+   * // Equivalent to f(a, b, c)
+   * expectedObj.and_then(f, a, b, c);
+   * \endcode
+   *
+   * The function \p f must be invocable with all passed arguments and return \c frt::expected<U, E>. The \p U type can
+   * be changed, but the \p E type must remain the same.
+   *
+   * \param f is a function to apply.
+   *
+   * \param args is an optional pack of arguments to supply to the function \p f.
+   */
+  template <class Self, class F, class... Args>
+    requires(detail::expected_::IsVoid<value_type>)
+  [[nodiscard]] constexpr auto and_then(this Self &&self, F &&f,
+                                        Args &&...args) noexcept(std::is_nothrow_invocable_v<F, Args...>)
+  {
+    static_assert(!detail::common_::contains_unwrapped<Args...>,
+                  "The trailing argument pack must not contain the frt::unwrapped if value_type is void");
+    static_assert(std::is_invocable_v<F, Args...>, "The function must be invocable with all extra arguments.");
+
+    using ret_t = std::invoke_result_t<F, Args...>;
+
+    static_assert(IsExpected<ret_t>, "The function must return an expected");
+    static_assert(detail::expected_::same_error_type<expected, ret_t>,
+                  "The function must return an expected with the same error type");
+
+    if (self.has_value()) {
+      return std::invoke(std::forward<F>(f), std::forward<Args>(args)...);
+    } else {
+      return std::forward<Self>(self).template forwardError<ret_t>();
+    }
+  }
+
+  /*!
+   * \brief Applies \p f to the error and returns the result.
+   *
+   * Has no effect if expected contains a value.
+   *
+   * This is possible to supply a pack of arguments to the function \p f. All arguments are not stored and simply
+   * forwarded to the function \p f keeping the same value category and constness.
+   *
+   * \code{.cpp}
+   * auto f(err, a, b, c) -> expected;
+   *
+   * // Equivalent to f(err, a, b, c)
+   * expectedObj.or_else(f, a, b, c);
+   *
+   * // Equivalent to f(a, err, b, c)
+   * expectedObj.or_else(f, a, frt::unwrapped, b, c);
+   * \endcode
+   *
+   * The \p frt::unwrapped will be simply replaced with the error. The pack must contain zero or one
+   * frt::unwrapped object. If it's a single-argument pack, then this argument must not be \p frt::unwrapped.
+   *
+   * The function \p f must be invocable with the final combination of arguments and return \c frt::expected<T, G>. The
+   * \p G type can be changed, but the \p T type must remain the same.
+   *
+   * \param f is a function to apply.
+   *
+   * \param args is an optional pack of arguments to supply to the function \p f.
+   */
+  template <class Self, class F, class... Args>
+    requires(detail::expected_::IsNotVoid<error_type>)
+  [[nodiscard]] constexpr auto or_else(this Self &&self, F &&f, Args &&...args) noexcept(
+      detail::common_::is_nothrow_invocable_with_extra_args<
+          F, decltype(std::forward_like<Self>(std::declval<error_type>())), Args...>)
+  {
+    using fwd_t = decltype(std::forward_like<Self>(std::declval<error_type>()));
+
+    static_assert(!detail::common_::single_arg_is_unwrapped<Args...>,
+                  "The trailing argument pack of a single argument must not contain std::unwrapped.");
+    static_assert(detail::common_::contains_zero_or_one_unwrapped<Args...>,
+                  "The trailing argument pack must contain zero or one std::unwrapped.");
+    static_assert(detail::common_::is_invocable_with_extra_args<F, fwd_t, Args...>,
+                  "The function must be invocable with a value of error_type and all extra arguments. "
+                  "Consider using frt::unwrapped if an argument of error_type shouldn't go first.");
+
+    using ret_t = detail::common_::invoke_result_t<F, fwd_t, Args...>;
+
+    static_assert(IsExpected<ret_t>, "The function must return an expected");
+    static_assert(detail::expected_::same_value_type<expected, ret_t>,
+                  "The function must return an expected with the same value type");
+
+    if (!self.has_value()) {
+      return detail::common_::invoke_with_extra_args(std::forward<F>(f), std::forward<Self>(self).error(),
+                                                     std::forward<Args>(args)...);
+    } else {
+      return std::forward<Self>(self).template forwardValue<ret_t>();
+    }
+  }
+
+  /*!
+   * \brief Applies \p f to the contained value and returns the result.
+   *
+   * Has no effect if expected contains an error.
+   *
+   * This is possible to supply a pack of arguments to the function \p f. All arguments are not stored and simply
+   * forwarded to the function \p f keeping the same value category and constness.
+   *
+   * \code{.cpp}
+   * auto f(val, a, b, c) -> T;
+   *
+   * // Equivalent to frt::expected<T, E>{frt::in_place_expected, f(val, a, b, c)}
+   * // Note that the type for the value may differ from the original one
+   * frt::expected<V, E> expectedObj = ...;
+   * frt::expected<T, E> result = expectedObj.transform(f, a, b, c);
+   *
+   * // Equivalent to f(a, val, b, c)
+   * expectedObj.transform(f, a, frt::unwrapped, b, c);
+   * \endcode
+   *
+   * The \p frt::unwrapped will be simply replaced with the contained value. The pack must contain zero or one
+   * frt::unwrapped object. If it's a single-argument pack, then this argument must not be \p frt::unwrapped.
+   *
+   * The function \p f must be invocable with the final combination of arguments. The return value will automatically be
+   * wrapped into \c frt::expected<T, E>, where T is the return type of \p f. The type \c T may differ from the original
+   * \c V. If the function \p f returns nothing, then the type for the value is \c void.
+   *
+   * \param f is a function to apply.
+   *
+   * \param args is an optional pack of arguments to supply to the function \p f.
+   */
+  template <class Self, class F, class... Args>
+    requires(detail::expected_::IsNotVoid<value_type>)
+  [[nodiscard]] constexpr auto transform(this Self &&self, F &&f, Args &&...args) noexcept(
+      detail::common_::is_nothrow_invocable_with_extra_args<
+          F, decltype(std::forward_like<Self>(std::declval<value_type>())), Args...>)
+  {
+    using fwd_t = decltype(std::forward_like<Self>(std::declval<value_type>()));
+
+    static_assert(!detail::common_::single_arg_is_unwrapped<Args...>,
+                  "The trailing argument pack of a single argument must not contain std::unwrapped.");
+    static_assert(detail::common_::contains_zero_or_one_unwrapped<Args...>,
+                  "The trailing argument pack must contain zero or one std::unwrapped.");
+    static_assert(detail::common_::is_invocable_with_extra_args<F, fwd_t, Args...>,
+                  "The function must be invocable with a value of value_type and all extra arguments. "
+                  "Consider using frt::unwrapped if an argument of value_type shouldn't go first.");
+
+    using func_ret_t = detail::common_::invoke_result_t<F, fwd_t, Args...>;
+    using ret_t = expected<detail::common_::bare_t<func_ret_t>, error_type>;
+
+    if (self.has_value()) {
+      if constexpr (detail::expected_::IsVoid<func_ret_t>) {
+        detail::common_::invoke_with_extra_args(std::forward<F>(f), std::forward<Self>(self).value(),
+                                                std::forward<Args>(args)...);
+        return ret_t{in_place_expected};
+      } else {
+        return ret_t{in_place_expected,
+                     detail::common_::invoke_with_extra_args(std::forward<F>(f), std::forward<Self>(self).value(),
+                                                             std::forward<Args>(args)...)};
+      }
+    } else {
+      return std::forward<Self>(self).template forwardError<ret_t>();
+    }
+  }
+
+  /*!
+   * \brief The specialization of \c transform() when the value is \p void.
+   *
+   * Has no effect if expected contains an error.
+   * Using \p frt::unwrapped as an argument to this function is prohibited.
+   *
+   * This is possible to supply a pack of arguments to the function \p f. All arguments are not stored and simply
+   * forwarded to the function \p f keeping the same value category and constness.
+   *
+   * \code{.cpp}
+   * auto f(a, b, c) -> T;
+   *
+   * // Equivalent to frt::expected<T, E>{frt::in_place_expected, f(a, b, c)}
+   * // Note that the type for the value may differ from the original one
+   * frt::expected<void, E> expectedObj = ...;
+   * frt::expected<T, E> result = expectedObj.transform(f, a, b, c);
+   * \endcode
+   *
+   * The function \p f must be invocable with the final combination of arguments. The return value will automatically be
+   * wrapped into \c frt::expected<T, E>, where T is the return type of \p f. The type \c T may differ from the original
+   * \c void. If the function \p f returns nothing, then the type for the value is \c void.
+   *
+   * \param f is a function to apply.
+   *
+   * \param args is an optional pack of arguments to supply to the function \p f.
+   */
+  template <class Self, class F, class... Args>
+    requires(detail::expected_::IsVoid<value_type>)
+  [[nodiscard]] constexpr auto transform(this Self &&self, F &&f,
+                                         Args &&...args) noexcept(std::is_nothrow_invocable_v<F, Args...>)
+  {
+    static_assert(!detail::common_::contains_unwrapped<Args...>,
+                  "The trailing argument pack must not contain the frt::unwrapped if value_type is void");
+    static_assert(std::is_invocable_v<F, Args...>, "The function must be invocable with all extra arguments.");
+
+    using func_ret_t = std::invoke_result_t<F, Args...>;
+    using ret_t = expected<detail::common_::bare_t<func_ret_t>, error_type>;
+
+    if (self.has_value()) {
+      if constexpr (detail::expected_::IsVoid<func_ret_t>) {
+        std::invoke(std::forward<F>(f), std::forward<Args>(args)...);
+        return ret_t{in_place_expected};
+      } else {
+        return ret_t{in_place_expected, std::invoke(std::forward<F>(f), std::forward<Args>(args)...)};
+      }
+    } else {
+      return std::forward<Self>(self).template forwardError<ret_t>();
+    }
+  }
+
+  /*!
+   * \brief Applies \p f to the error and returns the result.
+   *
+   * Has no effect if expected contains a value.
+   *
+   * This is possible to supply a pack of arguments to the function \p f. All arguments are not stored and simply
+   * forwarded to the function \p f keeping the same value category and constness.
+   *
+   * \code{.cpp}
+   * auto f(err, a, b, c) -> G;
+   *
+   * // Equivalent to frt::expected<T, G>{frt::in_place_unexpected, f(err, a, b, c)}
+   * // Note that the type for the error may differ from the original one
+   * frt::expected<T, E> expectedObj = ...;
+   * frt::expected<T, G> result = expectedObj.transform_error(f, a, b, c);
+   *
+   * // Equivalent to f(a, err, b, c)
+   * expectedObj.transform_error(f, a, frt::unwrapped, b, c);
+   * \endcode
+   *
+   * The \p frt::unwrapped will be simply replaced with the error. The pack must contain zero or one
+   * frt::unwrapped object. If it's a single-argument pack, then this argument must not be \p frt::unwrapped.
+   *
+   * The function \p f must be invocable with the final combination of arguments. The return value will automatically be
+   * wrapped into \c frt::expected<T, G>, where G is the return type of \p f. The type \c G may differ from the original
+   * \c E.
+   *
+   * \param f is a function to apply.
+   *
+   * \param args is an optional pack of arguments to supply to the function \p f.
+   */
+  template <class Self, class F, class... Args>
+    requires(detail::expected_::IsNotVoid<error_type>)
+  [[nodiscard]] constexpr auto transform_error(this Self &&self, F &&f, Args &&...args) noexcept(
+      detail::common_::is_nothrow_invocable_with_extra_args<
+          F, decltype(std::forward_like<Self>(std::declval<error_type>())), Args...>)
+  {
+    using fwd_t = decltype(std::forward_like<Self>(std::declval<error_type>()));
+
+    static_assert(!detail::common_::single_arg_is_unwrapped<Args...>,
+                  "The trailing argument pack of a single argument must not contain std::unwrapped.");
+    static_assert(detail::common_::contains_zero_or_one_unwrapped<Args...>,
+                  "The trailing argument pack must contain zero or one std::unwrapped.");
+    static_assert(detail::common_::is_invocable_with_extra_args<F, fwd_t, Args...>,
+                  "The function must be invocable with a value of error_type and all extra arguments. "
+                  "Consider using frt::unwrapped if an argument of error_type shouldn't go first.");
+
+    using func_ret_t = detail::common_::invoke_result_t<F, fwd_t, Args...>;
+    using ret_t = expected<value_type, detail::common_::bare_t<func_ret_t>>;
+
+    if (!self.has_value()) {
+      return ret_t{in_place_unexpected,
+                   detail::common_::invoke_with_extra_args(std::forward<F>(f), std::forward<Self>(self).error(),
+                                                           std::forward<Args>(args)...)};
+    } else {
+      return std::forward<Self>(self).template forwardValue<ret_t>();
+    }
+  }
+
+  /*!
+   * \brief Invoke \p vf for the value or \p ef for the error and return the result.
+   *
+   * This function works similarly to pattern matching. It takes into account the value category and constness of the
+   * `expected` object. It means, for example, that both \p vf and \p ef can modify contained values and accept them by
+   * rvalue reference.
+   *
+   * The \p vf function must be invocable for the value. If the value has type \c void, then \p vf
+   * must accept no arguments.
+   * The \p ef function must be invocable for the error.
+   *
+   * Both functions \p vf and \p ef must have the same return type.
+   *
+   * \param vf is a function to apply to the value.
+   * \param ef is a function to apply to the error.
+   */
+  template <class Self, class ValueFunc, class ErrorFunc>
+    requires(!detail::common_::IsVoid<
+             detail::common_::InvocableResultT<ValueFunc, detail::common_::ForwardAlternativeT<Self, value_type>>>)
+  [[nodiscard]] constexpr decltype(auto) fold(this Self &&self, ValueFunc vf, ErrorFunc ef) noexcept(
+      detail::common_::NothrowInvocableV<ValueFunc, detail::common_::ForwardAlternativeT<Self, value_type>> &&
+      detail::common_::NothrowInvocableV<ErrorFunc, detail::common_::ForwardAlternativeT<Self, error_type>>)
+  {
+    using fwd_val_t = detail::common_::ForwardAlternativeT<Self, value_type>;
+    using fwd_err_t = detail::common_::ForwardAlternativeT<Self, error_type>;
+
+    static_assert(detail::common_::InvocableV<ValueFunc, fwd_val_t>,
+                  "The value function must be invocable for the value. If the value has type void, "
+                  "then the value function must take no arguments.");
+    static_assert(detail::common_::InvocableV<ErrorFunc, fwd_err_t>,
+                  "The error function must be invocable for the error.");
+    static_assert(detail::common_::SameReturnType<ValueFunc, fwd_val_t, ErrorFunc, fwd_err_t>,
+                  "Both value and error functions must have the same return type.");
+
+    if (self.has_value()) {
+      if constexpr (detail::expected_::IsVoid<value_type>) {
+        return std::invoke(vf);
+      } else {
+        return std::invoke(vf, std::forward<Self>(self).value());
+      }
+    } else {
+      return std::invoke(ef, std::forward<Self>(self).error());
+    }
+  }
+
+  /*!
+   * \brief Invoke \p vf for the value or \p ef for the error.
+   *
+   * This function works similarly to pattern matching. It takes into account the value category and constness of the
+   * `expected` object. It means, for example, that both \p vf and \p ef can modify contained values and accept them by
+   * rvalue reference.
+   *
+   * The \p vf function must be invocable for the value. If the value has type \c void, then \p vf
+   * must accept no arguments.
+   * The \p ef function must be invocable for the error.
+   *
+   * Both functions \p vf and \p ef must not return.
+   *
+   * \param vf is a function to apply to the value.
+   * \param ef is a function to apply to the error.
+   */
+  template <class Self, class ValueFunc, class ErrorFunc>
+    requires(detail::common_::IsVoid<
+             detail::common_::InvocableResultT<ValueFunc, detail::common_::ForwardAlternativeT<Self, value_type>>>)
+  constexpr void fold(this Self &&self, ValueFunc vf, ErrorFunc ef) noexcept(
+      detail::common_::NothrowInvocableV<ValueFunc, detail::common_::ForwardAlternativeT<Self, value_type>> &&
+      detail::common_::NothrowInvocableV<ErrorFunc, detail::common_::ForwardAlternativeT<Self, error_type>>)
+  {
+    using fwd_val_t = detail::common_::ForwardAlternativeT<Self, value_type>;
+    using fwd_err_t = detail::common_::ForwardAlternativeT<Self, error_type>;
+
+    static_assert(detail::common_::InvocableV<ValueFunc, fwd_val_t>,
+                  "The value function must be invocable for the value. If the value has type void, "
+                  "then the value function must take no arguments.");
+    static_assert(detail::common_::InvocableV<ErrorFunc, fwd_err_t>,
+                  "The error function must be invocable for the error.");
+    static_assert(detail::common_::SameReturnType<ValueFunc, fwd_val_t, ErrorFunc, fwd_err_t>,
+                  "Both value and error functions must not return.");
+
+    if (self.has_value()) {
+      if constexpr (detail::expected_::IsVoid<value_type>) {
+        std::invoke(vf);
+      } else {
+        std::invoke(vf, std::forward<Self>(self).value());
+      }
+    } else {
+      return std::invoke(ef, std::forward<Self>(self).error());
+    }
+  }
+
+  /*!
+   * \brief Invoke \p f for the value or for the error and return the result.
+   *
+   * The function \p f must be invocable for both value and error. This function is implemented in terms of a fold that
+   * accepts two functions, but in this case, the function is the same, i.e. fold(f, f).
+   *
+   * This function has the same contract as fold that accepts two functions. See its description for more details.
+   *
+   * This function is useful when it's required to access the same interface of two distinct objects. E.g.
+   * \code{.cpp}
+   * auto str = expectedObj.fold([](const std::formattable<char> auto& obj) { return std::format("{}", obj); }
+   * \endcode
+   */
+  template <class Self, class Func>
+    requires(!detail::common_::IsVoid<
+             detail::common_::InvocableResultT<Func, detail::common_::ForwardAlternativeT<Self, value_type>>>)
+  [[nodiscard]] constexpr decltype(auto) fold(this Self &&self, Func f) noexcept(
+      detail::common_::NothrowInvocableV<Func, detail::common_::ForwardAlternativeT<Self, value_type>> &&
+      detail::common_::NothrowInvocableV<Func, detail::common_::ForwardAlternativeT<Self, error_type>>)
+  {
+    return std::forward<Self>(self).fold(f, f);
+  }
+
+  /*!
+   * \brief Invoke \p f for the value or for the error.
+   *
+   * The function \p f must be invocable for both value and error and must not return. This function is implemented in
+   * terms of a fold that accepts two functions, but in this case, the function is the same, i.e. fold(f, f).
+   *
+   * This function has the same contract as fold that accepts two functions. See its description for more details.
+   *
+   * This function is useful when it's required to access the same interface of two distinct objects. E.g.
+   * \code{.cpp}
+   * expectedObj.fold([](const std::formattable<char> auto& obj) { std::println("{}", obj); }
+   * \endcode
+   */
+  template <class Self, class Func>
+    requires(detail::common_::IsVoid<
+             detail::common_::InvocableResultT<Func, detail::common_::ForwardAlternativeT<Self, value_type>>>)
+  constexpr void fold(this Self &&self, Func f) noexcept(
+      detail::common_::NothrowInvocableV<Func, detail::common_::ForwardAlternativeT<Self, value_type>> &&
+      detail::common_::NothrowInvocableV<Func, detail::common_::ForwardAlternativeT<Self, error_type>>)
+  {
+    std::forward<Self>(self).fold(f, f);
+  }
+
 private:
+  // Forward the value of \p self as \p Ret
+  template <class Ret, class Self>
+  constexpr auto forwardValue(this Self &&self) noexcept
+  {
+    if constexpr (detail::expected_::IsVoid<value_type>) {
+      return Ret{in_place_expected};
+    } else {
+      return Ret{in_place_expected, std::forward<Self>(self).value()};
+    }
+  }
+
+  // Forward the error of \p self as \p Ret
+  template <class Ret, class Self>
+  constexpr auto forwardError(this Self &&self) noexcept
+  {
+    return Ret{in_place_unexpected, std::forward<Self>(self).error()};
+  }
+
   either<T, E> data_;
 };
 
