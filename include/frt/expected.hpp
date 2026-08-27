@@ -193,27 +193,27 @@ constexpr auto fromOther(Other &&other) -> either<T, E>
 }
 
 template <class T, class E, class U, class G>
-concept EqualityComparable = requires(const either<T, E> &lhs, const either<U, G> &rhs) {
-  { lhs == rhs };
-  { lhs != rhs };
+concept EqualityComparable = requires(const expected<T, E> &lhs, const expected<U, G> &rhs) {
+  { lhs.asEither() == rhs.asEither() };
+  { lhs.asEither() != rhs.asEither() };
 };
 
 template <class T, class E, class U, class G>
-concept ThreeWayComparable = requires(const either<T, E> &lhs, const either<U, G> &rhs) {
-  { lhs <=> rhs };
+concept ThreeWayComparable = requires(const expected<T, E> &lhs, const expected<U, G> &rhs) {
+  { lhs.asEither() <=> rhs.asEither() };
 };
 
 template <class T, class E, class U, class G>
 concept NothrowEqualityComparable =
-    EqualityComparable<T, E, U, G> && requires(const either<T, E> &lhs, const either<U, G> &rhs) {
-      { lhs == rhs } noexcept;
-      { lhs != rhs } noexcept;
+    EqualityComparable<T, E, U, G> && requires(const expected<T, E> &lhs, const expected<U, G> &rhs) {
+      { lhs.asEither() == rhs.asEither() } noexcept;
+      { lhs.asEither() != rhs.asEither() } noexcept;
     };
 
 template <class T, class E, class U, class G>
 concept NothrowThreeWayComparable =
-    ThreeWayComparable<T, E, U, G> && requires(const either<T, E> &lhs, const either<U, G> &rhs) {
-      { lhs <=> rhs } noexcept;
+    ThreeWayComparable<T, E, U, G> && requires(const expected<T, E> &lhs, const expected<U, G> &rhs) {
+      { lhs.asEither() <=> rhs.asEither() } noexcept;
     };
 
 } // namespace detail::expected_
@@ -377,9 +377,6 @@ struct [[nodiscard]] expected
                 "cv-qualified types are not allowed). It's also must not be a function, frt::in_place_expected_t type, "
                 "frt::in_place_unexpected_t type, or frt::unexpected<E> type.");
   static_assert(detail::expected_::DifferentTypes<T, E>, "Value and error types must be different.");
-
-  template <class, class>
-  friend struct expected;
 
   using value_type = T;
   using error_type = E;
@@ -1141,7 +1138,7 @@ struct [[nodiscard]] expected
   operator==(const expected &lhs,
              const expected<U, G> &rhs) noexcept(detail::expected_::NothrowEqualityComparable<T, E, U, G>)
   {
-    return lhs.data_ == rhs.data_;
+    return lhs.asEither() == rhs.asEither();
   }
 
   //! Three-way compare with another expected.
@@ -1151,7 +1148,13 @@ struct [[nodiscard]] expected
   operator<=>(const expected &lhs,
               const expected<U, G> &rhs) noexcept(detail::expected_::NothrowThreeWayComparable<T, E, U, G>)
   {
-    return lhs.data_ <=> rhs.data_;
+    return lhs.asEither() <=> rhs.asEither();
+  }
+
+  template <class Self>
+  [[nodiscard]] constexpr auto &&asEither(this Self &&self) noexcept
+  {
+    return std::forward_like<Self>(self.data_);
   }
 
 private:

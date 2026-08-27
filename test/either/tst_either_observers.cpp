@@ -98,12 +98,12 @@ TEST_CASE("Observers (left/right)", "[either]")
     {
       REQUIRE(std::move(voidRight).left() == expectedLeftValue);
     }
-    SECTION("non-invokable for left void")
+    SECTION("invokable for left void")
     {
-      STATIC_REQUIRE_FALSE(LeftInvocable<EitherVoidLeft &>);
-      STATIC_REQUIRE_FALSE(LeftInvocable<const EitherVoidLeft &>);
-      STATIC_REQUIRE_FALSE(LeftInvocable<EitherVoidLeft &&>);
-      STATIC_REQUIRE_FALSE(LeftInvocable<const EitherVoidLeft &&>);
+      STATIC_REQUIRE(LeftInvocable<EitherVoidLeft &>);
+      STATIC_REQUIRE(LeftInvocable<const EitherVoidLeft &>);
+      STATIC_REQUIRE(LeftInvocable<EitherVoidLeft &&>);
+      STATIC_REQUIRE(LeftInvocable<const EitherVoidLeft &&>);
 
       STATIC_REQUIRE(LeftInvocable<EitherVoidRight &>);
       STATIC_REQUIRE(LeftInvocable<const EitherVoidRight &>);
@@ -161,12 +161,12 @@ TEST_CASE("Observers (left/right)", "[either]")
       REQUIRE(std::move(voidLeft).right() == expectedRightValue);
     }
 
-    SECTION("non-invokable for right void")
+    SECTION("invokable for right void")
     {
-      STATIC_REQUIRE_FALSE(RightInvocable<EitherVoidRight &>);
-      STATIC_REQUIRE_FALSE(RightInvocable<const EitherVoidRight &>);
-      STATIC_REQUIRE_FALSE(RightInvocable<EitherVoidRight &&>);
-      STATIC_REQUIRE_FALSE(RightInvocable<const EitherVoidRight &&>);
+      STATIC_REQUIRE(RightInvocable<EitherVoidRight &>);
+      STATIC_REQUIRE(RightInvocable<const EitherVoidRight &>);
+      STATIC_REQUIRE(RightInvocable<EitherVoidRight &&>);
+      STATIC_REQUIRE(RightInvocable<const EitherVoidRight &&>);
 
       STATIC_REQUIRE(RightInvocable<EitherVoidLeft &>);
       STATIC_REQUIRE(RightInvocable<const EitherVoidLeft &>);

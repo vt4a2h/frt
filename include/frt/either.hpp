@@ -40,6 +40,9 @@ concept IsVoid = std::is_void_v<bare_t<T>>;
 template <class T>
 concept IsNotVoid = !IsVoid<T>;
 
+template <class T>
+using SelectedType = std::conditional_t<IsVoid<T>, Void, bare_t<T>>;
+
 struct UnwrappedTag
 {
   struct Secret
@@ -163,10 +166,34 @@ template <class Self, class T>
 using ForwardAlternativeT = ForwardAlternative<Self, T>::type;
 
 template <class L1, class R1, class L2, class R2>
-concept EqualityComparable = std::equality_comparable_with<L1, L2> && std::equality_comparable_with<R1, R2>;
+concept EqualityComparable =
+    requires(SelectedType<L1> l1, SelectedType<L2> l2, SelectedType<R1> r1, SelectedType<R2> r2) {
+      { l1 == l2 };
+      { r1 == r2 };
+    };
 
 template <class L1, class R1, class L2, class R2>
-concept ThreeWayComparable = std::three_way_comparable_with<L1, L2> && std::three_way_comparable_with<R1, R2>;
+concept ThreeWayComparable =
+    requires(SelectedType<L1> l1, SelectedType<L2> l2, SelectedType<R1> r1, SelectedType<R2> r2) {
+      { l1 <=> l2 } noexcept;
+      { r1 <=> r2 } noexcept;
+    };
+
+template <class L1, class R1, class L2, class R2>
+concept NothrowEqualityComparable =
+    requires(SelectedType<L1> l1, SelectedType<L2> l2, SelectedType<R1> r1, SelectedType<R2> r2) {
+      { l1 == l2 } noexcept;
+      { r1 == r2 } noexcept;
+      { l1 != l2 } noexcept;
+      { r1 != r2 } noexcept;
+    };
+
+template <class L1, class R1, class L2, class R2>
+concept NothrowThreeWayComparable =
+    requires(SelectedType<L1> l1, SelectedType<L2> l2, SelectedType<R1> r1, SelectedType<R2> r2) {
+      { l1 <=> l2 } noexcept;
+      { r1 <=> r2 } noexcept;
+    };
 
 } // namespace detail::common_
 
@@ -233,9 +260,6 @@ concept IsHashable = requires(T v) {
 
 inline constexpr std::size_t void_hash{};
 
-template <class T>
-using SelectedType = std::conditional_t<IsVoid<T>, Void, bare_t<T>>;
-
 template <class E1, class E2>
 constexpr inline bool same_right_alternative = std::same_as<typename bare_t<E1>::right_t, typename bare_t<E2>::right_t>;
 
@@ -270,9 +294,6 @@ concept IsEither = detail::either_::is_either_<detail::either_::bare_t<T>>;
 template <detail::either_::ValidType Left, detail::either_::ValidType Right>
 struct [[nodiscard]] either
 {
-  template <detail::either_::ValidType, detail::either_::ValidType>
-  friend struct either;
-
 private:
   using left_internal_t = detail::either_::SelectedType<Left>;
   using right_internal_t = detail::either_::SelectedType<Right>;
@@ -375,6 +396,18 @@ public:
     return std::forward_like<Self>(self.left_);
   }
 
+  constexpr void left() const &
+    requires(detail::either_::IsVoid<left_t>)
+  {
+    FRT_INTERNAL_ASSERT(is_left(), "must contain left alternative");
+  }
+
+  constexpr void left() &&
+    requires(detail::either_::IsVoid<left_t>)
+  {
+    FRT_INTERNAL_ASSERT(is_left(), "must contain left alternative");
+  }
+
   //! Returns the left alternative or \p default value if the object contains the right alternative.
   template <class U = left_internal_t>
     requires(std::is_copy_constructible_v<left_internal_t> && std::is_convertible_v<U, left_internal_t> &&
@@ -402,6 +435,18 @@ public:
     return std::forward_like<Self>(self.right_);
   }
 
+  constexpr void right() const &
+    requires(detail::either_::IsVoid<right_t>)
+  {
+    FRT_INTERNAL_ASSERT(is_right(), "must contain right alternative");
+  }
+
+  constexpr void right() &&
+    requires(detail::either_::IsVoid<right_t>)
+  {
+    FRT_INTERNAL_ASSERT(is_right(), "must contain right alternative");
+  }
+
   //! Returns the right alternative or \p default value if the object contains the left alternative.
   template <class U = right_internal_t>
     requires(std::is_copy_constructible_v<right_internal_t> && std::is_convertible_v<U, right_internal_t> &&
@@ -422,34 +467,59 @@ public:
 
   //! Compare with another either
   template <class L, class R>
-    requires(detail::either_::EqualityComparable<left_internal_t, right_internal_t, detail::either_::SelectedType<L>,
-                                                 detail::either_::SelectedType<R>>)
+    requires(detail::either_::EqualityComparable<Left, Right, L, R>)
   [[nodiscard]] friend constexpr bool
-  operator==(const either &lhs, const either<L, R> &rhs) noexcept(noexcept(static_cast<bool>(lhs.left_ == rhs.left_)) &&
-                                                                  noexcept(static_cast<bool>(lhs.right_ == rhs.right_)))
+  operator==(const either &lhs,
+             const either<L, R> &rhs) noexcept(detail::either_::NothrowEqualityComparable<Left, Right, L, R>)
   {
-    if (lhs.is_left_ != rhs.is_left_) {
+    if (lhs.is_left() != rhs.is_left()) {
       return false;
     }
 
-    if (lhs.is_left_) {
-      return lhs.left_ == rhs.left_;
+    if (lhs.is_left()) {
+      if constexpr (detail::common_::IsVoid<Left> && detail::common_::IsVoid<L>) {
+        return true;
+      } else if (detail::common_::IsVoid<Left> || detail::common_::IsVoid<L>) {
+        return false;
+      } else {
+        return lhs.left() == rhs.left();
+      }
     } else {
-      return lhs.right_ == rhs.right_;
+      if constexpr (detail::common_::IsVoid<Right> && detail::common_::IsVoid<R>) {
+        return true;
+      } else if (detail::common_::IsVoid<Right> || detail::common_::IsVoid<R>) {
+        return false;
+      } else {
+        return lhs.right() == rhs.right();
+      }
     }
   }
 
   //! Three-way compare with another either
   template <class L, class R>
-    requires(detail::either_::ThreeWayComparable<left_internal_t, right_internal_t, detail::either_::SelectedType<L>,
-                                                 detail::either_::SelectedType<R>>)
+    requires(detail::either_::ThreeWayComparable<Left, Right, L, R>)
   [[nodiscard]] friend constexpr std::partial_ordering
   operator<=>(const either &lhs,
-              const either<L, R> &rhs) noexcept(noexcept(static_cast<std::partial_ordering>(lhs.left_ <=> rhs.left_)) &&
-                                                noexcept(static_cast<std::partial_ordering>(lhs.right_ <=> rhs.right_)))
+              const either<L, R> &rhs) noexcept(detail::either_::NothrowThreeWayComparable<Left, Right, L, R>)
   {
-    if (lhs.is_left_ == rhs.is_left_) {
-      return lhs.is_left_ ? lhs.left_ <=> rhs.left_ : lhs.right_ <=> rhs.right_;
+    if (lhs.is_left() == rhs.is_left()) {
+      if (lhs.is_left()) {
+        if constexpr (detail::common_::IsVoid<Left> && detail::common_::IsVoid<L>) {
+          return std::partial_ordering::equivalent;
+        } else if (detail::common_::IsVoid<Left> || detail::common_::IsVoid<L>) {
+          return std::partial_ordering::unordered;
+        } else {
+          return lhs.left() <=> rhs.left();
+        }
+      } else {
+        if constexpr (detail::common_::IsVoid<Right> && detail::common_::IsVoid<R>) {
+          return std::partial_ordering::equivalent;
+        } else if (detail::common_::IsVoid<Right> || detail::common_::IsVoid<R>) {
+          return std::partial_ordering::unordered;
+        } else {
+          return lhs.right() <=> rhs.right();
+        }
+      }
     } else {
       return std::partial_ordering::unordered;
     }
