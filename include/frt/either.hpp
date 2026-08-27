@@ -162,6 +162,12 @@ struct ForwardAlternative<Self, void>
 template <class Self, class T>
 using ForwardAlternativeT = ForwardAlternative<Self, T>::type;
 
+template <class L1, class R1, class L2, class R2>
+concept EqualityComparable = std::equality_comparable_with<L1, L2> && std::equality_comparable_with<R1, R2>;
+
+template <class L1, class R1, class L2, class R2>
+concept ThreeWayComparable = std::three_way_comparable_with<L1, L2> && std::three_way_comparable_with<R1, R2>;
+
 } // namespace detail::common_
 
 namespace detail::either_
@@ -224,12 +230,6 @@ template <class T>
 concept IsHashable = requires(T v) {
   { std::hash<T>{}(v) } -> std::same_as<std::size_t>;
 };
-
-template <class L1, class R1, class L2, class R2>
-concept EqualityComparable = std::equality_comparable_with<L1, L2> && std::equality_comparable_with<R1, R2>;
-
-template <class L1, class R1, class L2, class R2>
-concept ThreeWayComparable = std::three_way_comparable_with<L1, L2> && std::three_way_comparable_with<R1, R2>;
 
 inline constexpr std::size_t void_hash{};
 
