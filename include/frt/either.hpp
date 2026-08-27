@@ -270,6 +270,9 @@ concept IsEither = detail::either_::is_either_<detail::either_::bare_t<T>>;
 template <detail::either_::ValidType Left, detail::either_::ValidType Right>
 struct [[nodiscard]] either
 {
+  template <detail::either_::ValidType, detail::either_::ValidType>
+  friend struct either;
+
 private:
   using left_internal_t = detail::either_::SelectedType<Left>;
   using right_internal_t = detail::either_::SelectedType<Right>;
@@ -419,7 +422,8 @@ public:
 
   //! Compare with another either
   template <class L, class R>
-    requires(detail::either_::EqualityComparable<left_internal_t, right_internal_t, L, R>)
+    requires(detail::either_::EqualityComparable<left_internal_t, right_internal_t, detail::either_::SelectedType<L>,
+                                                 detail::either_::SelectedType<R>>)
   [[nodiscard]] friend constexpr bool
   operator==(const either &lhs, const either<L, R> &rhs) noexcept(noexcept(static_cast<bool>(lhs.left_ == rhs.left_)) &&
                                                                   noexcept(static_cast<bool>(lhs.right_ == rhs.right_)))
@@ -437,7 +441,8 @@ public:
 
   //! Three-way compare with another either
   template <class L, class R>
-    requires(detail::either_::ThreeWayComparable<left_internal_t, right_internal_t, L, R>)
+    requires(detail::either_::ThreeWayComparable<left_internal_t, right_internal_t, detail::either_::SelectedType<L>,
+                                                 detail::either_::SelectedType<R>>)
   [[nodiscard]] friend constexpr std::partial_ordering
   operator<=>(const either &lhs,
               const either<L, R> &rhs) noexcept(noexcept(static_cast<std::partial_ordering>(lhs.left_ <=> rhs.left_)) &&

@@ -192,6 +192,30 @@ constexpr auto fromOther(Other &&other) -> either<T, E>
   }
 }
 
+template <class T, class E, class U, class G>
+concept EqualityComparable = requires(const either<T, E> &lhs, const either<U, G> &rhs) {
+  { lhs == rhs };
+  { lhs != rhs };
+};
+
+template <class T, class E, class U, class G>
+concept ThreeWayComparable = requires(const either<T, E> &lhs, const either<U, G> &rhs) {
+  { lhs <=> rhs };
+};
+
+template <class T, class E, class U, class G>
+concept NothrowEqualityComparable =
+    EqualityComparable<T, E, U, G> && requires(const either<T, E> &lhs, const either<U, G> &rhs) {
+      { lhs == rhs } noexcept;
+      { lhs != rhs } noexcept;
+    };
+
+template <class T, class E, class U, class G>
+concept NothrowThreeWayComparable =
+    ThreeWayComparable<T, E, U, G> && requires(const either<T, E> &lhs, const either<U, G> &rhs) {
+      { lhs <=> rhs } noexcept;
+    };
+
 } // namespace detail::expected_
 
 using in_place_expected_t = detail::expected_::InPlaceExpectedTag;
@@ -353,6 +377,9 @@ struct [[nodiscard]] expected
                 "cv-qualified types are not allowed). It's also must not be a function, frt::in_place_expected_t type, "
                 "frt::in_place_unexpected_t type, or frt::unexpected<E> type.");
   static_assert(detail::expected_::DifferentTypes<T, E>, "Value and error types must be different.");
+
+  template <class, class>
+  friend struct expected;
 
   using value_type = T;
   using error_type = E;
@@ -1043,6 +1070,88 @@ struct [[nodiscard]] expected
       detail::common_::NothrowInvocableV<Func, detail::common_::ForwardAlternativeT<Self, error_type>>)
   {
     std::forward<Self>(self).fold(f, f);
+  }
+
+  /*!
+   * \brief Emplace value in-place (with arguments).
+   *
+   * Destroys any currently contained value or error and in-place constructs a new value of type \p T from \p args.
+   */
+  template <class... Args>
+    requires(detail::common_::IsNotVoid<T> && std::constructible_from<T, Args...>)
+  constexpr decltype(auto) emplace(Args &&...args) noexcept(std::is_nothrow_constructible_v<T, Args...>)
+  {
+    return data_.emplaceLeft(std::forward<Args>(args)...);
+  }
+
+  /*!
+   * \brief Emplace value in-place (with an initializer list and arguments).
+   *
+   * Destroys any currently contained value or error and in-place constructs a new value of type \p T from \p il and \p
+   * args.
+   */
+  template <class U, class... Args>
+    requires(detail::common_::IsNotVoid<T> && std::constructible_from<T, std::initializer_list<U> &, Args...>)
+  constexpr decltype(auto)
+  emplace(std::initializer_list<U> il,
+          Args &&...args) noexcept(std::is_nothrow_constructible_v<T, std::initializer_list<U> &, Args...>)
+  {
+    return data_.emplaceLeft(il, std::forward<Args>(args)...);
+  }
+
+  /*!
+   * \brief Emplace value in-place (void specialization).
+   *
+   * Destroys any currently contained error and makes the object contain a value.
+   */
+  constexpr void emplace() noexcept
+    requires(detail::common_::IsVoid<T>)
+  {
+    data_.emplaceLeft();
+  }
+
+  /*!
+   * \brief Swap contents with \p other.
+   *
+   * Swaps the contents with \p other expected.
+   */
+  constexpr void swap(expected &other) noexcept(std::is_nothrow_swappable_v<T> && std::is_nothrow_swappable_v<E>)
+  {
+    data_.swap(other.data_);
+  }
+
+  /*!
+   * \brief Swap contents with \p other (void specialization).
+   *
+   * Swaps the contents with \p other expected.
+   */
+  constexpr void swap(expected &other) noexcept(std::is_nothrow_swappable_v<E>)
+    requires(detail::common_::IsVoid<T>)
+  {
+    data_.swap(other.data_);
+  }
+
+  //! Swap contents of \p lhs and \p rhs.
+  friend constexpr void swap(expected &lhs, expected &rhs) noexcept(noexcept(lhs.swap(rhs))) { lhs.swap(rhs); }
+
+  //! Compare with another expected.
+  template <class U, class G>
+    requires(detail::expected_::EqualityComparable<T, E, U, G>)
+  [[nodiscard]] friend constexpr bool
+  operator==(const expected &lhs,
+             const expected<U, G> &rhs) noexcept(detail::expected_::NothrowEqualityComparable<T, E, U, G>)
+  {
+    return lhs.data_ == rhs.data_;
+  }
+
+  //! Three-way compare with another expected.
+  template <class U, class G>
+    requires(detail::expected_::ThreeWayComparable<T, E, U, G>)
+  [[nodiscard]] friend constexpr std::partial_ordering
+  operator<=>(const expected &lhs,
+              const expected<U, G> &rhs) noexcept(detail::expected_::NothrowThreeWayComparable<T, E, U, G>)
+  {
+    return lhs.data_ <=> rhs.data_;
   }
 
 private:

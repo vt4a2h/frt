@@ -58,6 +58,15 @@ struct ThrowingMove
   ThrowingMove &operator=(ThrowingMove &&) noexcept(false) = default;
 };
 
+struct ThrowingCompare
+{
+  bool operator==(const ThrowingCompare &) const noexcept(false) { return true; }
+  std::partial_ordering operator<=>(const ThrowingCompare &) const noexcept(false)
+  {
+    return std::partial_ordering::equivalent;
+  }
+};
+
 struct IncompatibleType
 {
 };
@@ -207,6 +216,50 @@ TEMPLATE_TEST_CASE_SIG("same_value_type", "[expected]", ((class E1, class E2, bo
   STATIC_REQUIRE(frt::detail::expected_::same_value_type<E1, E2> == Valid);
 }
 
+TEMPLATE_TEST_CASE_SIG("EqualityComparable", "[expected]",
+                       ((class T, class E, class U, class G, bool Valid), T, E, U, G, Valid),
+                       (int, double, int, double, true), (void, double, void, double, true),
+                       (std::string, int, std::string, int, true),
+                       (IncompatibleType, int, IncompatibleType, int, false),
+                       (int, IncompatibleType, int, IncompatibleType, false), (int, double, std::string, double, false),
+                       (int, double, int, std::string, false))
+{
+  STATIC_REQUIRE(frt::detail::expected_::EqualityComparable<T, E, U, G> == Valid);
+}
+
+TEMPLATE_TEST_CASE_SIG("ThreeWayComparable", "[expected]",
+                       ((class T, class E, class U, class G, bool Valid), T, E, U, G, Valid),
+                       (int, double, int, double, true), (void, double, void, double, true),
+                       (std::string, int, std::string, int, true),
+                       (IncompatibleType, int, IncompatibleType, int, false),
+                       (int, IncompatibleType, int, IncompatibleType, false), (int, double, std::string, double, false),
+                       (int, double, int, std::string, false))
+{
+  STATIC_REQUIRE(frt::detail::expected_::ThreeWayComparable<T, E, U, G> == Valid);
+}
+
+TEMPLATE_TEST_CASE_SIG("NoexceptEqualityComparable", "[expected]",
+                       ((class T, class E, class U, class G, bool Valid), T, E, U, G, Valid),
+                       (int, double, int, double, true), (void, double, void, double, true),
+                       (std::string, int, std::string, int, true),
+                       (ThrowingCompare, double, ThrowingCompare, double, false),
+                       (int, ThrowingCompare, int, ThrowingCompare, false),
+                       (IncompatibleType, int, IncompatibleType, int, false))
+{
+  STATIC_REQUIRE(frt::detail::expected_::NothrowEqualityComparable<T, E, U, G> == Valid);
+}
+
+TEMPLATE_TEST_CASE_SIG("NoexceptThreeWayComparable", "[expected]",
+                       ((class T, class E, class U, class G, bool Valid), T, E, U, G, Valid),
+                       (int, double, int, double, true), (void, double, void, double, true),
+                       (std::string, int, std::string, int, true),
+                       (ThrowingCompare, double, ThrowingCompare, double, false),
+                       (int, ThrowingCompare, int, ThrowingCompare, false),
+                       (IncompatibleType, int, IncompatibleType, int, false))
+{
+  STATIC_REQUIRE(frt::detail::expected_::NothrowThreeWayComparable<T, E, U, G> == Valid);
+}
+
 TEST_CASE("expected constructors and concepts", "[expected]")
 {
   SECTION("default constructible for int value")
@@ -325,5 +378,37 @@ TEST_CASE("expected constructors and concepts", "[expected]")
   {
     STATIC_REQUIRE_FALSE(
         std::is_constructible_v<frt::expected<int, double>, frt::in_place_unexpected_t, IncompatibleType>);
+  }
+  SECTION("equality comparable for int value and double error")
+  {
+    STATIC_REQUIRE(std::equality_comparable<frt::expected<int, double>>);
+  }
+  SECTION("equality comparable for void value")
+  {
+    STATIC_REQUIRE(std::equality_comparable<frt::expected<void, double>>);
+  }
+  SECTION("not equality comparable when value is incompatible")
+  {
+    STATIC_REQUIRE_FALSE(std::equality_comparable<frt::expected<IncompatibleType, double>>);
+  }
+  SECTION("not equality comparable when error is incompatible")
+  {
+    STATIC_REQUIRE_FALSE(std::equality_comparable<frt::expected<int, IncompatibleType>>);
+  }
+  SECTION("three-way comparable for int value and double error")
+  {
+    STATIC_REQUIRE(std::three_way_comparable<frt::expected<int, double>>);
+  }
+  SECTION("three-way comparable for void value")
+  {
+    STATIC_REQUIRE(std::three_way_comparable<frt::expected<void, double>>);
+  }
+  SECTION("not three-way comparable when value is incompatible")
+  {
+    STATIC_REQUIRE_FALSE(std::three_way_comparable<frt::expected<IncompatibleType, double>>);
+  }
+  SECTION("not three-way comparable when error is incompatible")
+  {
+    STATIC_REQUIRE_FALSE(std::three_way_comparable<frt::expected<int, IncompatibleType>>);
   }
 }
