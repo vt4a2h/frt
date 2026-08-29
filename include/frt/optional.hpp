@@ -10,6 +10,8 @@
  */
 #pragma once
 
+#include <frt/detail/iterator.hpp>
+
 #include <frt/either.hpp>
 
 namespace frt
