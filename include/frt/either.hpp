@@ -389,78 +389,48 @@ public:
 
   //! Get the left alternative. Pre-condition: it must contain the left alternative.
   template <class Self>
-    requires(detail::either_::IsNotVoid<left_t>)
   [[nodiscard]] constexpr auto &&left(this Self &&self)
   {
     FRT_INTERNAL_ASSERT(self.is_left(), "must contain left alternative");
     return std::forward_like<Self>(self.left_);
   }
 
-  constexpr void left() const &
-    requires(detail::either_::IsVoid<left_t>)
-  {
-    FRT_INTERNAL_ASSERT(is_left(), "must contain left alternative");
-  }
-
-  constexpr void left() &&
-    requires(detail::either_::IsVoid<left_t>)
-  {
-    FRT_INTERNAL_ASSERT(is_left(), "must contain left alternative");
-  }
-
   //! Returns the left alternative or \p default value if the object contains the right alternative.
   template <class U = left_internal_t>
-    requires(std::is_copy_constructible_v<left_internal_t> && std::is_convertible_v<U, left_internal_t> &&
-             detail::either_::IsNotVoid<left_t>)
-  [[nodiscard]] constexpr left_internal_t left_or(U &&default_value) const &
+    requires(std::is_copy_constructible_v<left_internal_t> && std::is_convertible_v<U, left_internal_t>)
+  [[nodiscard]] constexpr auto left_or(U &&default_value) const &
   {
     return is_left() ? left_ : static_cast<left_internal_t>(std::forward<U>(default_value));
   }
 
   //! Returns the left alternative or \p default value if the object contains the right alternative.
   template <class U = left_internal_t>
-    requires(std::is_move_constructible_v<left_internal_t> && std::is_convertible_v<U, left_internal_t> &&
-             detail::either_::IsNotVoid<left_t>)
-  [[nodiscard]] constexpr left_internal_t left_or(U &&default_value) &&
+    requires(std::is_move_constructible_v<left_internal_t> && std::is_convertible_v<U, left_internal_t>)
+  [[nodiscard]] constexpr auto left_or(U &&default_value) &&
   {
     return is_left() ? std::move(left_) : static_cast<left_internal_t>(std::forward<U>(default_value));
   }
 
   //! Get the right alternative. Pre-condition: it must contain the right alternative.
   template <class Self>
-    requires(detail::either_::IsNotVoid<right_t>)
   [[nodiscard]] constexpr auto &&right(this Self &&self)
   {
     FRT_INTERNAL_ASSERT(self.is_right(), "must contain right alternative");
     return std::forward_like<Self>(self.right_);
   }
 
-  constexpr void right() const &
-    requires(detail::either_::IsVoid<right_t>)
-  {
-    FRT_INTERNAL_ASSERT(is_right(), "must contain right alternative");
-  }
-
-  constexpr void right() &&
-    requires(detail::either_::IsVoid<right_t>)
-  {
-    FRT_INTERNAL_ASSERT(is_right(), "must contain right alternative");
-  }
-
   //! Returns the right alternative or \p default value if the object contains the left alternative.
   template <class U = right_internal_t>
-    requires(std::is_copy_constructible_v<right_internal_t> && std::is_convertible_v<U, right_internal_t> &&
-             detail::either_::IsNotVoid<right_t>)
-  [[nodiscard]] constexpr right_internal_t right_or(U &&default_value) const &
+    requires(std::is_copy_constructible_v<right_internal_t> && std::is_convertible_v<U, right_internal_t>)
+  [[nodiscard]] constexpr auto right_or(U &&default_value) const &
   {
     return is_right() ? right_ : static_cast<right_internal_t>(std::forward<U>(default_value));
   }
 
   //! Returns the right alternative or \p default value if the object contains the left alternative.
   template <class U = right_internal_t>
-    requires(std::is_move_constructible_v<right_internal_t> && std::is_convertible_v<U, right_internal_t> &&
-             detail::either_::IsNotVoid<right_t>)
-  [[nodiscard]] constexpr right_internal_t right_or(U &&default_value) &&
+    requires(std::is_move_constructible_v<right_internal_t> && std::is_convertible_v<U, right_internal_t>)
+  [[nodiscard]] constexpr auto right_or(U &&default_value) &&
   {
     return is_right() ? std::move(right_) : static_cast<right_internal_t>(std::forward<U>(default_value));
   }
@@ -477,21 +447,9 @@ public:
     }
 
     if (lhs.is_left()) {
-      if constexpr (detail::common_::IsVoid<Left> && detail::common_::IsVoid<L>) {
-        return true;
-      } else if (detail::common_::IsVoid<Left> || detail::common_::IsVoid<L>) {
-        return false;
-      } else {
-        return lhs.left() == rhs.left();
-      }
+      return lhs.left() == rhs.left();
     } else {
-      if constexpr (detail::common_::IsVoid<Right> && detail::common_::IsVoid<R>) {
-        return true;
-      } else if (detail::common_::IsVoid<Right> || detail::common_::IsVoid<R>) {
-        return false;
-      } else {
-        return lhs.right() == rhs.right();
-      }
+      return lhs.right() == rhs.right();
     }
   }
 
@@ -504,21 +462,9 @@ public:
   {
     if (lhs.is_left() == rhs.is_left()) {
       if (lhs.is_left()) {
-        if constexpr (detail::common_::IsVoid<Left> && detail::common_::IsVoid<L>) {
-          return std::partial_ordering::equivalent;
-        } else if (detail::common_::IsVoid<Left> || detail::common_::IsVoid<L>) {
-          return std::partial_ordering::unordered;
-        } else {
-          return lhs.left() <=> rhs.left();
-        }
+        return lhs.left() <=> rhs.left();
       } else {
-        if constexpr (detail::common_::IsVoid<Right> && detail::common_::IsVoid<R>) {
-          return std::partial_ordering::equivalent;
-        } else if (detail::common_::IsVoid<Right> || detail::common_::IsVoid<R>) {
-          return std::partial_ordering::unordered;
-        } else {
-          return lhs.right() <=> rhs.right();
-        }
+        return lhs.right() <=> rhs.right();
       }
     } else {
       return std::partial_ordering::unordered;
@@ -550,7 +496,7 @@ public:
 
   //! Emplace left (from args)
   template <class... Args>
-    requires(std::constructible_from<left_internal_t, Args...> && detail::either_::IsNotVoid<left_t>)
+    requires(std::constructible_from<left_internal_t, Args...>)
   constexpr left_internal_t &
   emplaceLeft(Args &&...args) noexcept(std::is_nothrow_constructible_v<left_internal_t, Args...>)
   {
@@ -563,9 +509,8 @@ public:
 
   //! Emplace left (from an initializer list and args)
   template <class U, class... Args>
-    requires(std::constructible_from<left_internal_t, std::initializer_list<U> &, Args...> &&
-             detail::either_::IsNotVoid<left_t>)
-  constexpr left_internal_t &emplaceLeft(std::initializer_list<U> ilist, Args &&...args) noexcept(
+    requires(std::constructible_from<left_internal_t, std::initializer_list<U> &, Args...>)
+  constexpr auto &emplaceLeft(std::initializer_list<U> ilist, Args &&...args) noexcept(
       std::is_nothrow_constructible_v<left_internal_t, std::initializer_list<U> &, Args...>)
   {
     destroy();
@@ -575,20 +520,10 @@ public:
     return left_;
   }
 
-  //! Emplace left (void specialization)
-  constexpr void emplaceLeft() noexcept
-    requires(detail::either_::IsVoid<left_t>)
-  {
-    destroy();
-    std::construct_at(std::addressof(left_));
-    is_left_ = true;
-  }
-
   //! Emplace right (from args)
   template <class... Args>
-    requires(std::constructible_from<right_internal_t, Args...> && detail::either_::IsNotVoid<right_t>)
-  constexpr right_internal_t &
-  emplaceRight(Args &&...args) noexcept(std::is_nothrow_constructible_v<right_internal_t, Args...>)
+    requires(std::constructible_from<right_internal_t, Args...>)
+  constexpr auto &emplaceRight(Args &&...args) noexcept(std::is_nothrow_constructible_v<right_internal_t, Args...>)
   {
     destroy();
     std::construct_at(std::addressof(right_), std::forward<Args>(args)...);
@@ -599,9 +534,8 @@ public:
 
   //! Emplace right (from an initializer list and args)
   template <class U, class... Args>
-    requires(std::constructible_from<right_internal_t, std::initializer_list<U> &, Args...> &&
-             detail::either_::IsNotVoid<right_t>)
-  constexpr right_internal_t &emplaceRight(std::initializer_list<U> ilist, Args &&...args) noexcept(
+    requires(std::constructible_from<right_internal_t, std::initializer_list<U> &, Args...>)
+  constexpr auto &emplaceRight(std::initializer_list<U> ilist, Args &&...args) noexcept(
       std::is_nothrow_constructible_v<right_internal_t, std::initializer_list<U> &, Args...>)
   {
     destroy();
@@ -609,15 +543,6 @@ public:
     is_left_ = false;
 
     return right_;
-  }
-
-  //! Emplace right (void specialization)
-  constexpr void emplaceRight() noexcept
-    requires(detail::either_::IsVoid<right_t>)
-  {
-    destroy();
-    std::construct_at(std::addressof(right_));
-    is_left_ = false;
   }
 
   /*!
