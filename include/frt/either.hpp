@@ -211,7 +211,7 @@ concept ValidType = requires {
 
 } // namespace detail::either_
 
-template <detail::either_::ValidType Left, detail::either_::ValidType Right>
+template <class Left, class Right>
 struct either;
 
 namespace detail::either_
@@ -291,9 +291,16 @@ concept IsEither = detail::either_::is_either_<detail::either_::bare_t<T>>;
  *
  * The underlying types must not be references or arrays.
  */
-template <detail::either_::ValidType Left, detail::either_::ValidType Right>
+template <class Left, class Right>
 struct [[nodiscard]] either
 {
+  static_assert(detail::either_::ValidType<Left>,
+                "The value type of the left alternative must either be void, or meet the Destructible requirements (in "
+                "particular, array and reference types are not allowed).");
+  static_assert(detail::either_::ValidType<Right>,
+                "The error type of the right alternative must either be void, or meet the Destructible requirements "
+                "(in particular, array and reference types are not allowed).");
+
 private:
   using left_internal_t = detail::either_::SelectedType<Left>;
   using right_internal_t = detail::either_::SelectedType<Right>;

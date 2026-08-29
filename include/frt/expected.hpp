@@ -366,16 +366,15 @@ unexpected(E) -> unexpected<E>;
 template <class T, class E>
 struct [[nodiscard]] expected
 {
-  static_assert(
-      detail::expected_::ValidValueType<T>,
-      "The type of the expected value. The type must either be (possibly cv-qualified) void, or meet the "
-      "Destructible requirements (in particular, array and reference types are not allowed). It's also must "
-      "not be a function, frt::in_place_expected_t type, frt::in_place_unexpected_t type, or frt::unexpected<E> type.");
-  static_assert(detail::expected_::ValidErrorType<E>,
-                "The type of the unexpected value. The type must meet the Destructible requirements, and must "
-                "be a valid template argument for frt::unexpected (in particular, arrays, non-object types, and "
-                "cv-qualified types are not allowed). It's also must not be a function, frt::in_place_expected_t type, "
+  static_assert(detail::expected_::ValidValueType<T>,
+                "The type must either be void, or meet the Destructible requirements (in particular, array and "
+                "reference types are not allowed). It's also must not be a function, frt::in_place_expected_t type, "
                 "frt::in_place_unexpected_t type, or frt::unexpected<E> type.");
+  static_assert(detail::expected_::ValidErrorType<E>,
+                "The type must meet the Destructible requirements, and must be a valid template argument for "
+                "frt::unexpected (in particular, arrays, non-object types, and cv-qualified types are not allowed). "
+                "It's also must not be a function, frt::in_place_expected_t type, frt::in_place_unexpected_t type, or "
+                "frt::unexpected<E> type.");
   static_assert(detail::expected_::DifferentTypes<T, E>, "Value and error types must be different.");
 
   using value_type = T;
