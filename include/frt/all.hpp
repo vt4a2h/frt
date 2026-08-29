@@ -11,4 +11,4 @@
 #pragma once
 
 #include <frt/either.hpp>
-#include <frt/expects.hpp>
+#include <frt/expected.hpp>
