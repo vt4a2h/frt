@@ -6,8 +6,15 @@
 
 #include <frt/either.hpp>
 
+#include <test/helpers/types.hpp>
+
 namespace
 {
+
+struct NonDestructible
+{
+  ~NonDestructible() = delete;
+};
 
 struct CallableOneArg
 {
@@ -132,7 +139,7 @@ TEMPLATE_TEST_CASE_SIG("is_unwrapped", "[either]", ((class T, bool Valid), T, Va
                        (const int &, false), (std::string, false), (std::vector<int>, false), (void, false),
                        (frt::in_place_left_t, false), (frt::in_place_right_t, false), (frt::either<int, double>, false))
 {
-  STATIC_REQUIRE(frt::detail::either_::is_unwrapped<T> == Valid);
+  STATIC_REQUIRE(frt::detail::either_::is_unwrapped_<T> == Valid);
 }
 
 TEST_CASE("single_arg_is_unwrapped", "[either]")
@@ -465,4 +472,18 @@ TEMPLATE_TEST_CASE_SIG("std::formattable for either", "[either]", ((class T, boo
                        (frt::either<frt::either<IncompatibleType, double>, std::string>, false))
 {
   STATIC_REQUIRE(std::formattable<T, char> == Valid);
+}
+
+TEMPLATE_TEST_CASE_SIG("ValidType", "[either]", ((class T, bool Valid), T, Valid), (int, true), (const int, true),
+                       (volatile int, true), (const volatile int, true), (double, true), (std::string, true),
+                       (std::vector<int>, true), (void, true), (const void, true), (volatile void, true),
+                       (const volatile void, true), (test::helpers::TestArgsIl, true), (frt::either<int, double>, true),
+                       (frt::either<void, void>, true), (int &, false), (const int &, false), (int &&, false),
+                       (const int &&, false), (int[5], false), (int[], false), (const int[3], false),
+                       (frt::in_place_left_t, false), (const frt::in_place_left_t, false),
+                       (frt::in_place_right_t, false), (const frt::in_place_right_t, false), (frt::unwrapped_t, false),
+                       (const frt::unwrapped_t, false), (frt::detail::either_::Void, false),
+                       (const frt::detail::either_::Void, false), (void(), false), (NonDestructible, false))
+{
+  STATIC_REQUIRE(frt::detail::either_::ValidType<T> == Valid);
 }

@@ -35,6 +35,9 @@ struct Void
 inline constexpr Void void_val;
 
 template <class T>
+concept is_internal_void_ = std::same_as<bare_t<T>, Void>;
+
+template <class T>
 concept IsVoid = std::is_void_v<bare_t<T>>;
 
 template <class T>
@@ -53,10 +56,10 @@ struct UnwrappedTag
 };
 
 template <class T>
-inline constexpr bool is_unwrapped = std::same_as<bare_t<T>, UnwrappedTag>;
+inline constexpr bool is_unwrapped_ = std::same_as<bare_t<T>, UnwrappedTag>;
 
 template <class... Args>
-constexpr inline std::size_t unwrapped_count = (std::size_t{} + ... + static_cast<std::size_t>(is_unwrapped<Args>));
+constexpr inline std::size_t unwrapped_count = (std::size_t{} + ... + static_cast<std::size_t>(is_unwrapped_<Args>));
 
 template <class... Args>
 constexpr inline bool single_arg_is_unwrapped = sizeof...(Args) == 1 && unwrapped_count<Args...> == 1;
@@ -65,7 +68,7 @@ template <class... Args>
 constexpr inline bool contains_zero_or_one_unwrapped = unwrapped_count<Args...> <= 1;
 
 template <class... Args>
-inline constexpr bool contains_unwrapped = (... || is_unwrapped<Args>);
+inline constexpr bool contains_unwrapped = (... || is_unwrapped_<Args>);
 
 template <class F, class T, class... Args>
 constexpr inline bool is_invocable_with_extra_args = std::is_invocable_v<F, T, Args...>;
@@ -73,7 +76,7 @@ constexpr inline bool is_invocable_with_extra_args = std::is_invocable_v<F, T, A
 template <class F, class T, class... Args>
   requires(contains_unwrapped<Args...>)
 constexpr inline bool is_invocable_with_extra_args<F, T, Args...> =
-    std::is_invocable_v<F, std::conditional_t<is_unwrapped<Args>, T, Args>...>;
+    std::is_invocable_v<F, std::conditional_t<is_unwrapped_<Args>, T, Args>...>;
 
 template <class F, class T, class... Args>
 constexpr inline bool is_nothrow_invocable_with_extra_args = std::is_nothrow_invocable_v<F, T, Args...>;
@@ -81,7 +84,7 @@ constexpr inline bool is_nothrow_invocable_with_extra_args = std::is_nothrow_inv
 template <class F, class T, class... Args>
   requires(contains_unwrapped<Args...>)
 constexpr inline bool is_nothrow_invocable_with_extra_args<F, T, Args...> =
-    std::is_nothrow_invocable_v<F, std::conditional_t<is_unwrapped<Args>, T, Args>...>;
+    std::is_nothrow_invocable_v<F, std::conditional_t<is_unwrapped_<Args>, T, Args>...>;
 
 template <class F, class T, class... Args>
 struct invoke_result
@@ -95,7 +98,7 @@ struct invoke_result<F, T, Args...>
 {
   static_assert(is_invocable_with_extra_args<F, T, Args...>);
 
-  using type = std::invoke_result_t<F, std::conditional_t<is_unwrapped<Args>, T, Args>...>;
+  using type = std::invoke_result_t<F, std::conditional_t<is_unwrapped_<Args>, T, Args>...>;
 };
 
 template <class F, class T, class... Args>
@@ -105,7 +108,7 @@ template <class T, class Arg>
 constexpr auto &&forward(T &&t, Arg &&arg) noexcept
 {
   // We can have only 0 or 1 unwrapped argument. Hence, it will be forwarded only once
-  if constexpr (is_unwrapped<Arg>) {
+  if constexpr (is_unwrapped_<Arg>) {
     return std::forward<T>(t);
   } else {
     return std::forward<Arg>(arg);
@@ -197,29 +200,17 @@ concept NothrowThreeWayComparable =
 
 } // namespace detail::common_
 
-namespace detail::either_
-{
-
-using namespace detail::common_;
-
-template <class T>
-concept ValidType = requires {
-  requires std::destructible<bare_t<T>> || IsVoid<T>;
-  requires !std::is_reference_v<T>;
-  requires !std::is_array_v<bare_t<T>>;
-};
-
-} // namespace detail::either_
-
 template <class Left, class Right>
 struct either;
 
 namespace detail::either_
 {
+using namespace detail::common_;
+
 template <class T>
 inline constexpr bool is_either_ = false;
 
-template <ValidType L, ValidType R>
+template <class L, class R>
 inline constexpr bool is_either_<either<L, R>> = true;
 
 template <class T>
@@ -269,6 +260,16 @@ constexpr inline bool same_left_alternative = std::same_as<typename bare_t<E1>::
 template <class T, class CharT>
 concept FormattableAlternative = IsVoid<T> || std::formattable<T, CharT>;
 
+template <class T>
+concept ValidType = requires {
+  requires std::destructible<bare_t<T>> || IsVoid<T>;
+  requires !std::is_reference_v<T>;
+  requires !std::is_array_v<bare_t<T>>;
+  requires !is_tag_<bare_t<T>>;
+  requires !is_internal_void_<bare_t<T>>;
+  requires !is_unwrapped_<bare_t<T>>;
+};
+
 } // namespace detail::either_
 
 using in_place_left_t = detail::either_::InPlaceLeftTag;
@@ -296,10 +297,12 @@ struct [[nodiscard]] either
 {
   static_assert(detail::either_::ValidType<Left>,
                 "The value type of the left alternative must either be void, or meet the Destructible requirements (in "
-                "particular, array and reference types are not allowed).");
+                "particular, array and reference types are not allowed). The type must not be frt::in_place_left_t, "
+                "frt::in_place_right_t, frt::unwrapped_t, or the internal Void type.");
   static_assert(detail::either_::ValidType<Right>,
                 "The error type of the right alternative must either be void, or meet the Destructible requirements "
-                "(in particular, array and reference types are not allowed).");
+                "(in particular, array and reference types are not allowed). The type must not be "
+                "frt::in_place_left_t, frt::in_place_right_t, frt::unwrapped_t, or the internal Void type.");
 
 private:
   using left_internal_t = detail::either_::SelectedType<Left>;
