@@ -26,4 +26,4 @@ function(frt_add_benchmark benchmark_name)
     set(frt_benchmark_target_name ${benchmark_target_name} PARENT_SCOPE)
 endfunction()
 
-add_subdirectory(either)
+add_subdirectory(expected)
