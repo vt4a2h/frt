@@ -315,7 +315,110 @@ struct [[nodiscard]] optional
     return data_.emplaceRight(il, std::forward<Args>(args)...);
   }
 
-  // TODO: monadics
+  template <class Self, class F, class... Args>
+  [[nodiscard]] constexpr auto and_then(this Self &&self, F &&f, Args &&...args) noexcept(
+      detail::common_::is_nothrow_invocable_with_extra_args<F, decltype(std::forward_like<Self>(std::declval<T>())),
+                                                            Args...>)
+  {
+    using fwd_t = decltype(std::forward_like<Self>(std::declval<T>()));
+
+    static_assert(!detail::common_::single_arg_is_unwrapped<Args...>,
+                  "The trailing argument pack of a single argument must not contain frt::unwrapped.");
+    static_assert(detail::common_::contains_zero_or_one_unwrapped<Args...>,
+                  "The trailing argument pack must contain zero or one frt::unwrapped.");
+    static_assert(detail::common_::is_invocable_with_extra_args<F, fwd_t, Args...>,
+                  "The function must be invocable with a value of value_type and all extra arguments. "
+                  "Consider using frt::unwrapped if an argument of value_type shouldn't go first.");
+
+    using ret_t = detail::common_::invoke_result_t<F, fwd_t, Args...>;
+
+    static_assert(IsOptional<ret_t>, "The function must return optional");
+
+    if (self.has_value()) {
+      return detail::common_::invoke_with_extra_args(std::forward<F>(f), std::forward<Self>(self).value(),
+                                                     std::forward<Args>(args)...);
+    } else {
+      return std::forward<Self>(self).template forwardError<ret_t>();
+    }
+  }
+
+  template <class Self, class F, class... Args>
+  [[nodiscard]] constexpr auto
+  or_else(this Self &&self, F &&f,
+          Args &&...args) noexcept(detail::common_::is_nothrow_invocable_with_extra_args<F, Args...>)
+  {
+    static_assert(!detail::common_::contains_unwrapped<Args...>,
+                  "The trailing argument pack must contain zero frt::unwrapped.");
+    static_assert(detail::common_::is_invocable_with_extra_args<F, Args...>,
+                  "The function must be invocable with a value of error_type and all extra arguments. "
+                  "Consider using frt::unwrapped if an argument of error_type shouldn't go first.");
+
+    using ret_t = std::invoke_result_t<F, Args...>;
+
+    static_assert(IsOptional<ret_t>, "The function must return optional");
+
+    if (!self.has_value()) {
+      return detail::common_::invoke_with_extra_args(std::forward<F>(f), std::forward<Args>(args)...);
+    } else {
+      return std::forward<Self>(self).template forwardValue<ret_t>();
+    }
+  }
+
+  template <class Self, class F, class... Args>
+  [[nodiscard]] constexpr auto transform(this Self &&self, F &&f, Args &&...args) noexcept(
+      detail::common_::is_nothrow_invocable_with_extra_args<F, decltype(std::forward_like<Self>(std::declval<T>())),
+                                                            Args...>)
+  {
+    using fwd_t = decltype(std::forward_like<Self>(std::declval<T>()));
+
+    static_assert(!detail::common_::single_arg_is_unwrapped<Args...>,
+                  "The trailing argument pack of a single argument must not contain frt::unwrapped.");
+    static_assert(detail::common_::contains_zero_or_one_unwrapped<Args...>,
+                  "The trailing argument pack must contain zero or one frt::unwrapped.");
+    static_assert(detail::common_::is_invocable_with_extra_args<F, fwd_t, Args...>,
+                  "The function must be invocable with a value of value_type and all extra arguments. "
+                  "Consider using frt::unwrapped if an argument of value_type shouldn't go first.");
+
+    using func_ret_t = detail::common_::invoke_result_t<F, fwd_t, Args...>;
+
+    static_assert(detail::common_::IsNotVoid<func_ret_t>, "The function must not return void");
+
+    using ret_t = optional<detail::common_::bare_t<func_ret_t>>;
+
+    if (self.has_value()) {
+      return ret_t{in_place_opt,
+                   detail::common_::invoke_with_extra_args(std::forward<F>(f), std::forward<Self>(self).value(),
+                                                           std::forward<Args>(args)...)};
+    } else {
+      return std::forward<Self>(self).template forwardError<ret_t>();
+    }
+  }
+
+  template <class Self, class ValueFunc, class NullOptFunc>
+  [[nodiscard]] constexpr decltype(auto) fold(this Self &&self, ValueFunc vf,
+                                              NullOptFunc nf) noexcept(std::is_nothrow_invocable_v<ValueFunc, T> &&
+                                                                       std::is_nothrow_invocable_v<NullOptFunc, T>)
+  {
+    using fwd_val_t = decltype(std::forward_like<Self>(std::declval<T>()));
+
+    static_assert(std::invocable<ValueFunc, fwd_val_t>, "The value function must be invocable for the value.");
+    static_assert(std::invocable<NullOptFunc>, "The nullopt function must be invocable without arguments.");
+    static_assert(std::same_as<std::invoke_result_t<ValueFunc, fwd_val_t>, std::invoke_result_t<NullOptFunc>>,
+                  "Both value and nullopt functions must have the same return type.");
+
+    if (self.has_value()) {
+      return std::invoke(vf, std::forward<Self>(self).value());
+    } else {
+      return std::invoke(nf);
+    }
+  }
+
+  template <class Self, class Func>
+  [[nodiscard]] constexpr decltype(auto) fold(this Self &&self, Func f) noexcept(std::is_nothrow_invocable_v<Func, T> &&
+                                                                                 std::is_nothrow_invocable_v<Func>)
+  {
+    return std::forward<Self>(self).fold(f, f);
+  }
 
   //! Compare with another expected.
   template <class U>
