@@ -592,9 +592,9 @@ public:
     using fwd_t = decltype(std::forward_like<Self>(std::declval<left_t>()));
 
     static_assert(!detail::either_::single_arg_is_unwrapped<Args...>,
-                  "The trailing argument pack of a single argument must not contain std::unwrapped.");
+                  "The trailing argument pack of a single argument must not contain frt::unwrapped.");
     static_assert(detail::either_::contains_zero_or_one_unwrapped<Args...>,
-                  "The trailing argument pack must contain zero or one std::unwrapped.");
+                  "The trailing argument pack must contain zero or one frt::unwrapped.");
     static_assert(detail::either_::is_invocable_with_extra_args<F, fwd_t, Args...>,
                   "The function must be invocable with a value of left_t and all extra arguments. "
                   "Consider using frt::unwrapped if an argument of left_t shouldn't go first.");
@@ -696,9 +696,9 @@ public:
     using fwd_t = decltype(std::forward_like<Self>(std::declval<right_t>()));
 
     static_assert(!detail::either_::single_arg_is_unwrapped<Args...>,
-                  "The trailing argument pack of a single argument must not contain std::unwrapped.");
+                  "The trailing argument pack of a single argument must not contain frt::unwrapped.");
     static_assert(detail::either_::contains_zero_or_one_unwrapped<Args...>,
-                  "The trailing argument pack must contain zero or one std::unwrapped.");
+                  "The trailing argument pack must contain zero or one frt::unwrapped.");
     static_assert(detail::either_::is_invocable_with_extra_args<F, fwd_t, Args...>,
                   "The function must be invocable with a value of right_t and all extra arguments. "
                   "Consider using frt::unwrapped if an argument of right_t shouldn't go first.");
@@ -803,9 +803,9 @@ public:
     using fwd_t = decltype(std::forward_like<Self>(std::declval<left_t>()));
 
     static_assert(!detail::either_::single_arg_is_unwrapped<Args...>,
-                  "The trailing argument pack of a single argument must not contain std::unwrapped.");
+                  "The trailing argument pack of a single argument must not contain frt::unwrapped.");
     static_assert(detail::either_::contains_zero_or_one_unwrapped<Args...>,
-                  "The trailing argument pack must contain zero or one std::unwrapped.");
+                  "The trailing argument pack must contain zero or one frt::unwrapped.");
     static_assert(detail::either_::is_invocable_with_extra_args<F, fwd_t, Args...>,
                   "The function must be invocable with a value of left_t and all extra arguments. "
                   "Consider using frt::unwrapped if an argument of left_t shouldn't go first.");
@@ -918,9 +918,9 @@ public:
     using fwd_t = decltype(std::forward_like<Self>(std::declval<right_t>()));
 
     static_assert(!detail::either_::single_arg_is_unwrapped<Args...>,
-                  "The trailing argument pack of a single argument must not contain std::unwrapped.");
+                  "The trailing argument pack of a single argument must not contain frt::unwrapped.");
     static_assert(detail::either_::contains_zero_or_one_unwrapped<Args...>,
-                  "The trailing argument pack must contain zero or one std::unwrapped.");
+                  "The trailing argument pack must contain zero or one frt::unwrapped.");
     static_assert(detail::either_::is_invocable_with_extra_args<F, fwd_t, Args...>,
                   "The function must be invocable with a value of right_t and all extra arguments. "
                   "Consider using frt::unwrapped if an argument of right_t shouldn't go first.");

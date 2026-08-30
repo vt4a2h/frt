@@ -634,9 +634,9 @@ struct [[nodiscard]] expected
     using fwd_t = decltype(std::forward_like<Self>(std::declval<value_type>()));
 
     static_assert(!detail::common_::single_arg_is_unwrapped<Args...>,
-                  "The trailing argument pack of a single argument must not contain std::unwrapped.");
+                  "The trailing argument pack of a single argument must not contain frt::unwrapped.");
     static_assert(detail::common_::contains_zero_or_one_unwrapped<Args...>,
-                  "The trailing argument pack must contain zero or one std::unwrapped.");
+                  "The trailing argument pack must contain zero or one frt::unwrapped.");
     static_assert(detail::common_::is_invocable_with_extra_args<F, fwd_t, Args...>,
                   "The function must be invocable with a value of value_type and all extra arguments. "
                   "Consider using frt::unwrapped if an argument of value_type shouldn't go first.");
@@ -737,9 +737,9 @@ struct [[nodiscard]] expected
     using fwd_t = decltype(std::forward_like<Self>(std::declval<error_type>()));
 
     static_assert(!detail::common_::single_arg_is_unwrapped<Args...>,
-                  "The trailing argument pack of a single argument must not contain std::unwrapped.");
+                  "The trailing argument pack of a single argument must not contain frt::unwrapped.");
     static_assert(detail::common_::contains_zero_or_one_unwrapped<Args...>,
-                  "The trailing argument pack must contain zero or one std::unwrapped.");
+                  "The trailing argument pack must contain zero or one frt::unwrapped.");
     static_assert(detail::common_::is_invocable_with_extra_args<F, fwd_t, Args...>,
                   "The function must be invocable with a value of error_type and all extra arguments. "
                   "Consider using frt::unwrapped if an argument of error_type shouldn't go first.");
@@ -798,9 +798,9 @@ struct [[nodiscard]] expected
     using fwd_t = decltype(std::forward_like<Self>(std::declval<value_type>()));
 
     static_assert(!detail::common_::single_arg_is_unwrapped<Args...>,
-                  "The trailing argument pack of a single argument must not contain std::unwrapped.");
+                  "The trailing argument pack of a single argument must not contain frt::unwrapped.");
     static_assert(detail::common_::contains_zero_or_one_unwrapped<Args...>,
-                  "The trailing argument pack must contain zero or one std::unwrapped.");
+                  "The trailing argument pack must contain zero or one frt::unwrapped.");
     static_assert(detail::common_::is_invocable_with_extra_args<F, fwd_t, Args...>,
                   "The function must be invocable with a value of value_type and all extra arguments. "
                   "Consider using frt::unwrapped if an argument of value_type shouldn't go first.");
@@ -913,9 +913,9 @@ struct [[nodiscard]] expected
     using fwd_t = decltype(std::forward_like<Self>(std::declval<error_type>()));
 
     static_assert(!detail::common_::single_arg_is_unwrapped<Args...>,
-                  "The trailing argument pack of a single argument must not contain std::unwrapped.");
+                  "The trailing argument pack of a single argument must not contain frt::unwrapped.");
     static_assert(detail::common_::contains_zero_or_one_unwrapped<Args...>,
-                  "The trailing argument pack must contain zero or one std::unwrapped.");
+                  "The trailing argument pack must contain zero or one frt::unwrapped.");
     static_assert(detail::common_::is_invocable_with_extra_args<F, fwd_t, Args...>,
                   "The function must be invocable with a value of error_type and all extra arguments. "
                   "Consider using frt::unwrapped if an argument of error_type shouldn't go first.");
