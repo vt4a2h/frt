@@ -17,6 +17,9 @@
 namespace frt
 {
 
+template <class T>
+struct optional;
+
 namespace detail::optional_
 {
 
@@ -43,16 +46,37 @@ struct NullOptTag
 template <class T>
 concept is_tag_ = std::same_as<bare_t<T>, InPlaceTag> || std::same_as<bare_t<T>, NullOptTag>;
 
-} // namespace detail::optional_
+template <class>
+inline constexpr bool is_optional = false;
 
-using in_place_t = detail::optional_::InPlaceTag;
-using nullopt_t = detail::optional_::NullOptTag;
+template <class T>
+inline constexpr bool is_optional<optional<T>> = true;
 
-inline constexpr in_place_t in_place_opt{in_place_t::Secret{}};
-inline constexpr nullopt_t nullopt{nullopt_t::Secret{}};
+template <class T>
+concept is_optional_ = is_optional<bare_t<T>>;
 
-namespace detail::optional_
-{
+template <class T>
+inline constexpr bool is_bool_ = std::same_as<bool, bare_t<T>>;
+
+template <class T, class U>
+concept not_from_optional_ = requires {
+  requires !std::constructible_from<bare_t<T>, optional<U>>;
+  requires !std::convertible_to<optional<U>, bare_t<T>>;
+};
+
+template <class U, class T>
+concept CopyConstructibleFromOtherOptional = requires {
+  requires !std::same_as<bare_t<T>, bare_t<U>>;
+  requires std::constructible_from<bare_t<T>, std::add_const_t<std::add_lvalue_reference_t<bare_t<U>>>>;
+  requires is_bool_<T> || not_from_optional_<T, U>;
+};
+
+template <class U, class T>
+concept MoveConstructibleFromOtherOptional = requires {
+  requires !std::same_as<bare_t<T>, bare_t<U>>;
+  requires std::constructible_from<bare_t<T>, bare_t<U>>;
+  requires is_bool_<T> || not_from_optional_<T, U>;
+};
 
 template <class T>
 concept ValidType = requires {
@@ -63,7 +87,49 @@ concept ValidType = requires {
   requires std::destructible<bare_t<T>>;
 };
 
+template <class U, class T>
+concept ValidOtherType = requires {
+  requires ValidType<T>;
+  requires std::constructible_from<T, U>;
+  requires !std::same_as<bare_t<U>, InPlaceTag>;
+  requires !is_optional_<U>;
+  requires !is_bool_<T> || !is_optional<U>;
+};
+
+template <class T, class U>
+concept EqualityComparable = requires(const optional<T> &lhs, const optional<U> &rhs) {
+  { lhs.asEither() == rhs.asEither() };
+  { lhs.asEither() != rhs.asEither() };
+};
+
+template <class T, class U>
+concept ThreeWayComparable = requires(const optional<T> &lhs, const optional<U> &rhs) {
+  { lhs.asEither() <=> rhs.asEither() };
+};
+
+template <class T, class U>
+concept NothrowEqualityComparable =
+    EqualityComparable<T, U> && requires(const optional<T> &lhs, const optional<U> &rhs) {
+      { lhs.asEither() == rhs.asEither() } noexcept;
+      { lhs.asEither() != rhs.asEither() } noexcept;
+    };
+
+template <class T, class U>
+concept NothrowThreeWayComparable =
+    ThreeWayComparable<T, U> && requires(const optional<T> &lhs, const optional<U> &rhs) {
+      { lhs.asEither() <=> rhs.asEither() } noexcept;
+    };
+
 } // namespace detail::optional_
+
+using in_place_opt_t = detail::optional_::InPlaceTag;
+using nullopt_t = detail::optional_::NullOptTag;
+
+inline constexpr in_place_opt_t in_place_opt{in_place_opt_t::Secret{}};
+inline constexpr nullopt_t nullopt{nullopt_t::Secret{}};
+
+template <class T>
+concept IsOptional = detail::optional_::is_optional_<T>;
 
 /*!
  * \brief The class template frt::optional manages an optional contained value,
@@ -85,7 +151,7 @@ struct [[nodiscard]] optional
   using iterator = detail::optional_::contiguous_iterator<T>;
   using const_iterator = detail::optional_::contiguous_iterator<const T>;
 
-  constexpr optional() noexcept : data_(in_place_left) {}
+  constexpr optional() noexcept = default;
 
   constexpr explicit(false) optional(nullopt_t) noexcept : data_(in_place_left) {}
 
@@ -108,6 +174,18 @@ struct [[nodiscard]] optional
     return *this;
   }
 
+  template <detail::optional_::CopyConstructibleFromOtherOptional<T> U>
+  constexpr optional &operator=(const optional<U> &other) noexcept(std::is_nothrow_constructible_v<T, const U &>)
+  {
+    if (other.has_value()) {
+      data_.emplaceRight(other.value());
+    } else {
+      reset();
+    }
+
+    return *this;
+  }
+
   constexpr optional &operator=(optional &&other) noexcept(std::is_nothrow_move_assignable_v<T>)
     requires(std::is_move_assignable_v<T>)
   {
@@ -115,8 +193,196 @@ struct [[nodiscard]] optional
     return *this;
   }
 
+  template <detail::optional_::MoveConstructibleFromOtherOptional<T> U>
+  constexpr optional &operator=(optional<U> &&other) noexcept(std::is_nothrow_constructible_v<T, const U &>)
+  {
+    if (other.has_value()) {
+      data_.emplaceRight(std::move(other).value());
+    } else {
+      reset();
+    }
+
+    return *this;
+  }
+
+  constexpr optional &operator=(nullopt_t) noexcept
+  {
+    reset();
+    return *this;
+  }
+
+  template <detail::optional_::ValidOtherType<T> U = std::remove_cvref_t<T>>
+  constexpr optional &operator=(U &&value) noexcept(std::is_nothrow_constructible_v<T, U>)
+  {
+    data_.emplaceRight(std::forward<U>(value));
+    return *this;
+  }
+
+  template <detail::optional_::CopyConstructibleFromOtherOptional<T> U>
+  constexpr explicit(!std::convertible_to<const U &, T>)
+      optional(const optional<U> &other) noexcept(std::is_nothrow_constructible_v<T, const U &>)
+      : data_(other.has_value() ? either<void, T>{in_place_right, other.value()} : either<void, T>{in_place_left})
+  {
+  }
+
+  template <detail::optional_::MoveConstructibleFromOtherOptional<T> U>
+  constexpr explicit(!std::convertible_to<U, T>)
+      optional(optional<U> &&other) noexcept(std::is_nothrow_constructible_v<T, U>)
+      : data_(other.has_value() ? either<void, T>{in_place_right, std::move(other).value()}
+                                : either<void, T>{in_place_left})
+  {
+  }
+
+  template <class... Args>
+    requires(std::constructible_from<T, Args...>)
+  constexpr explicit optional(in_place_opt_t, Args &&...args) noexcept(std::is_nothrow_constructible_v<T, Args...>)
+      : data_{in_place_right, std::forward<Args>(args)...}
+  {
+  }
+
+  template <class U, class... Args>
+    requires(std::constructible_from<T, std::initializer_list<U>, Args...>)
+  constexpr explicit optional(in_place_opt_t, std::initializer_list<U> il, Args &&...args) noexcept(
+      std::is_nothrow_constructible_v<T, std::initializer_list<U>, Args...>)
+      : data_{in_place_right, il, std::forward<Args>(args)...}
+  {
+  }
+
+  template <detail::optional_::ValidOtherType<T> U = std::remove_cvref_t<T>>
+  constexpr explicit(!std::constructible_from<T, U>) optional(U &&value) noexcept(std::is_nothrow_constructible_v<T, U>)
+      : data_(in_place_right, std::forward<U>(value))
+  {
+  }
+
+  constexpr explicit operator bool() const noexcept { return has_value(); }
+
+  [[nodiscard]] constexpr bool has_value() const noexcept { return data_.is_right(); }
+
+  template <class Self>
+  [[nodiscard]] constexpr auto &&value(this Self &&self) noexcept
+  {
+    FRT_INTERNAL_ASSERT(self.has_value(), "must contain value");
+    return std::forward_like<Self>(self.data_).right();
+  }
+
+  template <class Self>
+  [[nodiscard]] constexpr auto &&operator*(this Self &&self) noexcept
+  {
+    return std::forward<Self>(self).value();
+  }
+
+  constexpr const T *operator->() const noexcept { return &value(); }
+
+  constexpr T *operator->() noexcept { return &value(); }
+
+  template <std::convertible_to<T> U = std::remove_cv_t<T>>
+    requires(std::is_copy_constructible_v<T>)
+  constexpr T value_or(U &&default_value) const & noexcept(std::is_nothrow_constructible_v<T, U &&>)
+  {
+    return has_value() ? **this : static_cast<T>(std::forward<U>(default_value));
+  }
+
+  template <std::convertible_to<T> U = std::remove_cv_t<T>>
+    requires(std::is_move_constructible_v<T>)
+  constexpr T value_or(U &&default_value) && noexcept(std::is_nothrow_constructible_v<T, U &&>)
+  {
+    return has_value() ? std::move(**this) : static_cast<T>(std::forward<U>(default_value));
+  }
+
+  constexpr void swap(optional &other) noexcept(std::is_nothrow_move_constructible_v<T> &&
+                                                std::is_nothrow_swappable_v<T>)
+  {
+    data_.swap(other.data_);
+  }
+
+  friend constexpr void swap(optional &lhs, optional &rhs) noexcept(noexcept(lhs.swap(rhs))) { lhs.swap(rhs); }
+
+  constexpr void reset() noexcept { data_.emplaceLeft(); }
+
+  template <class... Args>
+    requires(std::constructible_from<T, Args && ...>)
+  constexpr T &emplace(Args &&...args) noexcept(std::is_nothrow_constructible_v<T, Args &&...>)
+  {
+    return data_.emplaceRight(std::forward<Args>(args)...);
+  }
+
+  template <class U, class... Args>
+    requires(std::constructible_from<T, std::initializer_list<U> &, Args && ...>)
+  constexpr T &
+  emplace(std::initializer_list<U> il,
+          Args &&...args) noexcept(std::is_nothrow_constructible_v<T, std::initializer_list<U> &, Args &&...>)
+  {
+    return data_.emplaceRight(il, std::forward<Args>(args)...);
+  }
+
+  // TODO: monadics
+
+  //! Compare with another expected.
+  template <class U>
+    requires(detail::optional_::EqualityComparable<T, U>)
+  [[nodiscard]] friend constexpr bool
+  operator==(const optional &lhs, const optional<U> &rhs) noexcept(detail::optional_::NothrowEqualityComparable<T, U>)
+  {
+    return lhs.asEither() == rhs.asEither();
+  }
+
+  friend constexpr bool operator==(const optional &opt, nullopt_t) noexcept { return !opt.has_value(); }
+
+  template <class U>
+  friend constexpr bool operator==(const optional &opt, const U &value) noexcept /* TODO: add noexcept */
+  {
+    return opt.has_value() && opt.value() == value;
+  }
+
+  //! Three-way compare with another expected.
+  template <class U>
+    requires(detail::optional_::ThreeWayComparable<T, U>)
+  [[nodiscard]] friend constexpr auto
+  operator<=>(const optional &lhs, const optional<U> &rhs) noexcept(detail::optional_::NothrowThreeWayComparable<T, U>)
+  {
+    return lhs.asEither() <=> rhs.asEither();
+  }
+
+  friend constexpr std::strong_ordering operator<=>(const optional &opt, nullopt_t) noexcept
+  {
+    return opt.has_value() <=> false;
+  }
+
+  template <class U>
+  friend constexpr std::strong_ordering operator<=>(const optional &opt,
+                                                    const U &value) noexcept /* TODO: add noexcept */
+  {
+    return opt.has_value() ? opt.value() <=> value : std::strong_ordering::less;
+  }
+
+  [[nodiscard]] constexpr iterator begin() noexcept
+  {
+    return iterator{has_value() ? std::addressof(value()) : nullptr};
+  }
+
+  [[nodiscard]] constexpr iterator end() noexcept
+  {
+    return iterator{has_value() ? std::addressof(value()) + 1 : nullptr};
+  }
+
+  [[nodiscard]] constexpr const_iterator begin() const noexcept
+  {
+    return const_iterator{has_value() ? std::addressof(value()) : nullptr};
+  }
+
+  [[nodiscard]] constexpr const_iterator end() const noexcept
+  {
+    return const_iterator{has_value() ? std::addressof(value()) + 1 : nullptr};
+  }
+
+  template <class Self>
+  [[nodiscard]] constexpr auto &&asEither(this Self &&self) noexcept
+  {
+    return std::forward_like<Self>(self.data_);
+  }
+
 private:
-  either<void, T> data_;
+  either<void, T> data_{in_place_left};
 };
 
 } // namespace frt
