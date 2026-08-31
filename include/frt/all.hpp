@@ -12,3 +12,4 @@
 
 #include <frt/either.hpp>
 #include <frt/expected.hpp>
+#include <frt/optional.hpp>
