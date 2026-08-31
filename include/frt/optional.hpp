@@ -120,6 +120,26 @@ concept NothrowThreeWayComparable =
       { lhs.asEither() <=> rhs.asEither() } noexcept;
     };
 
+template <class T, class U>
+concept EqualityComparableVal = requires(const T &lhs, const U &rhs) {
+  { lhs == rhs };
+};
+
+template <class T, class U>
+concept ThreeWayComparableVal = requires(const T &lhs, const U &rhs) {
+  { lhs <=> rhs };
+};
+
+template <class T, class U>
+concept NothrowEqualityComparableVal = requires(const T &lhs, const U &rhs) {
+  { lhs == rhs } noexcept;
+};
+
+template <class T, class U>
+concept NothrowThreeWayComparableVal = requires(const T &lhs, const U &rhs) {
+  { lhs <=> rhs } noexcept;
+};
+
 } // namespace detail::optional_
 
 using in_place_opt_t = detail::optional_::InPlaceTag;
@@ -432,7 +452,8 @@ struct [[nodiscard]] optional
   friend constexpr bool operator==(const optional &opt, nullopt_t) noexcept { return !opt.has_value(); }
 
   template <class U>
-  friend constexpr bool operator==(const optional &opt, const U &value) noexcept /* TODO: add noexcept */
+  friend constexpr bool operator==(const optional &opt,
+                                   const U &value) noexcept(detail::optional_::NothrowEqualityComparableVal<T, U>)
   {
     return opt.has_value() && opt.value() == value;
   }
@@ -452,8 +473,8 @@ struct [[nodiscard]] optional
   }
 
   template <class U>
-  friend constexpr std::strong_ordering operator<=>(const optional &opt,
-                                                    const U &value) noexcept /* TODO: add noexcept */
+  friend constexpr std::strong_ordering
+  operator<=>(const optional &opt, const U &value) noexcept(detail::optional_::NothrowThreeWayComparableVal<T, U>)
   {
     return opt.has_value() ? opt.value() <=> value : std::strong_ordering::less;
   }
