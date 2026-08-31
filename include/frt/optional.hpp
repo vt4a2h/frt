@@ -363,13 +363,12 @@ struct [[nodiscard]] optional
   }
 
   template <class Self, class F, class... Args>
-  [[nodiscard]] constexpr auto
-  or_else(this Self &&self, F &&f,
-          Args &&...args) noexcept(detail::common_::is_nothrow_invocable_with_extra_args<F, Args...>)
+  [[nodiscard]] constexpr auto or_else(this Self &&self, F &&f,
+                                       Args &&...args) noexcept(std::is_nothrow_invocable_v<F, Args...>)
   {
     static_assert(!detail::common_::contains_unwrapped<Args...>,
                   "The trailing argument pack must contain zero frt::unwrapped.");
-    static_assert(detail::common_::is_invocable_with_extra_args<F, Args...>,
+    static_assert(std::invocable<F, Args...>,
                   "The function must be invocable with a value of error_type and all extra arguments. "
                   "Consider using frt::unwrapped if an argument of error_type shouldn't go first.");
 
@@ -378,7 +377,7 @@ struct [[nodiscard]] optional
     static_assert(IsOptional<ret_t>, "The function must return optional");
 
     if (!self.has_value()) {
-      return detail::common_::invoke_with_extra_args(std::forward<F>(f), std::forward<Args>(args)...);
+      return std::invoke(std::forward<F>(f), std::forward<Args>(args)...);
     } else {
       return ret_t{in_place_opt, std::forward<Self>(self).value()};
     }
@@ -417,7 +416,7 @@ struct [[nodiscard]] optional
   template <class Self, class ValueFunc, class NullOptFunc>
   [[nodiscard]] constexpr decltype(auto) fold(this Self &&self, ValueFunc vf,
                                               NullOptFunc nf) noexcept(std::is_nothrow_invocable_v<ValueFunc, T> &&
-                                                                       std::is_nothrow_invocable_v<NullOptFunc, T>)
+                                                                       std::is_nothrow_invocable_v<NullOptFunc>)
   {
     using fwd_val_t = decltype(std::forward_like<Self>(std::declval<T>()));
 
