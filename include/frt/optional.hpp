@@ -358,7 +358,7 @@ struct [[nodiscard]] optional
       return detail::common_::invoke_with_extra_args(std::forward<F>(f), std::forward<Self>(self).value(),
                                                      std::forward<Args>(args)...);
     } else {
-      return std::forward<Self>(self).template forwardError<ret_t>();
+      return ret_t{};
     }
   }
 
@@ -380,7 +380,7 @@ struct [[nodiscard]] optional
     if (!self.has_value()) {
       return detail::common_::invoke_with_extra_args(std::forward<F>(f), std::forward<Args>(args)...);
     } else {
-      return std::forward<Self>(self).template forwardValue<ret_t>();
+      return ret_t{in_place_opt, std::forward<Self>(self).value()};
     }
   }
 
@@ -410,7 +410,7 @@ struct [[nodiscard]] optional
                    detail::common_::invoke_with_extra_args(std::forward<F>(f), std::forward<Self>(self).value(),
                                                            std::forward<Args>(args)...)};
     } else {
-      return std::forward<Self>(self).template forwardError<ret_t>();
+      return ret_t{};
     }
   }
 
