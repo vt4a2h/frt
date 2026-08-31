@@ -1159,7 +1159,9 @@ struct [[nodiscard]] expected
 private:
   // Forward the value of \p self as \p Ret
   template <class Ret, class Self>
-  constexpr auto forwardValue(this Self &&self) noexcept
+  constexpr auto forwardValue(this Self &&self) noexcept(
+      detail::expected_::IsVoid<value_type> ||
+      std::is_nothrow_constructible_v<Ret, in_place_expected_t, detail::common_::ForwardAlternativeT<Self, value_type>>)
   {
     if constexpr (detail::expected_::IsVoid<value_type>) {
       return Ret{in_place_expected};
@@ -1170,7 +1172,8 @@ private:
 
   // Forward the error of \p self as \p Ret
   template <class Ret, class Self>
-  constexpr auto forwardError(this Self &&self) noexcept
+  constexpr auto forwardError(this Self &&self) noexcept(
+      std::is_nothrow_constructible_v<Ret, in_place_expected_t, detail::common_::ForwardAlternativeT<Self, error_type>>)
   {
     return Ret{in_place_unexpected, std::forward<Self>(self).error()};
   }
