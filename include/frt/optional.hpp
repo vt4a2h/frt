@@ -509,4 +509,7 @@ private:
   either<void, T> data_{in_place_left};
 };
 
+template <class T>
+optional(T) -> optional<T>;
+
 } // namespace frt
