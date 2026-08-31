@@ -197,7 +197,6 @@ concept NothrowThreeWayComparable =
       { l1 <=> l2 } noexcept;
       { r1 <=> r2 } noexcept;
     };
-
 } // namespace detail::common_
 
 template <class Left, class Right>
@@ -244,11 +243,6 @@ concept ValidConstructableFrom = requires {
   requires !is_tag_<bare_t<U>>;
 };
 
-template <class T>
-concept IsHashable = requires(T v) {
-  { std::hash<T>{}(v) } -> std::same_as<std::size_t>;
-};
-
 inline constexpr std::size_t void_hash{};
 
 template <class E1, class E2>
@@ -256,9 +250,6 @@ constexpr inline bool same_right_alternative = std::same_as<typename bare_t<E1>:
 
 template <class E1, class E2>
 constexpr inline bool same_left_alternative = std::same_as<typename bare_t<E1>::left_t, typename bare_t<E2>::left_t>;
-
-template <class T, class CharT>
-concept FormattableAlternative = IsVoid<T> || std::formattable<T, CharT>;
 
 template <class T>
 concept ValidType = requires {
@@ -1198,58 +1189,3 @@ private:
 };
 
 } // namespace frt
-
-template <>
-struct std::hash<frt::detail::either_::Void>
-{
-  constexpr std::size_t operator()(const frt::detail::either_::Void &) const noexcept
-  {
-    return frt::detail::either_::void_hash;
-  }
-};
-
-//! Hasher for `frt::either<L, R>`. The result is either hash of the left or of the right alternative.
-template <class Left, class Right>
-  requires(frt::detail::either_::IsHashable<frt::detail::either_::SelectedType<Left>> &&
-           frt::detail::either_::IsHashable<frt::detail::either_::SelectedType<Right>>)
-struct std::hash<frt::either<Left, Right>>
-{
-  constexpr std::size_t operator()(const frt::either<Left, Right> &e) const noexcept
-  {
-    if (e.is_left()) {
-      return std::hash<frt::detail::either_::bare_t<Left>>{}(e.left());
-    } else {
-      return std::hash<frt::detail::either_::bare_t<Right>>{}(e.right());
-    }
-  }
-};
-
-//! Formatter for `frt::either<L, R>`.
-template <frt::detail::either_::FormattableAlternative<char> Left,
-          frt::detail::either_::FormattableAlternative<char> Right>
-struct std::formatter<frt::either<Left, Right>, char> : private std::formatter<std::string>
-{
-  template <class ParseContext>
-  constexpr auto parse(ParseContext &ctx)
-  {
-    return std::formatter<std::string>::parse(ctx);
-  }
-
-  template <class FmtContext>
-  constexpr auto format(const frt::either<Left, Right> &e, FmtContext &ctx) const
-  {
-    if (e.is_left()) {
-      if constexpr (frt::detail::either_::IsVoid<Left>) {
-        return formatter<string>::format("either{left: void}", ctx);
-      } else {
-        return formatter<string>::format(std::format("either{{left: {}}}", e.left()), ctx);
-      }
-    } else {
-      if constexpr (frt::detail::either_::IsVoid<Right>) {
-        return formatter<string>::format("either{right: void}", ctx);
-      } else {
-        return formatter<string>::format(std::format("either{{right: {}}}", e.right()), ctx);
-      }
-    }
-  }
-};

@@ -5,6 +5,7 @@
 #include <vector>
 
 #include <frt/either.hpp>
+#include <frt/format/either-fmt.hpp>
 
 #include <test/helpers/types.hpp>
 

@@ -4,7 +4,7 @@
 #include <iterator>
 #include <string>
 
-#include <frt/either.hpp>
+#include <frt/format/either-fmt.hpp>
 
 namespace
 {

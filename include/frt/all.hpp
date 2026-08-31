@@ -11,5 +11,8 @@
 #pragma once
 
 #include <frt/either.hpp>
+#include <frt/format/either-fmt.hpp>
+#include <frt/hash/either-hash.hpp>
+
 #include <frt/expected.hpp>
 #include <frt/optional.hpp>
