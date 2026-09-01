@@ -15,4 +15,9 @@
 #include <frt/hash/either-hash.hpp>
 
 #include <frt/expected.hpp>
+#include <frt/format/expected-fmt.hpp>
+#include <frt/hash/expected-hash.hpp>
+
+#include <frt/format/optional-fmt.hpp>
+#include <frt/hash/optional-hash.hpp>
 #include <frt/optional.hpp>
