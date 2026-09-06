@@ -295,11 +295,8 @@ struct [[nodiscard]] either
                 "(in particular, array and reference types are not allowed). The type must not be "
                 "frt::in_place_left_t, frt::in_place_right_t, frt::unwrapped_t, or the internal Void type.");
 
-private:
   using left_internal_t = detail::either_::SelectedType<Left>;
   using right_internal_t = detail::either_::SelectedType<Right>;
-
-public:
   using left_t = detail::either_::bare_t<Left>;
   using right_t = detail::either_::bare_t<Right>;
 
