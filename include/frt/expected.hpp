@@ -216,6 +216,25 @@ concept NothrowThreeWayComparable =
       { lhs.asEither() <=> rhs.asEither() } noexcept;
     };
 
+template <class T, class E, class L, class R>
+concept CopyConstructibleFromEither =
+    std::constructible_from<bare_t<T>, std::add_const_t<std::add_lvalue_reference_t<bare_t<L>>>> &&
+    std::constructible_from<bare_t<E>, std::add_const_t<std::add_lvalue_reference_t<bare_t<R>>>>;
+
+template <class T, class E, class L, class R>
+concept NothrowCopyConstructibleFromEither =
+    std::is_nothrow_constructible_v<bare_t<T>, std::add_const_t<std::add_lvalue_reference_t<bare_t<L>>>> &&
+    std::is_nothrow_constructible_v<bare_t<E>, std::add_const_t<std::add_lvalue_reference_t<bare_t<R>>>>;
+
+template <class T, class E, class L, class R>
+concept MoveConstructibleFromEither = std::constructible_from<bare_t<T>, std::add_rvalue_reference_t<bare_t<L>>> &&
+                                      std::constructible_from<bare_t<E>, std::add_rvalue_reference_t<bare_t<R>>>;
+
+template <class T, class E, class L, class R>
+concept NothrowMoveConstructibleFromEither =
+    std::is_nothrow_constructible_v<bare_t<T>, std::add_rvalue_reference_t<bare_t<L>>> &&
+    std::is_nothrow_constructible_v<bare_t<E>, std::add_rvalue_reference_t<bare_t<R>>>;
+
 } // namespace detail::expected_
 
 using in_place_expected_t = detail::expected_::InPlaceExpectedTag;
@@ -403,6 +422,26 @@ struct [[nodiscard]] expected
   constexpr expected(expected &&) noexcept(std::is_nothrow_move_constructible_v<either<T, E>>)
     requires((detail::either_::IsVoid<T> || std::is_move_constructible_v<T>) && std::is_move_constructible_v<E>)
   = default;
+
+  //! Create from `either` by copy.
+  template <class L, class R>
+    requires(detail::expected_::CopyConstructibleFromEither<T, E, L, R>)
+  constexpr expected(const either<L, R> &inEither) noexcept(
+      detail::expected_::NothrowCopyConstructibleFromEither<T, E, L, R>)
+      : data_(inEither.is_left() ? either<T, E>{in_place_left, inEither.left()}
+                                 : either<T, E>{in_place_right, inEither.right()})
+  {
+  }
+
+  //! Move from `either`.
+  template <class L, class R>
+    requires(detail::expected_::MoveConstructibleFromEither<T, E, L, R>)
+  constexpr expected(either<L, R> &&inEither) noexcept(
+      detail::expected_::NothrowMoveConstructibleFromEither<T, E, L, R>)
+      : data_(inEither.is_left() ? either<T, E>{in_place_left, std::move(inEither).left()}
+                                 : either<T, E>{in_place_right, std::move(inEither).right()})
+  {
+  }
 
   //! Create from another `expected` by copy.
   template <class U, class G>
