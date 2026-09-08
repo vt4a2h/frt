@@ -262,25 +262,25 @@ concept ValidType = requires {
 };
 
 template <class Left, class Right, class AnotherLeft, class AnotherRight>
-concept CopyConstructableFromAnotherEither =
+concept CopyConstructibleFromAnotherEither =
     !(std::same_as<bare_t<Left>, bare_t<AnotherLeft>> && std::same_as<bare_t<Right>, bare_t<AnotherRight>>) &&
     std::is_constructible_v<bare_t<Left>, std::add_const_t<std::add_lvalue_reference_t<bare_t<AnotherLeft>>>> &&
     std::is_constructible_v<bare_t<Right>, std::add_const_t<std::add_lvalue_reference_t<bare_t<AnotherRight>>>>;
 
 template <class Left, class Right, class AnotherLeft, class AnotherRight>
-concept NothrowCopyConstructableFromAnotherEither =
+concept NothrowCopyConstructibleFromAnotherEither =
     !(std::same_as<bare_t<Left>, bare_t<AnotherLeft>> && std::same_as<bare_t<Right>, bare_t<AnotherRight>>) &&
     std::is_nothrow_constructible_v<bare_t<Left>, std::add_const_t<std::add_lvalue_reference_t<bare_t<AnotherLeft>>>> &&
     std::is_nothrow_constructible_v<bare_t<Right>, std::add_const_t<std::add_lvalue_reference_t<bare_t<AnotherRight>>>>;
 
 template <class Left, class Right, class AnotherLeft, class AnotherRight>
-concept MoveConstructableFromAnotherEither =
+concept MoveConstructibleFromAnotherEither =
     !(std::same_as<bare_t<Left>, bare_t<AnotherLeft>> && std::same_as<bare_t<Right>, bare_t<AnotherRight>>) &&
     std::is_constructible_v<bare_t<Left>, std::add_rvalue_reference_t<bare_t<AnotherLeft>>> &&
     std::is_constructible_v<bare_t<Right>, std::add_rvalue_reference_t<bare_t<AnotherRight>>>;
 
 template <class Left, class Right, class AnotherLeft, class AnotherRight>
-concept NothrowMoveConstructableFromAnotherEither =
+concept NothrowMoveConstructibleFromAnotherEither =
     !(std::same_as<bare_t<Left>, bare_t<AnotherLeft>> && std::same_as<bare_t<Right>, bare_t<AnotherRight>>) &&
     std::is_nothrow_constructible_v<bare_t<Left>, std::add_rvalue_reference_t<bare_t<AnotherLeft>>> &&
     std::is_nothrow_constructible_v<bare_t<Right>, std::add_rvalue_reference_t<bare_t<AnotherRight>>>;
@@ -363,11 +363,11 @@ struct [[nodiscard]] either
 
   //! Copy construct from another either.
   template <class AnotherLeft, class AnotherRight>
-    requires(detail::either_::CopyConstructableFromAnotherEither<left_internal_t, right_internal_t,
+    requires(detail::either_::CopyConstructibleFromAnotherEither<left_internal_t, right_internal_t,
                                                                  detail::either_::SelectedType<AnotherLeft>,
                                                                  detail::either_::SelectedType<AnotherRight>>)
   constexpr either(const either<AnotherLeft, AnotherRight> &src) noexcept(
-      detail::either_::NothrowCopyConstructableFromAnotherEither<left_internal_t, right_internal_t,
+      detail::either_::NothrowCopyConstructibleFromAnotherEither<left_internal_t, right_internal_t,
                                                                  detail::either_::SelectedType<AnotherLeft>,
                                                                  detail::either_::SelectedType<AnotherRight>>)
   {
@@ -376,11 +376,11 @@ struct [[nodiscard]] either
 
   //! Move construct from another either.
   template <class AnotherLeft, class AnotherRight>
-    requires(detail::either_::MoveConstructableFromAnotherEither<left_internal_t, right_internal_t,
+    requires(detail::either_::MoveConstructibleFromAnotherEither<left_internal_t, right_internal_t,
                                                                  detail::either_::SelectedType<AnotherLeft>,
                                                                  detail::either_::SelectedType<AnotherRight>>)
   constexpr either(either<AnotherLeft, AnotherRight> &&src) noexcept(
-      detail::either_::NothrowMoveConstructableFromAnotherEither<left_internal_t, right_internal_t,
+      detail::either_::NothrowMoveConstructibleFromAnotherEither<left_internal_t, right_internal_t,
                                                                  detail::either_::SelectedType<AnotherLeft>,
                                                                  detail::either_::SelectedType<AnotherRight>>)
   {
