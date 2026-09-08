@@ -72,11 +72,26 @@ concept CopyConstructibleFromOtherOptional = requires {
 };
 
 template <class U, class T>
+concept CopyConstructibleFromEither =
+    std::constructible_from<bare_t<T>, std::add_const_t<std::add_lvalue_reference_t<bare_t<U>>>>;
+
+template <class U, class T>
+concept NothrowCopyConstructibleFromEither =
+    std::is_nothrow_constructible_v<bare_t<T>, std::add_const_t<std::add_lvalue_reference_t<bare_t<U>>>>;
+
+template <class U, class T>
 concept MoveConstructibleFromOtherOptional = requires {
   requires !std::same_as<bare_t<T>, bare_t<U>>;
   requires std::constructible_from<bare_t<T>, bare_t<U>>;
   requires is_bool_<T> || not_from_optional_<T, U>;
 };
+
+template <class U, class T>
+concept MoveConstructibleFromEither = std::constructible_from<bare_t<T>, std::add_rvalue_reference_t<bare_t<U>>>;
+
+template <class U, class T>
+concept NothrowMoveConstructibleFromEither =
+    std::is_nothrow_constructible_v<bare_t<T>, std::add_rvalue_reference_t<bare_t<U>>>;
 
 template <class T>
 concept ValidType = requires {
@@ -191,6 +206,23 @@ struct [[nodiscard]] optional
   constexpr optional(optional &&other) noexcept(std::is_nothrow_move_constructible_v<T>)
     requires(std::is_move_constructible_v<T>)
       : data_(std::move(other.data_))
+  {
+  }
+
+  //! Create from `either` by copy.
+  template <detail::optional_::CopyConstructibleFromEither<T> U>
+  constexpr explicit optional(const either<void, U> &inEither) noexcept(
+      detail::optional_::NothrowCopyConstructibleFromEither<T, U>)
+      : data_(inEither.is_right() ? either<void, T>{in_place_right, inEither.right()} : either<void, T>{in_place_left})
+  {
+  }
+
+  //! Move from `either`.
+  template <detail::optional_::MoveConstructibleFromEither<T> U>
+  constexpr explicit optional(either<void, U> &&inEither) noexcept(
+      detail::optional_::NothrowMoveConstructibleFromEither<T, U>)
+      : data_(inEither.is_right() ? either<void, T>{in_place_right, std::move(inEither).right()}
+                                  : either<void, T>{in_place_left})
   {
   }
 
