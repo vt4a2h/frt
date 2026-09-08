@@ -235,6 +235,25 @@ concept NothrowMoveConstructibleFromEither =
     std::is_nothrow_constructible_v<bare_t<T>, std::add_rvalue_reference_t<bare_t<L>>> &&
     std::is_nothrow_constructible_v<bare_t<E>, std::add_rvalue_reference_t<bare_t<R>>>;
 
+template <class T, class E, class L, class R>
+concept CopyAssignableFromEither =
+    std::assignable_from<bare_t<T>, std::add_const_t<std::add_lvalue_reference_t<bare_t<L>>>> &&
+    std::assignable_from<bare_t<E>, std::add_const_t<std::add_lvalue_reference_t<bare_t<R>>>>;
+
+template <class T, class E, class L, class R>
+concept NothrowCopyAssignableFromEither =
+    std::is_nothrow_assignable_v<bare_t<T>, std::add_const_t<std::add_lvalue_reference_t<bare_t<L>>>> &&
+    std::is_nothrow_assignable_v<bare_t<E>, std::add_const_t<std::add_lvalue_reference_t<bare_t<R>>>>;
+
+template <class T, class E, class L, class R>
+concept MoveAssignableFromEither = std::assignable_from<bare_t<T>, std::add_rvalue_reference_t<bare_t<L>>> &&
+                                   std::assignable_from<bare_t<E>, std::add_rvalue_reference_t<bare_t<R>>>;
+
+template <class T, class E, class L, class R>
+concept NothrowMoveAssignableFromEither =
+    std::is_nothrow_assignable_v<bare_t<T>, std::add_rvalue_reference_t<bare_t<L>>> &&
+    std::is_nothrow_assignable_v<bare_t<E>, std::add_rvalue_reference_t<bare_t<R>>>;
+
 } // namespace detail::expected_
 
 using in_place_expected_t = detail::expected_::InPlaceExpectedTag;
@@ -543,6 +562,34 @@ struct [[nodiscard]] expected
   expected &operator=(expected &&) noexcept(std::is_nothrow_move_assignable_v<either<T, E>>)
     requires(std::is_move_assignable_v<either<T, E>>)
   = default;
+
+  //! Assign from `either` by copy.
+  template <class L, class R>
+    requires(detail::expected_::CopyAssignableFromEither<T, E, L, R>)
+  expected &operator=(const either<L, R> &src) noexcept(detail::expected_::NothrowCopyAssignableFromEither<T, E, L, R>)
+  {
+    if (src.is_left()) {
+      data_.emplaceLeft(src.left());
+    } else {
+      data_.emplaceRight(src.right());
+    }
+
+    return *this;
+  }
+
+  //! Assign from another `either` by move.
+  template <class L, class R>
+    requires(detail::expected_::MoveAssignableFromEither<T, E, L, R>)
+  expected &operator=(either<L, R> &&src) noexcept(detail::expected_::NothrowMoveAssignableFromEither<T, E, L, R>)
+  {
+    if (src.is_left()) {
+      data_.emplaceLeft(std::move(src).left());
+    } else {
+      data_.emplaceRight(std::move(src).right());
+    }
+
+    return *this;
+  }
 
   //! Access the contained value through a pointer. Pre-condition: it must contain a value.
   [[nodiscard]] constexpr const T *operator->() const noexcept
