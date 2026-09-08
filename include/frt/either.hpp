@@ -285,6 +285,30 @@ concept NothrowMoveConstructibleFromAnotherEither =
     std::is_nothrow_constructible_v<bare_t<Left>, std::add_rvalue_reference_t<bare_t<AnotherLeft>>> &&
     std::is_nothrow_constructible_v<bare_t<Right>, std::add_rvalue_reference_t<bare_t<AnotherRight>>>;
 
+template <class Left, class Right, class AnotherLeft, class AnotherRight>
+concept CopyAssignableFromAnotherEither =
+    !(std::same_as<bare_t<Left>, bare_t<AnotherLeft>> && std::same_as<bare_t<Right>, bare_t<AnotherRight>>) &&
+    std::assignable_from<bare_t<Left>, std::add_const_t<std::add_lvalue_reference_t<bare_t<AnotherLeft>>>> &&
+    std::assignable_from<bare_t<Right>, std::add_const_t<std::add_lvalue_reference_t<bare_t<AnotherRight>>>>;
+
+template <class Left, class Right, class AnotherLeft, class AnotherRight>
+concept NothrowCopyAssignableFromAnotherEither =
+    !(std::same_as<bare_t<Left>, bare_t<AnotherLeft>> && std::same_as<bare_t<Right>, bare_t<AnotherRight>>) &&
+    std::is_nothrow_assignable_v<bare_t<Left>, std::add_const_t<std::add_lvalue_reference_t<bare_t<AnotherLeft>>>> &&
+    std::is_nothrow_assignable_v<bare_t<Right>, std::add_const_t<std::add_lvalue_reference_t<bare_t<AnotherRight>>>>;
+
+template <class Left, class Right, class AnotherLeft, class AnotherRight>
+concept MoveAssignableFromAnotherEither =
+    !(std::same_as<bare_t<Left>, bare_t<AnotherLeft>> && std::same_as<bare_t<Right>, bare_t<AnotherRight>>) &&
+    std::assignable_from<bare_t<Left>, std::add_rvalue_reference_t<bare_t<AnotherLeft>>> &&
+    std::assignable_from<bare_t<Right>, std::add_rvalue_reference_t<bare_t<AnotherRight>>>;
+
+template <class Left, class Right, class AnotherLeft, class AnotherRight>
+concept NothrowMoveAssignableFromAnotherEither =
+    !(std::same_as<bare_t<Left>, bare_t<AnotherLeft>> && std::same_as<bare_t<Right>, bare_t<AnotherRight>>) &&
+    std::is_nothrow_assignable_v<bare_t<Left>, std::add_rvalue_reference_t<bare_t<AnotherLeft>>> &&
+    std::is_nothrow_assignable_v<bare_t<Right>, std::add_rvalue_reference_t<bare_t<AnotherRight>>>;
+
 } // namespace detail::either_
 
 using in_place_left_t = detail::either_::InPlaceLeftTag;
@@ -354,6 +378,38 @@ struct [[nodiscard]] either
   //! Assign from another `either` by move.
   constexpr either &operator=(either &&src) noexcept(std::is_nothrow_move_assignable_v<left_internal_t> &&
                                                      std::is_nothrow_move_assignable_v<right_internal_t>)
+  {
+    destroy();
+    initFrom(std::move(src));
+
+    return *this;
+  }
+
+  //! Assign from another `either` by copy.
+  template <class AnotherLeft, class AnotherRight>
+    requires(detail::either_::CopyAssignableFromAnotherEither<left_internal_t, right_internal_t,
+                                                              detail::either_::SelectedType<AnotherLeft>,
+                                                              detail::either_::SelectedType<AnotherRight>>)
+  constexpr either &operator=(const either<AnotherLeft, AnotherRight> &src) noexcept(
+      detail::either_::NothrowCopyAssignableFromAnotherEither<left_internal_t, right_internal_t,
+                                                              detail::either_::SelectedType<AnotherLeft>,
+                                                              detail::either_::SelectedType<AnotherRight>>)
+  {
+    destroy();
+    initFrom(src);
+
+    return *this;
+  }
+
+  //! Assign from another `either` by move.
+  template <class AnotherLeft, class AnotherRight>
+    requires(detail::either_::MoveAssignableFromAnotherEither<left_internal_t, right_internal_t,
+                                                              detail::either_::SelectedType<AnotherLeft>,
+                                                              detail::either_::SelectedType<AnotherRight>>)
+  constexpr either &operator=(either<AnotherLeft, AnotherRight> &&src) noexcept(
+      detail::either_::NothrowMoveAssignableFromAnotherEither<left_internal_t, right_internal_t,
+                                                              detail::either_::SelectedType<AnotherLeft>,
+                                                              detail::either_::SelectedType<AnotherRight>>)
   {
     destroy();
     initFrom(std::move(src));
