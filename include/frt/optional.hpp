@@ -80,6 +80,14 @@ concept NothrowCopyConstructibleFromEither =
     std::is_nothrow_constructible_v<bare_t<T>, std::add_const_t<std::add_lvalue_reference_t<bare_t<U>>>>;
 
 template <class U, class T>
+concept CopyAssignableFromEither =
+    std::assignable_from<bare_t<T>, std::add_const_t<std::add_lvalue_reference_t<bare_t<U>>>>;
+
+template <class U, class T>
+concept NothrowCopyAssignableFromEither =
+    std::is_nothrow_assignable_v<bare_t<T>, std::add_const_t<std::add_lvalue_reference_t<bare_t<U>>>>;
+
+template <class U, class T>
 concept MoveConstructibleFromOtherOptional = requires {
   requires !std::same_as<bare_t<T>, bare_t<U>>;
   requires std::constructible_from<bare_t<T>, bare_t<U>>;
@@ -92,6 +100,13 @@ concept MoveConstructibleFromEither = std::constructible_from<bare_t<T>, std::ad
 template <class U, class T>
 concept NothrowMoveConstructibleFromEither =
     std::is_nothrow_constructible_v<bare_t<T>, std::add_rvalue_reference_t<bare_t<U>>>;
+
+template <class U, class T>
+concept MoveAssignableFromEither = std::assignable_from<bare_t<T>, std::add_rvalue_reference_t<bare_t<U>>>;
+
+template <class U, class T>
+concept NothrowMoveAssignableFromEither =
+    std::is_nothrow_assignable_v<bare_t<T>, std::add_rvalue_reference_t<bare_t<U>>>;
 
 template <class T>
 concept ValidType = requires {
@@ -234,6 +249,20 @@ struct [[nodiscard]] optional
     return *this;
   }
 
+  //! Assign from `either` by copy.
+  template <detail::optional_::CopyAssignableFromEither<T> U>
+  constexpr optional &
+  operator=(const either<void, U> &other) noexcept(detail::optional_::NothrowCopyAssignableFromEither<T, U>)
+  {
+    if (other.has_value()) {
+      data_.emplaceRight(other.right());
+    } else {
+      reset();
+    }
+
+    return *this;
+  }
+
   //! Assign from another `optional` by copy.
   template <detail::optional_::CopyConstructibleFromOtherOptional<T> U>
   constexpr optional &operator=(const optional<U> &other) noexcept(std::is_nothrow_constructible_v<T, const U &>)
@@ -252,6 +281,20 @@ struct [[nodiscard]] optional
     requires(std::is_move_assignable_v<T>)
   {
     data_ = std::move(other.data_);
+    return *this;
+  }
+
+  //! Assign from `either` by move.
+  template <detail::optional_::MoveAssignableFromEither<T> U>
+  constexpr optional &
+  operator=(either<void, U> &&other) noexcept(detail::optional_::NothrowCopyAssignableFromEither<T, U>)
+  {
+    if (other.has_value()) {
+      data_.emplaceRight(std::move(other).right());
+    } else {
+      reset();
+    }
+
     return *this;
   }
 
