@@ -16,8 +16,8 @@
 namespace test::helpers
 {
 
-inline const int expectedIntValue = 42;
-inline const double expectedDoubleValue = 42.0;
+inline constexpr int expectedIntValue = 42;
+inline constexpr double expectedDoubleValue = 42.0;
 
 inline const std::string expectedStringValue =
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor "

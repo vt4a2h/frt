@@ -56,8 +56,7 @@ TEST_CASE("Create constexpr", "[unexpected][constexpr]")
   {
     constexpr auto valid = [] {
       const int intVal = 42;
-      const double expectedDoubleValue = 42.0;
-      frt::unexpected<double> u{intVal};
+      const frt::unexpected<double> u{intVal};
       return u.error() == expectedDoubleValue;
     }();
     STATIC_REQUIRE(valid);
