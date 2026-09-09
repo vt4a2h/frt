@@ -1256,13 +1256,13 @@ private:
   template <class D>
   constexpr void initFrom(D &&data)
   {
-    if (data.is_left_) {
-      std::construct_at(std::addressof(left_), std::forward_like<D>(data.left_));
+    if (data.is_left()) {
+      std::construct_at(std::addressof(left_), std::forward<D>(data).left());
     } else {
-      std::construct_at(std::addressof(right_), std::forward_like<D>(data.right_));
+      std::construct_at(std::addressof(right_), std::forward<D>(data).right());
     }
 
-    is_left_ = data.is_left_;
+    is_left_ = data.is_left();
   }
 
   // Forward the left alternative of \p self as \p Ret
