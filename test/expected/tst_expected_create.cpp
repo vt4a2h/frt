@@ -508,6 +508,177 @@ TEST_CASE("Create", "[expected]")
 
     REQUIRE(e2.error() == expectedError);
   }
+  SECTION("converting copy constructor from either (value) (has_value)")
+  {
+    const frt::either<std::vector<int>, std::string> src{frt::in_place_left, expectedValue};
+    const Expected e{src};
+
+    REQUIRE(e.has_value());
+  }
+
+  SECTION("converting copy constructor from either (value) (value)")
+  {
+    const frt::either<std::vector<int>, std::string> src{frt::in_place_left, expectedValue};
+    const Expected e{src};
+
+    REQUIRE(e.value() == expectedValue);
+  }
+
+  SECTION("converting copy constructor from either (error) (has_value)")
+  {
+    const frt::either<std::vector<int>, std::string> src{frt::in_place_right, expectedError};
+    const Expected e{src};
+
+    REQUIRE_FALSE(e.has_value());
+  }
+
+  SECTION("converting copy constructor from either (error) (error)")
+  {
+    const frt::either<std::vector<int>, std::string> src{frt::in_place_right, expectedError};
+    const Expected e{src};
+
+    REQUIRE(e.error() == expectedError);
+  }
+
+  SECTION("converting move constructor from either (value) (has_value)")
+  {
+    frt::either<std::vector<int>, std::string> src{frt::in_place_left, expectedValue};
+    const Expected e{std::move(src)};
+
+    REQUIRE(e.has_value());
+  }
+
+  SECTION("converting move constructor from either (value) (value)")
+  {
+    frt::either<std::vector<int>, std::string> src{frt::in_place_left, expectedValue};
+    const Expected e{std::move(src)};
+
+    REQUIRE(e.value() == expectedValue);
+  }
+
+  SECTION("converting move constructor from either (error) (has_value)")
+  {
+    frt::either<std::vector<int>, std::string> src{frt::in_place_right, expectedError};
+    const Expected e{std::move(src)};
+
+    REQUIRE_FALSE(e.has_value());
+  }
+
+  SECTION("converting move constructor from either (error) (error)")
+  {
+    frt::either<std::vector<int>, std::string> src{frt::in_place_right, expectedError};
+    const Expected e{std::move(src)};
+
+    REQUIRE(e.error() == expectedError);
+  }
+
+  SECTION("copy assignment from either (value to value) (value)")
+  {
+    const frt::either<std::vector<int>, std::string> src{frt::in_place_left, expectedValue};
+    Expected e{frt::in_place_expected, std::vector<int>{}};
+    e = src;
+
+    REQUIRE(e.value() == expectedValue);
+  }
+
+  SECTION("copy assignment from either (value to error) (has_value)")
+  {
+    const frt::either<std::vector<int>, std::string> src{frt::in_place_left, expectedValue};
+    Expected e{frt::unexpected{""s}};
+    e = src;
+
+    REQUIRE(e.has_value());
+  }
+
+  SECTION("copy assignment from either (value to error) (value)")
+  {
+    const frt::either<std::vector<int>, std::string> src{frt::in_place_left, expectedValue};
+    Expected e{frt::unexpected{""s}};
+    e = src;
+
+    REQUIRE(e.value() == expectedValue);
+  }
+
+  SECTION("copy assignment from either (error to value) (has_value)")
+  {
+    const frt::either<std::vector<int>, std::string> src{frt::in_place_right, expectedError};
+    Expected e{frt::in_place_expected, std::vector<int>{}};
+    e = src;
+
+    REQUIRE_FALSE(e.has_value());
+  }
+
+  SECTION("copy assignment from either (error to value) (error)")
+  {
+    const frt::either<std::vector<int>, std::string> src{frt::in_place_right, expectedError};
+    Expected e{frt::in_place_expected, std::vector<int>{}};
+    e = src;
+
+    REQUIRE(e.error() == expectedError);
+  }
+
+  SECTION("copy assignment from either (error to error) (error)")
+  {
+    const frt::either<std::vector<int>, std::string> src{frt::in_place_right, expectedError};
+    Expected e{frt::unexpected{""s}};
+    e = src;
+
+    REQUIRE(e.error() == expectedError);
+  }
+
+  SECTION("move assignment from either (value to value) (value)")
+  {
+    frt::either<std::vector<int>, std::string> src{frt::in_place_left, expectedValue};
+    Expected e{frt::in_place_expected, std::vector<int>{}};
+    e = std::move(src);
+
+    REQUIRE(e.value() == expectedValue);
+  }
+
+  SECTION("move assignment from either (value to error) (has_value)")
+  {
+    frt::either<std::vector<int>, std::string> src{frt::in_place_left, expectedValue};
+    Expected e{frt::unexpected{""s}};
+    e = std::move(src);
+
+    REQUIRE(e.has_value());
+  }
+
+  SECTION("move assignment from either (value to error) (value)")
+  {
+    frt::either<std::vector<int>, std::string> src{frt::in_place_left, expectedValue};
+    Expected e{frt::unexpected{""s}};
+    e = std::move(src);
+
+    REQUIRE(e.value() == expectedValue);
+  }
+
+  SECTION("move assignment from either (error to value) (has_value)")
+  {
+    frt::either<std::vector<int>, std::string> src{frt::in_place_right, expectedError};
+    Expected e{frt::in_place_expected, std::vector<int>{}};
+    e = std::move(src);
+
+    REQUIRE_FALSE(e.has_value());
+  }
+
+  SECTION("move assignment from either (error to value) (error)")
+  {
+    frt::either<std::vector<int>, std::string> src{frt::in_place_right, expectedError};
+    Expected e{frt::in_place_expected, std::vector<int>{}};
+    e = std::move(src);
+
+    REQUIRE(e.error() == expectedError);
+  }
+
+  SECTION("move assignment from either (error to error) (error)")
+  {
+    frt::either<std::vector<int>, std::string> src{frt::in_place_right, expectedError};
+    Expected e{frt::unexpected{""s}};
+    e = std::move(src);
+
+    REQUIRE(e.error() == expectedError);
+  }
 }
 
 TEST_CASE("Create expected<void, E>", "[expected]")

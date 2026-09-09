@@ -260,6 +260,74 @@ TEMPLATE_TEST_CASE_SIG("NoexceptThreeWayComparable", "[expected]",
   STATIC_REQUIRE(frt::detail::expected_::NothrowThreeWayComparable<T, E, U, G> == Valid);
 }
 
+TEMPLATE_TEST_CASE_SIG("CopyConstructibleFromEither", "[expected]",
+                       ((class T, class E, class L, class R, bool Valid), T, E, L, R, Valid),
+                       (int, double, int, double, true), (double, std::string, int, const char *, true),
+                       (NonCopyable, double, NonCopyable, double, false), (int, NonCopyable, int, NonCopyable, false),
+                       (IncompatibleType, double, int, double, false), (int, IncompatibleType, int, double, false))
+{
+  STATIC_REQUIRE(frt::detail::expected_::CopyConstructibleFromEither<T, E, L, R> == Valid);
+}
+
+TEMPLATE_TEST_CASE_SIG("NothrowCopyConstructibleFromEither", "[expected]",
+                       ((class T, class E, class L, class R, bool Valid), T, E, L, R, Valid),
+                       (int, double, int, double, true), (ThrowingCopy, double, ThrowingCopy, double, false),
+                       (int, ThrowingCopy, int, ThrowingCopy, false), (IncompatibleType, double, int, double, false))
+{
+  STATIC_REQUIRE(frt::detail::expected_::NothrowCopyConstructibleFromEither<T, E, L, R> == Valid);
+}
+
+TEMPLATE_TEST_CASE_SIG("MoveConstructibleFromEither", "[expected]",
+                       ((class T, class E, class L, class R, bool Valid), T, E, L, R, Valid),
+                       (int, double, int, double, true), (double, std::string, int, std::string, true),
+                       (NonMovable, double, NonMovable, double, false), (int, NonMovable, int, NonMovable, false),
+                       (IncompatibleType, double, int, double, false))
+{
+  STATIC_REQUIRE(frt::detail::expected_::MoveConstructibleFromEither<T, E, L, R> == Valid);
+}
+
+TEMPLATE_TEST_CASE_SIG("NothrowMoveConstructibleFromEither", "[expected]",
+                       ((class T, class E, class L, class R, bool Valid), T, E, L, R, Valid),
+                       (int, double, int, double, true), (ThrowingMove, double, ThrowingMove, double, false),
+                       (int, ThrowingMove, int, ThrowingMove, false), (IncompatibleType, double, int, double, false))
+{
+  STATIC_REQUIRE(frt::detail::expected_::NothrowMoveConstructibleFromEither<T, E, L, R> == Valid);
+}
+
+TEMPLATE_TEST_CASE_SIG("CopyAssignableFromEither", "[expected]",
+                       ((class T, class E, class L, class R, bool Valid), T, E, L, R, Valid),
+                       (int, double, int, double, true), (double, std::string, int, const char *, true),
+                       (NonCopyable, double, NonCopyable, double, false), (int, NonCopyable, int, NonCopyable, false),
+                       (IncompatibleType, double, int, double, false), (int, IncompatibleType, int, double, false))
+{
+  STATIC_REQUIRE(frt::detail::expected_::CopyAssignableFromEither<T, E, L, R> == Valid);
+}
+
+TEMPLATE_TEST_CASE_SIG("NothrowCopyAssignableFromEither", "[expected]",
+                       ((class T, class E, class L, class R, bool Valid), T, E, L, R, Valid),
+                       (int, double, int, double, true), (ThrowingCopy, double, ThrowingCopy, double, false),
+                       (int, ThrowingCopy, int, ThrowingCopy, false), (IncompatibleType, double, int, double, false))
+{
+  STATIC_REQUIRE(frt::detail::expected_::NothrowCopyAssignableFromEither<T, E, L, R> == Valid);
+}
+
+TEMPLATE_TEST_CASE_SIG("MoveAssignableFromEither", "[expected]",
+                       ((class T, class E, class L, class R, bool Valid), T, E, L, R, Valid),
+                       (int, double, int, double, true), (double, std::string, int, std::string, true),
+                       (NonMovable, double, NonMovable, double, false), (int, NonMovable, int, NonMovable, false),
+                       (IncompatibleType, double, int, double, false))
+{
+  STATIC_REQUIRE(frt::detail::expected_::MoveAssignableFromEither<T, E, L, R> == Valid);
+}
+
+TEMPLATE_TEST_CASE_SIG("NothrowMoveAssignableFromEither", "[expected]",
+                       ((class T, class E, class L, class R, bool Valid), T, E, L, R, Valid),
+                       (int, double, int, double, true), (ThrowingMove, double, ThrowingMove, double, false),
+                       (int, ThrowingMove, int, ThrowingMove, false), (IncompatibleType, double, int, double, false))
+{
+  STATIC_REQUIRE(frt::detail::expected_::NothrowMoveAssignableFromEither<T, E, L, R> == Valid);
+}
+
 TEST_CASE("expected constructors and concepts", "[expected]")
 {
   SECTION("default constructible for int value")
@@ -410,5 +478,58 @@ TEST_CASE("expected constructors and concepts", "[expected]")
   SECTION("not three-way comparable when error is incompatible")
   {
     STATIC_REQUIRE_FALSE(std::three_way_comparable<frt::expected<int, IncompatibleType>>);
+  }
+  SECTION("constructible from const either &")
+  {
+    STATIC_REQUIRE(std::is_constructible_v<frt::expected<int, double>, const frt::either<int, double> &>);
+  }
+
+  SECTION("constructible from either &&")
+  {
+    STATIC_REQUIRE(std::is_constructible_v<frt::expected<int, double>, frt::either<int, double> &&>);
+  }
+
+  SECTION("constructible from const either with convertible types")
+  {
+    STATIC_REQUIRE(std::is_constructible_v<frt::expected<double, std::string>, const frt::either<int, const char *> &>);
+  }
+
+  SECTION("not constructible from const either with incompatible value")
+  {
+    STATIC_REQUIRE_FALSE(
+        std::is_constructible_v<frt::expected<int, double>, const frt::either<IncompatibleType, double> &>);
+  }
+
+  SECTION("not constructible from const either with incompatible error")
+  {
+    STATIC_REQUIRE_FALSE(
+        std::is_constructible_v<frt::expected<int, double>, const frt::either<int, IncompatibleType> &>);
+  }
+
+  SECTION("assignable from const either &")
+  {
+    STATIC_REQUIRE(std::is_assignable_v<frt::expected<int, double> &, const frt::either<int, double> &>);
+  }
+
+  SECTION("assignable from either &&")
+  {
+    STATIC_REQUIRE(std::is_assignable_v<frt::expected<int, double> &, frt::either<int, double> &&>);
+  }
+
+  SECTION("assignable from const either with convertible types")
+  {
+    STATIC_REQUIRE(std::is_assignable_v<frt::expected<double, std::string> &, const frt::either<int, const char *> &>);
+  }
+
+  SECTION("not assignable from const either with incompatible value")
+  {
+    STATIC_REQUIRE_FALSE(
+        std::is_assignable_v<frt::expected<int, double> &, const frt::either<IncompatibleType, double> &>);
+  }
+
+  SECTION("not assignable from const either with incompatible error")
+  {
+    STATIC_REQUIRE_FALSE(
+        std::is_assignable_v<frt::expected<int, double> &, const frt::either<int, IncompatibleType> &>);
   }
 }
