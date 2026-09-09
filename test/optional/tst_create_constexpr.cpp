@@ -375,4 +375,152 @@ TEST_CASE("Create constexpr", "[optional][constexpr]")
     }();
     STATIC_REQUIRE(valid);
   }
+
+  SECTION("From either by copy (value)")
+  {
+    constexpr auto checked = [] {
+      constexpr int expected = 42;
+      const frt::either<void, int> eitherVal{frt::in_place_right, expected};
+      const frt::optional<double> opt{eitherVal};
+      return opt == expected;
+    }();
+
+    STATIC_REQUIRE(checked);
+  }
+
+  SECTION("From either by copy (nullopt)")
+  {
+    constexpr auto checked = [] {
+      const frt::either<void, int> eitherVal{frt::in_place_left};
+      const frt::optional<double> opt{eitherVal};
+      return !opt.has_value();
+    }();
+
+    STATIC_REQUIRE(checked);
+  }
+
+  SECTION("From either by copy assignment (value to empty)")
+  {
+    constexpr auto checked = [] {
+      constexpr int expected = 42;
+      const frt::either<void, int> eitherVal{frt::in_place_right, expected};
+      frt::optional<double> opt;
+      opt = eitherVal;
+      return opt == expected;
+    }();
+
+    STATIC_REQUIRE(checked);
+  }
+
+  SECTION("From either by copy assignment (value to value)")
+  {
+    constexpr auto checked = [] {
+      constexpr int expected = 42;
+      const frt::either<void, int> eitherVal{frt::in_place_right, expected};
+      frt::optional<double> opt{100.0};
+      opt = eitherVal;
+      return opt == expected;
+    }();
+
+    STATIC_REQUIRE(checked);
+  }
+
+  SECTION("From either by copy assignment (nullopt to empty)")
+  {
+    constexpr auto checked = [] {
+      const frt::either<void, int> eitherVal{frt::in_place_left};
+      frt::optional<double> opt;
+      opt = eitherVal;
+      return !opt.has_value();
+    }();
+
+    STATIC_REQUIRE(checked);
+  }
+
+  SECTION("From either by copy assignment (nullopt to value)")
+  {
+    constexpr auto checked = [] {
+      constexpr int expected = 42;
+      const frt::either<void, int> eitherVal{frt::in_place_left};
+      frt::optional<double> opt{expected};
+      opt = eitherVal;
+      return !opt.has_value();
+    }();
+
+    STATIC_REQUIRE(checked);
+  }
+
+  SECTION("From either by move (value)")
+  {
+    constexpr auto checked = [] {
+      constexpr int expected = 42;
+      frt::either<void, int> eitherVal{frt::in_place_right, expected};
+      const frt::optional<double> opt{std::move(eitherVal)};
+      return opt == expected;
+    }();
+
+    STATIC_REQUIRE(checked);
+  }
+
+  SECTION("From either by move (nullopt)")
+  {
+    constexpr auto checked = [] {
+      frt::either<void, int> eitherVal{frt::in_place_left};
+      const frt::optional<double> opt{std::move(eitherVal)};
+      return !opt.has_value();
+    }();
+
+    STATIC_REQUIRE(checked);
+  }
+
+  SECTION("From either by move assignment (value to empty)")
+  {
+    constexpr auto checked = [] {
+      constexpr int expected = 42;
+      frt::either<void, int> eitherVal{frt::in_place_right, expected};
+      frt::optional<double> opt;
+      opt = std::move(eitherVal);
+      return opt == expected;
+    }();
+
+    STATIC_REQUIRE(checked);
+  }
+
+  SECTION("From either by move assignment (value to value)")
+  {
+    constexpr auto checked = [] {
+      constexpr int expected = 42;
+      frt::either<void, int> eitherVal{frt::in_place_right, expected};
+      frt::optional<double> opt{100.0};
+      opt = std::move(eitherVal);
+      return opt == expected;
+    }();
+
+    STATIC_REQUIRE(checked);
+  }
+
+  SECTION("From either by move assignment (nullopt to empty)")
+  {
+    constexpr auto checked = [] {
+      frt::either<void, int> eitherVal{frt::in_place_left};
+      frt::optional<double> opt;
+      opt = std::move(eitherVal);
+      return !opt.has_value();
+    }();
+
+    STATIC_REQUIRE(checked);
+  }
+
+  SECTION("From either by move assignment (nullopt to value)")
+  {
+    constexpr auto checked = [] {
+      constexpr int expected = 42;
+      frt::either<void, int> eitherVal{frt::in_place_left};
+      frt::optional<double> opt{expected};
+      opt = std::move(eitherVal);
+      return !opt.has_value();
+    }();
+
+    STATIC_REQUIRE(checked);
+  }
 }

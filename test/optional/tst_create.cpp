@@ -290,4 +290,116 @@ TEST_CASE("Create", "[optional]")
     const frt::optional opt{std::string{lorem_ipsum}};
     REQUIRE(opt.value() == lorem_ipsum);
   }
+
+  SECTION("From either by copy (value)")
+  {
+    const std::string expected{lorem_ipsum};
+    const frt::either<void, std::string> eitherVal{frt::in_place_right, expected};
+    const frt::optional<std::string> opt{eitherVal};
+
+    REQUIRE(opt == expected);
+  }
+
+  SECTION("From either by copy (nullopt)")
+  {
+    const frt::either<void, std::string> eitherVal{frt::in_place_left};
+    const frt::optional<std::string> opt{eitherVal};
+
+    REQUIRE_FALSE(opt.has_value());
+  }
+
+  SECTION("From either by copy assignment (value to empty)")
+  {
+    const std::string expected{lorem_ipsum};
+    const frt::either<void, std::string> eitherVal{frt::in_place_right, expected};
+    frt::optional<std::string> opt;
+    opt = eitherVal;
+
+    REQUIRE(opt == expected);
+  }
+
+  SECTION("From either by copy assignment (value to value)")
+  {
+    const std::string expected{lorem_ipsum};
+    const frt::either<void, std::string> eitherVal{frt::in_place_right, expected};
+    frt::optional<std::string> opt{std::string{"Sed ut perspiciatis unde omnis iste natus error sit voluptatem"}};
+    opt = eitherVal;
+
+    REQUIRE(opt == expected);
+  }
+
+  SECTION("From either by copy assignment (nullopt to empty)")
+  {
+    const frt::either<void, std::string> eitherVal{frt::in_place_left};
+    frt::optional<std::string> opt;
+    opt = eitherVal;
+
+    REQUIRE_FALSE(opt.has_value());
+  }
+
+  SECTION("From either by copy assignment (nullopt to value)")
+  {
+    const std::string expected{lorem_ipsum};
+    const frt::either<void, std::string> eitherVal{frt::in_place_left};
+    frt::optional<std::string> opt{expected};
+    opt = eitherVal;
+
+    REQUIRE_FALSE(opt.has_value());
+  }
+
+  SECTION("From either by move (value)")
+  {
+    const std::string expected{lorem_ipsum};
+    frt::either<void, std::string> eitherVal{frt::in_place_right, expected};
+    const frt::optional<std::string> opt{std::move(eitherVal)};
+
+    REQUIRE(opt == expected);
+  }
+
+  SECTION("From either by move (nullopt)")
+  {
+    frt::either<void, std::string> eitherVal{frt::in_place_left};
+    const frt::optional<std::string> opt{std::move(eitherVal)};
+
+    REQUIRE_FALSE(opt.has_value());
+  }
+
+  SECTION("From either by move assignment (value to empty)")
+  {
+    const std::string expected{lorem_ipsum};
+    frt::either<void, std::string> eitherVal{frt::in_place_right, expected};
+    frt::optional<std::string> opt;
+    opt = std::move(eitherVal);
+
+    REQUIRE(opt == expected);
+  }
+
+  SECTION("From either by move assignment (value to value)")
+  {
+    const std::string expected{lorem_ipsum};
+    frt::either<void, std::string> eitherVal{frt::in_place_right, expected};
+    frt::optional<std::string> opt{std::string{"Sed ut perspiciatis unde omnis iste natus error sit voluptatem"}};
+    opt = std::move(eitherVal);
+
+    REQUIRE(opt == expected);
+  }
+
+  SECTION("From either by move assignment (nullopt to empty)")
+  {
+    frt::either<void, std::string> eitherVal{frt::in_place_left};
+    frt::optional<std::string> opt;
+    opt = std::move(eitherVal);
+
+    REQUIRE_FALSE(opt.has_value());
+  }
+
+  SECTION("From either by move assignment (nullopt to value)")
+  {
+    const std::string expected{lorem_ipsum};
+    frt::either<void, std::string> eitherVal{frt::in_place_left};
+    frt::optional<std::string> opt{expected};
+    opt = std::move(eitherVal);
+
+    REQUIRE_FALSE(opt.has_value());
+  }
 }
