@@ -263,6 +263,217 @@ TEST_CASE("Create", "[either]")
     EitherTT either{frt::in_place_right, 42};
     REQUIRE(either.is_right());
   }
+  SECTION("converting copy constructor from another either (left) (is_left)")
+  {
+    using AnotherEither = frt::either<std::vector<int>, const char *>;
+    const AnotherEither src{frt::in_place_left, expectedLeftValue};
+    const Either either{src};
+
+    REQUIRE(either.is_left());
+  }
+
+  SECTION("converting copy constructor from another either (left) (value)")
+  {
+    using AnotherEither = frt::either<std::vector<int>, const char *>;
+    const AnotherEither src{frt::in_place_left, expectedLeftValue};
+    const Either either{src};
+
+    REQUIRE(either.left() == expectedLeftValue);
+  }
+
+  SECTION("converting copy constructor from another either (right) (is_right)")
+  {
+    using AnotherEither = frt::either<std::vector<int>, const char *>;
+    const char *expectedRightCStr = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor "
+                                    "incididunt ut labore et dolore magna aliqua";
+    const AnotherEither src{frt::in_place_right, expectedRightCStr};
+    const Either either{src};
+
+    REQUIRE(either.is_right());
+  }
+
+  SECTION("converting copy constructor from another either (right) (value)")
+  {
+    using AnotherEither = frt::either<std::vector<int>, const char *>;
+    const char *expectedRightCStr = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor "
+                                    "incididunt ut labore et dolore magna aliqua";
+    const AnotherEither src{frt::in_place_right, expectedRightCStr};
+    const Either either{src};
+
+    REQUIRE(either.right() == expectedRightValue);
+  }
+
+  SECTION("converting move constructor from another either (left) (is_left)")
+  {
+    using AnotherEither = frt::either<std::vector<int>, const char *>;
+    AnotherEither src{frt::in_place_left, expectedLeftValue};
+    const Either either{std::move(src)};
+
+    REQUIRE(either.is_left());
+  }
+
+  SECTION("converting move constructor from another either (left) (value)")
+  {
+    using AnotherEither = frt::either<std::vector<int>, const char *>;
+    AnotherEither src{frt::in_place_left, expectedLeftValue};
+    const Either either{std::move(src)};
+
+    REQUIRE(either.left() == expectedLeftValue);
+  }
+
+  SECTION("converting move constructor from another either (right) (is_right)")
+  {
+    using AnotherEither = frt::either<std::vector<int>, const char *>;
+    const char *expectedRightCStr = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor "
+                                    "incididunt ut labore et dolore magna aliqua";
+    AnotherEither src{frt::in_place_right, expectedRightCStr};
+    const Either either{std::move(src)};
+
+    REQUIRE(either.is_right());
+  }
+
+  SECTION("converting move constructor from another either (right) (value)")
+  {
+    using AnotherEither = frt::either<std::vector<int>, const char *>;
+    const char *expectedRightCStr = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor "
+                                    "incididunt ut labore et dolore magna aliqua";
+    AnotherEither src{frt::in_place_right, expectedRightCStr};
+    const Either either{std::move(src)};
+
+    REQUIRE(either.right() == expectedRightValue);
+  }
+
+  SECTION("copy assignment from another either (left to left) (value)")
+  {
+    using AnotherEither = frt::either<std::vector<int>, const char *>;
+    const AnotherEither src{frt::in_place_left, expectedLeftValue};
+    Either either{frt::in_place_left, std::vector<int>{}};
+    either = src;
+
+    REQUIRE(either.left() == expectedLeftValue);
+  }
+
+  SECTION("copy assignment from another either (left to right) (is_left)")
+  {
+    using AnotherEither = frt::either<std::vector<int>, const char *>;
+    const AnotherEither src{frt::in_place_left, expectedLeftValue};
+    Either either{frt::in_place_right, ""s};
+    either = src;
+
+    REQUIRE(either.is_left());
+  }
+
+  SECTION("copy assignment from another either (left to right) (value)")
+  {
+    using AnotherEither = frt::either<std::vector<int>, const char *>;
+    const AnotherEither src{frt::in_place_left, expectedLeftValue};
+    Either either{frt::in_place_right, ""s};
+    either = src;
+
+    REQUIRE(either.left() == expectedLeftValue);
+  }
+
+  SECTION("copy assignment from another either (right to left) (is_right)")
+  {
+    using AnotherEither = frt::either<std::vector<int>, const char *>;
+    const char *expectedRightCStr = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor "
+                                    "incididunt ut labore et dolore magna aliqua";
+    const AnotherEither src{frt::in_place_right, expectedRightCStr};
+    Either either{frt::in_place_left, std::vector<int>{}};
+    either = src;
+
+    REQUIRE(either.is_right());
+  }
+
+  SECTION("copy assignment from another either (right to left) (value)")
+  {
+    using AnotherEither = frt::either<std::vector<int>, const char *>;
+    const char *expectedRightCStr = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor "
+                                    "incididunt ut labore et dolore magna aliqua";
+    const AnotherEither src{frt::in_place_right, expectedRightCStr};
+    Either either{frt::in_place_left, std::vector<int>{}};
+    either = src;
+
+    REQUIRE(either.right() == expectedRightValue);
+  }
+
+  SECTION("copy assignment from another either (right to right) (value)")
+  {
+    using AnotherEither = frt::either<std::vector<int>, const char *>;
+    const char *expectedRightCStr = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor "
+                                    "incididunt ut labore et dolore magna aliqua";
+    const AnotherEither src{frt::in_place_right, expectedRightCStr};
+    Either either{frt::in_place_right, ""s};
+    either = src;
+
+    REQUIRE(either.right() == expectedRightValue);
+  }
+
+  SECTION("move assignment from another either (left to left) (value)")
+  {
+    using AnotherEither = frt::either<std::vector<int>, const char *>;
+    AnotherEither src{frt::in_place_left, expectedLeftValue};
+    Either either{frt::in_place_left, std::vector<int>{}};
+    either = std::move(src);
+
+    REQUIRE(either.left() == expectedLeftValue);
+  }
+
+  SECTION("move assignment from another either (left to right) (is_left)")
+  {
+    using AnotherEither = frt::either<std::vector<int>, const char *>;
+    AnotherEither src{frt::in_place_left, expectedLeftValue};
+    Either either{frt::in_place_right, ""s};
+    either = std::move(src);
+
+    REQUIRE(either.is_left());
+  }
+
+  SECTION("move assignment from another either (left to right) (value)")
+  {
+    using AnotherEither = frt::either<std::vector<int>, const char *>;
+    AnotherEither src{frt::in_place_left, expectedLeftValue};
+    Either either{frt::in_place_right, ""s};
+    either = std::move(src);
+
+    REQUIRE(either.left() == expectedLeftValue);
+  }
+
+  SECTION("move assignment from another either (right to left) (is_right)")
+  {
+    using AnotherEither = frt::either<std::vector<int>, const char *>;
+    const char *expectedRightCStr = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor "
+                                    "incididunt ut labore et dolore magna aliqua";
+    AnotherEither src{frt::in_place_right, expectedRightCStr};
+    Either either{frt::in_place_left, std::vector<int>{}};
+    either = std::move(src);
+
+    REQUIRE(either.is_right());
+  }
+
+  SECTION("move assignment from another either (right to left) (value)")
+  {
+    using AnotherEither = frt::either<std::vector<int>, const char *>;
+    const char *expectedRightCStr = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor "
+                                    "incididunt ut labore et dolore magna aliqua";
+    AnotherEither src{frt::in_place_right, expectedRightCStr};
+    Either either{frt::in_place_left, std::vector<int>{}};
+    either = std::move(src);
+
+    REQUIRE(either.right() == expectedRightValue);
+  }
+
+  SECTION("move assignment from another either (right to right) (value)")
+  {
+    using AnotherEither = frt::either<std::vector<int>, const char *>;
+    const char *expectedRightCStr = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor "
+                                    "incididunt ut labore et dolore magna aliqua";
+    AnotherEither src{frt::in_place_right, expectedRightCStr};
+    Either either{frt::in_place_right, ""s};
+    either = std::move(src);
+
+    REQUIRE(either.right() == expectedRightValue);
+  }
 }
 
 TEST_CASE("Create either<void, T>", "[either]")

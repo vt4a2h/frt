@@ -92,6 +92,42 @@ struct CallableReturnVoidOneArg
   void operator()(int) const;
 };
 
+struct NonCopyable
+{
+  NonCopyable() = default;
+  NonCopyable(const NonCopyable &) = delete;
+  NonCopyable &operator=(const NonCopyable &) = delete;
+  NonCopyable(NonCopyable &&) = default;
+  NonCopyable &operator=(NonCopyable &&) = default;
+};
+
+struct NonMovable
+{
+  NonMovable() = default;
+  NonMovable(const NonMovable &) = delete;
+  NonMovable &operator=(const NonMovable &) = delete;
+  NonMovable(NonMovable &&) = delete;
+  NonMovable &operator=(NonMovable &&) = delete;
+};
+
+struct ThrowingCopy
+{
+  ThrowingCopy() = default;
+  ThrowingCopy(const ThrowingCopy &) noexcept(false) {}
+  ThrowingCopy(ThrowingCopy &&) noexcept = default;
+  ThrowingCopy &operator=(const ThrowingCopy &) noexcept(false) = default;
+  ThrowingCopy &operator=(ThrowingCopy &&) noexcept = default;
+};
+
+struct ThrowingMove
+{
+  ThrowingMove() = default;
+  ThrowingMove(const ThrowingMove &) noexcept = default;
+  ThrowingMove(ThrowingMove &&) noexcept(false) {}
+  ThrowingMove &operator=(const ThrowingMove &) noexcept = default;
+  ThrowingMove &operator=(ThrowingMove &&) noexcept(false) = default;
+};
+
 struct IncompatibleType
 {
 };
@@ -487,4 +523,102 @@ TEMPLATE_TEST_CASE_SIG("ValidType", "[either]", ((class T, bool Valid), T, Valid
                        (const frt::detail::either_::Void, false), (void(), false), (NonDestructible, false))
 {
   STATIC_REQUIRE(frt::detail::either_::ValidType<T> == Valid);
+}
+
+TEMPLATE_TEST_CASE_SIG("CopyConstructibleFromAnotherEither", "[either]",
+                       ((class Left, class Right, class AnotherLeft, class AnotherRight, bool Valid), Left, Right,
+                        AnotherLeft, AnotherRight, Valid),
+                       (int, double, int, double, false), (double, std::string, int, const char *, true),
+                       (int, std::string, int, const char *, true), (double, int, int, int, true),
+                       (NonCopyable, double, NonCopyable, double, false),
+                       (double, NonCopyable, double, NonCopyable, false),
+                       (IncompatibleType, double, int, double, false), (int, IncompatibleType, int, double, false))
+{
+  STATIC_REQUIRE(frt::detail::either_::CopyConstructibleFromAnotherEither<Left, Right, AnotherLeft, AnotherRight> ==
+                 Valid);
+}
+
+TEMPLATE_TEST_CASE_SIG("NothrowCopyConstructibleFromAnotherEither", "[either]",
+                       ((class Left, class Right, class AnotherLeft, class AnotherRight, bool Valid), Left, Right,
+                        AnotherLeft, AnotherRight, Valid),
+                       (int, double, int, double, false), (double, int, int, int, true),
+                       (ThrowingCopy, double, ThrowingCopy, double, false),
+                       (double, ThrowingCopy, double, ThrowingCopy, false),
+                       (IncompatibleType, double, int, double, false))
+{
+  STATIC_REQUIRE(
+      frt::detail::either_::NothrowCopyConstructibleFromAnotherEither<Left, Right, AnotherLeft, AnotherRight> == Valid);
+}
+
+TEMPLATE_TEST_CASE_SIG("MoveConstructibleFromAnotherEither", "[either]",
+                       ((class Left, class Right, class AnotherLeft, class AnotherRight, bool Valid), Left, Right,
+                        AnotherLeft, AnotherRight, Valid),
+                       (int, double, int, double, false), (double, std::string, int, std::string, true),
+                       (int, std::string, int, const char *, true), (double, int, int, int, true),
+                       (NonMovable, double, NonMovable, double, false), (double, NonMovable, double, NonMovable, false),
+                       (IncompatibleType, double, int, double, false))
+{
+  STATIC_REQUIRE(frt::detail::either_::MoveConstructibleFromAnotherEither<Left, Right, AnotherLeft, AnotherRight> ==
+                 Valid);
+}
+
+TEMPLATE_TEST_CASE_SIG("NothrowMoveConstructibleFromAnotherEither", "[either]",
+                       ((class Left, class Right, class AnotherLeft, class AnotherRight, bool Valid), Left, Right,
+                        AnotherLeft, AnotherRight, Valid),
+                       (int, double, int, double, false), (double, int, int, int, true),
+                       (ThrowingMove, double, ThrowingMove, double, false),
+                       (double, ThrowingMove, double, ThrowingMove, false),
+                       (IncompatibleType, double, int, double, false))
+{
+  STATIC_REQUIRE(
+      frt::detail::either_::NothrowMoveConstructibleFromAnotherEither<Left, Right, AnotherLeft, AnotherRight> == Valid);
+}
+
+TEMPLATE_TEST_CASE_SIG("CopyAssignableFromAnotherEither", "[either]",
+                       ((class Left, class Right, class AnotherLeft, class AnotherRight, bool Valid), Left, Right,
+                        AnotherLeft, AnotherRight, Valid),
+                       (int, double, int, double, false), (double, std::string, int, const char *, true),
+                       (int, std::string, int, const char *, true), (double, int, int, int, true),
+                       (NonCopyable, double, NonCopyable, double, false),
+                       (double, NonCopyable, double, NonCopyable, false),
+                       (IncompatibleType, double, int, double, false), (int, IncompatibleType, int, double, false))
+{
+  STATIC_REQUIRE(frt::detail::either_::CopyAssignableFromAnotherEither<Left, Right, AnotherLeft, AnotherRight> ==
+                 Valid);
+}
+
+TEMPLATE_TEST_CASE_SIG("NothrowCopyAssignableFromAnotherEither", "[either]",
+                       ((class Left, class Right, class AnotherLeft, class AnotherRight, bool Valid), Left, Right,
+                        AnotherLeft, AnotherRight, Valid),
+                       (int, double, int, double, false), (double, int, int, int, true),
+                       (ThrowingCopy, double, ThrowingCopy, double, false),
+                       (double, ThrowingCopy, double, ThrowingCopy, false),
+                       (IncompatibleType, double, int, double, false))
+{
+  STATIC_REQUIRE(frt::detail::either_::NothrowCopyAssignableFromAnotherEither<Left, Right, AnotherLeft, AnotherRight> ==
+                 Valid);
+}
+
+TEMPLATE_TEST_CASE_SIG("MoveAssignableFromAnotherEither", "[either]",
+                       ((class Left, class Right, class AnotherLeft, class AnotherRight, bool Valid), Left, Right,
+                        AnotherLeft, AnotherRight, Valid),
+                       (int, double, int, double, false), (double, std::string, int, std::string, true),
+                       (int, std::string, int, const char *, true), (double, int, int, int, true),
+                       (NonMovable, double, NonMovable, double, false), (double, NonMovable, double, NonMovable, false),
+                       (IncompatibleType, double, int, double, false))
+{
+  STATIC_REQUIRE(frt::detail::either_::MoveAssignableFromAnotherEither<Left, Right, AnotherLeft, AnotherRight> ==
+                 Valid);
+}
+
+TEMPLATE_TEST_CASE_SIG("NothrowMoveAssignableFromAnotherEither", "[either]",
+                       ((class Left, class Right, class AnotherLeft, class AnotherRight, bool Valid), Left, Right,
+                        AnotherLeft, AnotherRight, Valid),
+                       (int, double, int, double, false), (double, int, int, int, true),
+                       (ThrowingMove, double, ThrowingMove, double, false),
+                       (double, ThrowingMove, double, ThrowingMove, false),
+                       (IncompatibleType, double, int, double, false))
+{
+  STATIC_REQUIRE(frt::detail::either_::NothrowMoveAssignableFromAnotherEither<Left, Right, AnotherLeft, AnotherRight> ==
+                 Valid);
 }
