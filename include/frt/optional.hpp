@@ -72,20 +72,16 @@ concept CopyConstructibleFromOtherOptional = requires {
 };
 
 template <class U, class T>
-concept CopyConstructibleFromEither =
-    std::constructible_from<bare_t<T>, std::add_const_t<std::add_lvalue_reference_t<bare_t<U>>>>;
+concept CopyConstructibleFromEither = std::constructible_from<bare_t<T>, c_l_ref_t<U>>;
 
 template <class U, class T>
-concept NothrowCopyConstructibleFromEither =
-    std::is_nothrow_constructible_v<bare_t<T>, std::add_const_t<std::add_lvalue_reference_t<bare_t<U>>>>;
+concept NothrowCopyConstructibleFromEither = std::is_nothrow_constructible_v<bare_t<T>, c_l_ref_t<U>>;
 
 template <class U, class T>
-concept CopyAssignableFromEither =
-    std::assignable_from<bare_t<T>, std::add_const_t<std::add_lvalue_reference_t<bare_t<U>>>>;
+concept CopyAssignableFromEither = std::assignable_from<l_ref_t<T>, c_l_ref_t<U>>;
 
 template <class U, class T>
-concept NothrowCopyAssignableFromEither =
-    std::is_nothrow_assignable_v<bare_t<T>, std::add_const_t<std::add_lvalue_reference_t<bare_t<U>>>>;
+concept NothrowCopyAssignableFromEither = std::is_nothrow_assignable_v<l_ref_t<T>, c_l_ref_t<U>>;
 
 template <class U, class T>
 concept MoveConstructibleFromOtherOptional = requires {
@@ -95,18 +91,16 @@ concept MoveConstructibleFromOtherOptional = requires {
 };
 
 template <class U, class T>
-concept MoveConstructibleFromEither = std::constructible_from<bare_t<T>, std::add_rvalue_reference_t<bare_t<U>>>;
+concept MoveConstructibleFromEither = std::constructible_from<bare_t<T>, r_ref_t<U>>;
 
 template <class U, class T>
-concept NothrowMoveConstructibleFromEither =
-    std::is_nothrow_constructible_v<bare_t<T>, std::add_rvalue_reference_t<bare_t<U>>>;
+concept NothrowMoveConstructibleFromEither = std::is_nothrow_constructible_v<bare_t<T>, r_ref_t<U>>;
 
 template <class U, class T>
-concept MoveAssignableFromEither = std::assignable_from<bare_t<T>, std::add_rvalue_reference_t<bare_t<U>>>;
+concept MoveAssignableFromEither = std::assignable_from<l_ref_t<T>, r_ref_t<U>>;
 
 template <class U, class T>
-concept NothrowMoveAssignableFromEither =
-    std::is_nothrow_assignable_v<bare_t<T>, std::add_rvalue_reference_t<bare_t<U>>>;
+concept NothrowMoveAssignableFromEither = std::is_nothrow_assignable_v<l_ref_t<T>, r_ref_t<U>>;
 
 template <class T>
 concept ValidType = requires {
@@ -254,7 +248,7 @@ struct [[nodiscard]] optional
   constexpr optional &
   operator=(const either<void, U> &other) noexcept(detail::optional_::NothrowCopyAssignableFromEither<T, U>)
   {
-    if (other.has_value()) {
+    if (other.is_right()) {
       data_.emplaceRight(other.right());
     } else {
       reset();
@@ -287,9 +281,9 @@ struct [[nodiscard]] optional
   //! Assign from `either` by move.
   template <detail::optional_::MoveAssignableFromEither<T> U>
   constexpr optional &
-  operator=(either<void, U> &&other) noexcept(detail::optional_::NothrowCopyAssignableFromEither<T, U>)
+  operator=(either<void, U> &&other) noexcept(detail::optional_::NothrowMoveAssignableFromEither<T, U>)
   {
-    if (other.has_value()) {
+    if (other.is_right()) {
       data_.emplaceRight(std::move(other).right());
     } else {
       reset();

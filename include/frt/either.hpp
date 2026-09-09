@@ -27,6 +27,15 @@ namespace detail::common_
 template <class T>
 using bare_t = std::remove_cvref_t<T>;
 
+template <class T>
+using l_ref_t = std::add_lvalue_reference_t<bare_t<T>>;
+
+template <class T>
+using c_l_ref_t = std::add_lvalue_reference_t<std::add_const_t<bare_t<T>>>;
+
+template <class T>
+using r_ref_t = std::add_rvalue_reference_t<bare_t<T>>;
+
 struct Void
 {
   friend constexpr bool operator==(Void, Void) noexcept = default;
@@ -264,50 +273,50 @@ concept ValidType = requires {
 template <class Left, class Right, class AnotherLeft, class AnotherRight>
 concept CopyConstructibleFromAnotherEither =
     !(std::same_as<bare_t<Left>, bare_t<AnotherLeft>> && std::same_as<bare_t<Right>, bare_t<AnotherRight>>) &&
-    std::is_constructible_v<bare_t<Left>, std::add_const_t<std::add_lvalue_reference_t<bare_t<AnotherLeft>>>> &&
-    std::is_constructible_v<bare_t<Right>, std::add_const_t<std::add_lvalue_reference_t<bare_t<AnotherRight>>>>;
+    std::is_constructible_v<bare_t<Left>, c_l_ref_t<AnotherLeft>> &&
+    std::is_constructible_v<bare_t<Right>, c_l_ref_t<AnotherRight>>;
 
 template <class Left, class Right, class AnotherLeft, class AnotherRight>
 concept NothrowCopyConstructibleFromAnotherEither =
     !(std::same_as<bare_t<Left>, bare_t<AnotherLeft>> && std::same_as<bare_t<Right>, bare_t<AnotherRight>>) &&
-    std::is_nothrow_constructible_v<bare_t<Left>, std::add_const_t<std::add_lvalue_reference_t<bare_t<AnotherLeft>>>> &&
-    std::is_nothrow_constructible_v<bare_t<Right>, std::add_const_t<std::add_lvalue_reference_t<bare_t<AnotherRight>>>>;
+    std::is_nothrow_constructible_v<bare_t<Left>, c_l_ref_t<AnotherLeft>> &&
+    std::is_nothrow_constructible_v<bare_t<Right>, c_l_ref_t<AnotherRight>>;
 
 template <class Left, class Right, class AnotherLeft, class AnotherRight>
 concept MoveConstructibleFromAnotherEither =
     !(std::same_as<bare_t<Left>, bare_t<AnotherLeft>> && std::same_as<bare_t<Right>, bare_t<AnotherRight>>) &&
-    std::is_constructible_v<bare_t<Left>, std::add_rvalue_reference_t<bare_t<AnotherLeft>>> &&
-    std::is_constructible_v<bare_t<Right>, std::add_rvalue_reference_t<bare_t<AnotherRight>>>;
+    std::is_constructible_v<bare_t<Left>, r_ref_t<AnotherLeft>> &&
+    std::is_constructible_v<bare_t<Right>, r_ref_t<AnotherRight>>;
 
 template <class Left, class Right, class AnotherLeft, class AnotherRight>
 concept NothrowMoveConstructibleFromAnotherEither =
     !(std::same_as<bare_t<Left>, bare_t<AnotherLeft>> && std::same_as<bare_t<Right>, bare_t<AnotherRight>>) &&
-    std::is_nothrow_constructible_v<bare_t<Left>, std::add_rvalue_reference_t<bare_t<AnotherLeft>>> &&
-    std::is_nothrow_constructible_v<bare_t<Right>, std::add_rvalue_reference_t<bare_t<AnotherRight>>>;
+    std::is_nothrow_constructible_v<bare_t<Left>, r_ref_t<AnotherLeft>> &&
+    std::is_nothrow_constructible_v<bare_t<Right>, r_ref_t<AnotherRight>>;
 
 template <class Left, class Right, class AnotherLeft, class AnotherRight>
 concept CopyAssignableFromAnotherEither =
     !(std::same_as<bare_t<Left>, bare_t<AnotherLeft>> && std::same_as<bare_t<Right>, bare_t<AnotherRight>>) &&
-    std::assignable_from<bare_t<Left>, std::add_const_t<std::add_lvalue_reference_t<bare_t<AnotherLeft>>>> &&
-    std::assignable_from<bare_t<Right>, std::add_const_t<std::add_lvalue_reference_t<bare_t<AnotherRight>>>>;
+    std::assignable_from<l_ref_t<Left>, c_l_ref_t<AnotherLeft>> &&
+    std::assignable_from<l_ref_t<Right>, c_l_ref_t<AnotherRight>>;
 
 template <class Left, class Right, class AnotherLeft, class AnotherRight>
 concept NothrowCopyAssignableFromAnotherEither =
     !(std::same_as<bare_t<Left>, bare_t<AnotherLeft>> && std::same_as<bare_t<Right>, bare_t<AnotherRight>>) &&
-    std::is_nothrow_assignable_v<bare_t<Left>, std::add_const_t<std::add_lvalue_reference_t<bare_t<AnotherLeft>>>> &&
-    std::is_nothrow_assignable_v<bare_t<Right>, std::add_const_t<std::add_lvalue_reference_t<bare_t<AnotherRight>>>>;
+    std::is_nothrow_assignable_v<l_ref_t<Left>, c_l_ref_t<AnotherLeft>> &&
+    std::is_nothrow_assignable_v<l_ref_t<Right>, c_l_ref_t<AnotherRight>>;
 
 template <class Left, class Right, class AnotherLeft, class AnotherRight>
 concept MoveAssignableFromAnotherEither =
     !(std::same_as<bare_t<Left>, bare_t<AnotherLeft>> && std::same_as<bare_t<Right>, bare_t<AnotherRight>>) &&
-    std::assignable_from<bare_t<Left>, std::add_rvalue_reference_t<bare_t<AnotherLeft>>> &&
-    std::assignable_from<bare_t<Right>, std::add_rvalue_reference_t<bare_t<AnotherRight>>>;
+    std::assignable_from<l_ref_t<Left>, r_ref_t<AnotherLeft>> &&
+    std::assignable_from<l_ref_t<Right>, r_ref_t<AnotherRight>>;
 
 template <class Left, class Right, class AnotherLeft, class AnotherRight>
 concept NothrowMoveAssignableFromAnotherEither =
     !(std::same_as<bare_t<Left>, bare_t<AnotherLeft>> && std::same_as<bare_t<Right>, bare_t<AnotherRight>>) &&
-    std::is_nothrow_assignable_v<bare_t<Left>, std::add_rvalue_reference_t<bare_t<AnotherLeft>>> &&
-    std::is_nothrow_assignable_v<bare_t<Right>, std::add_rvalue_reference_t<bare_t<AnotherRight>>>;
+    std::is_nothrow_assignable_v<l_ref_t<Left>, r_ref_t<AnotherLeft>> &&
+    std::is_nothrow_assignable_v<l_ref_t<Right>, r_ref_t<AnotherRight>>;
 
 } // namespace detail::either_
 

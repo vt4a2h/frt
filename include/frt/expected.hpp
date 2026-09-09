@@ -111,9 +111,6 @@ template <class Err, class E>
 concept ValidUnexpectedError = !std::same_as<bare_t<Err>, unexpected<E>> &&
                                !std::same_as<bare_t<Err>, InPlaceExpectedTag> && std::constructible_from<E, Err>;
 
-template <class T>
-using c_l_ref_t = std::add_lvalue_reference_t<std::add_const_t<bare_t<T>>>;
-
 template <class E, class U, class G>
 concept UnexConstructableFromExpected =
     std::is_constructible_v<unexpected<bare_t<E>>, expected<bare_t<U>, bare_t<G>> &> ||
@@ -218,41 +215,35 @@ concept NothrowThreeWayComparable =
 
 template <class T, class E, class L, class R>
 concept CopyConstructibleFromEither =
-    std::constructible_from<bare_t<T>, std::add_const_t<std::add_lvalue_reference_t<bare_t<L>>>> &&
-    std::constructible_from<bare_t<E>, std::add_const_t<std::add_lvalue_reference_t<bare_t<R>>>>;
+    std::constructible_from<bare_t<T>, c_l_ref_t<L>> && std::constructible_from<bare_t<E>, c_l_ref_t<R>>;
 
 template <class T, class E, class L, class R>
-concept NothrowCopyConstructibleFromEither =
-    std::is_nothrow_constructible_v<bare_t<T>, std::add_const_t<std::add_lvalue_reference_t<bare_t<L>>>> &&
-    std::is_nothrow_constructible_v<bare_t<E>, std::add_const_t<std::add_lvalue_reference_t<bare_t<R>>>>;
+concept NothrowCopyConstructibleFromEither = std::is_nothrow_constructible_v<bare_t<T>, c_l_ref_t<L>> &&
+                                             std::is_nothrow_constructible_v<bare_t<E>, c_l_ref_t<R>>;
 
 template <class T, class E, class L, class R>
-concept MoveConstructibleFromEither = std::constructible_from<bare_t<T>, std::add_rvalue_reference_t<bare_t<L>>> &&
-                                      std::constructible_from<bare_t<E>, std::add_rvalue_reference_t<bare_t<R>>>;
+concept MoveConstructibleFromEither =
+    std::constructible_from<bare_t<T>, r_ref_t<L>> && std::constructible_from<bare_t<E>, r_ref_t<R>>;
 
 template <class T, class E, class L, class R>
 concept NothrowMoveConstructibleFromEither =
-    std::is_nothrow_constructible_v<bare_t<T>, std::add_rvalue_reference_t<bare_t<L>>> &&
-    std::is_nothrow_constructible_v<bare_t<E>, std::add_rvalue_reference_t<bare_t<R>>>;
+    std::is_nothrow_constructible_v<bare_t<T>, r_ref_t<L>> && std::is_nothrow_constructible_v<bare_t<E>, r_ref_t<R>>;
 
 template <class T, class E, class L, class R>
 concept CopyAssignableFromEither =
-    std::assignable_from<bare_t<T>, std::add_const_t<std::add_lvalue_reference_t<bare_t<L>>>> &&
-    std::assignable_from<bare_t<E>, std::add_const_t<std::add_lvalue_reference_t<bare_t<R>>>>;
+    std::assignable_from<l_ref_t<T>, c_l_ref_t<L>> && std::assignable_from<l_ref_t<E>, c_l_ref_t<R>>;
 
 template <class T, class E, class L, class R>
 concept NothrowCopyAssignableFromEither =
-    std::is_nothrow_assignable_v<bare_t<T>, std::add_const_t<std::add_lvalue_reference_t<bare_t<L>>>> &&
-    std::is_nothrow_assignable_v<bare_t<E>, std::add_const_t<std::add_lvalue_reference_t<bare_t<R>>>>;
+    std::is_nothrow_assignable_v<l_ref_t<T>, c_l_ref_t<L>> && std::is_nothrow_assignable_v<l_ref_t<E>, c_l_ref_t<R>>;
 
 template <class T, class E, class L, class R>
-concept MoveAssignableFromEither = std::assignable_from<bare_t<T>, std::add_rvalue_reference_t<bare_t<L>>> &&
-                                   std::assignable_from<bare_t<E>, std::add_rvalue_reference_t<bare_t<R>>>;
+concept MoveAssignableFromEither =
+    std::assignable_from<l_ref_t<T>, r_ref_t<L>> && std::assignable_from<l_ref_t<E>, r_ref_t<R>>;
 
 template <class T, class E, class L, class R>
 concept NothrowMoveAssignableFromEither =
-    std::is_nothrow_assignable_v<bare_t<T>, std::add_rvalue_reference_t<bare_t<L>>> &&
-    std::is_nothrow_assignable_v<bare_t<E>, std::add_rvalue_reference_t<bare_t<R>>>;
+    std::is_nothrow_assignable_v<l_ref_t<T>, r_ref_t<L>> && std::is_nothrow_assignable_v<l_ref_t<E>, r_ref_t<R>>;
 
 } // namespace detail::expected_
 
@@ -566,7 +557,8 @@ struct [[nodiscard]] expected
   //! Assign from `either` by copy.
   template <class L, class R>
     requires(detail::expected_::CopyAssignableFromEither<T, E, L, R>)
-  expected &operator=(const either<L, R> &src) noexcept(detail::expected_::NothrowCopyAssignableFromEither<T, E, L, R>)
+  constexpr expected &
+  operator=(const either<L, R> &src) noexcept(detail::expected_::NothrowCopyAssignableFromEither<T, E, L, R>)
   {
     if (src.is_left()) {
       data_.emplaceLeft(src.left());
@@ -580,7 +572,8 @@ struct [[nodiscard]] expected
   //! Assign from another `either` by move.
   template <class L, class R>
     requires(detail::expected_::MoveAssignableFromEither<T, E, L, R>)
-  expected &operator=(either<L, R> &&src) noexcept(detail::expected_::NothrowMoveAssignableFromEither<T, E, L, R>)
+  constexpr expected &
+  operator=(either<L, R> &&src) noexcept(detail::expected_::NothrowMoveAssignableFromEither<T, E, L, R>)
   {
     if (src.is_left()) {
       data_.emplaceLeft(std::move(src).left());
