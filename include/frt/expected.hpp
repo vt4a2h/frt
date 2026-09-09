@@ -156,8 +156,8 @@ concept ConstructableFromAnotherExpected = constructable_from_another_expected_i
 
 template <class T, class E, class U, class G>
 concept noexcept_from_another_impl =
-    (detail::either_::IsVoid<T> || std::is_nothrow_constructible_v<either<T, E>, in_place_left_t, U>) &&
-    std::is_nothrow_constructible_v<either<T, E>, in_place_right_t, G>;
+    (detail::either_::IsVoid<T> || std::is_nothrow_constructible_v<either<E, T>, in_place_right_t, U>) &&
+    std::is_nothrow_constructible_v<either<E, T>, in_place_left_t, G>;
 
 template <class T, class E, class U, class G>
 concept NoexceptFromAnotherCref = noexcept_from_another_impl<T, E, c_l_ref_t<U>, c_l_ref_t<G>>;
@@ -176,15 +176,15 @@ concept ExplicitFromAnother = explicit_from_another_impl<T, E, bare_t<U>, bare_t
 
 // NOTE: it might be nice to have an appropriate ctor in either for this scenario
 template <class T, class E, IsExpected Other>
-constexpr auto fromOther(Other &&other) -> either<T, E>
+constexpr auto fromOther(Other &&other) -> either<E, T>
 {
   if (!other.has_value()) {
-    return {in_place_right, std::forward<Other>(other).error()};
+    return {in_place_left, std::forward<Other>(other).error()};
   } else {
     if constexpr (IsVoid<T> && IsVoid<typename bare_t<Other>::value_type>) {
-      return {in_place_left};
+      return {in_place_right};
     } else {
-      return {in_place_left, std::forward<Other>(other).value()};
+      return {in_place_right, std::forward<Other>(other).value()};
     }
   }
 }
@@ -388,7 +388,7 @@ unexpected(E) -> unexpected<E>;
  * of the "value of unexpected type".
  *
  * This class is \c std::expected<T, E> with extended monadic operations and some extra methods. It's implemented based
- * on \c frt::either<T, E>.
+ * on \c frt::either<E, T>.
  *
  * Read the official documentation for more info: https://en.cppreference.com/cpp/utility/expected.
  */
@@ -419,17 +419,17 @@ struct [[nodiscard]] expected
   //! Create with a default value.
   constexpr expected() noexcept(detail::either_::IsVoid<T> || std::is_nothrow_default_constructible_v<T>)
     requires(detail::either_::IsVoid<T> || std::is_default_constructible_v<T>)
-      : data_(in_place_left)
+      : data_(in_place_right)
   {
   }
 
   //! Create from another `expected` by copy.
-  constexpr expected(const expected &) noexcept(std::is_nothrow_copy_constructible_v<either<T, E>>)
+  constexpr expected(const expected &) noexcept(std::is_nothrow_copy_constructible_v<either<E, T>>)
     requires((detail::either_::IsVoid<T> || std::is_copy_constructible_v<T>) && std::is_copy_constructible_v<E>)
   = default;
 
   //! Create from another `expected` by move.
-  constexpr expected(expected &&) noexcept(std::is_nothrow_move_constructible_v<either<T, E>>)
+  constexpr expected(expected &&) noexcept(std::is_nothrow_move_constructible_v<either<E, T>>)
     requires((detail::either_::IsVoid<T> || std::is_move_constructible_v<T>) && std::is_move_constructible_v<E>)
   = default;
 
@@ -438,8 +438,8 @@ struct [[nodiscard]] expected
     requires(detail::expected_::CopyConstructibleFromEither<T, E, L, R>)
   constexpr expected(const either<L, R> &inEither) noexcept(
       detail::expected_::NothrowCopyConstructibleFromEither<T, E, L, R>)
-      : data_(inEither.is_left() ? either<T, E>{in_place_left, inEither.left()}
-                                 : either<T, E>{in_place_right, inEither.right()})
+      : data_(inEither.is_left() ? either<E, T>{in_place_right, inEither.left()}
+                                 : either<E, T>{in_place_left, inEither.right()})
   {
   }
 
@@ -448,8 +448,8 @@ struct [[nodiscard]] expected
     requires(detail::expected_::MoveConstructibleFromEither<T, E, L, R>)
   constexpr expected(either<L, R> &&inEither) noexcept(
       detail::expected_::NothrowMoveConstructibleFromEither<T, E, L, R>)
-      : data_(inEither.is_left() ? either<T, E>{in_place_left, std::move(inEither).left()}
-                                 : either<T, E>{in_place_right, std::move(inEither).right()})
+      : data_(inEither.is_left() ? either<E, T>{in_place_right, std::move(inEither).left()}
+                                 : either<E, T>{in_place_left, std::move(inEither).right()})
   {
   }
 
@@ -477,8 +477,8 @@ struct [[nodiscard]] expected
              !std::same_as<detail::either_::bare_t<U>, expected> && std::is_constructible_v<T, U> && !IsUnexpected<U> &&
              (!std::same_as<value_type, bool> || !IsExpected<U>))
   constexpr explicit(!std::is_convertible_v<U, T>)
-      expected(U &&v) noexcept(std::is_nothrow_constructible_v<either<T, E>, in_place_left_t, U>)
-      : data_(in_place_left, std::forward<U>(v))
+      expected(U &&v) noexcept(std::is_nothrow_constructible_v<either<E, T>, in_place_right_t, U>)
+      : data_(in_place_right, std::forward<U>(v))
   {
   }
 
@@ -486,8 +486,8 @@ struct [[nodiscard]] expected
   template <class G = E>
     requires(std::is_constructible_v<E, const G &>)
   constexpr explicit(!std::is_convertible_v<const G &, E>) expected(const unexpected<G> &e) noexcept(
-      std::is_nothrow_constructible_v<either<T, E>, in_place_right_t, const G &>)
-      : data_(in_place_right, e.error())
+      std::is_nothrow_constructible_v<either<E, T>, in_place_left_t, const G &>)
+      : data_(in_place_left, e.error())
   {
   }
 
@@ -495,8 +495,8 @@ struct [[nodiscard]] expected
   template <class G = E>
     requires(std::is_constructible_v<E, G>)
   constexpr explicit(!std::is_convertible_v<G, E>)
-      expected(unexpected<G> &&e) noexcept(std::is_nothrow_constructible_v<either<T, E>, in_place_right_t, G &&>)
-      : data_(in_place_right, std::move(e).error())
+      expected(unexpected<G> &&e) noexcept(std::is_nothrow_constructible_v<either<E, T>, in_place_left_t, G &&>)
+      : data_(in_place_left, std::move(e).error())
   {
   }
 
@@ -504,8 +504,8 @@ struct [[nodiscard]] expected
   template <class... Args>
     requires(detail::either_::IsNotVoid<T> && std::is_constructible_v<T, Args...>)
   constexpr explicit expected(in_place_expected_t, Args &&...args) noexcept(
-      std::is_nothrow_constructible_v<either<T, E>, in_place_left_t, Args...>)
-      : data_(in_place_left, std::forward<Args>(args)...)
+      std::is_nothrow_constructible_v<either<E, T>, in_place_right_t, Args...>)
+      : data_(in_place_right, std::forward<Args>(args)...)
   {
   }
 
@@ -513,16 +513,16 @@ struct [[nodiscard]] expected
   template <class U, class... Args>
     requires(detail::either_::IsNotVoid<T> && std::is_constructible_v<T, std::initializer_list<U> &, Args...>)
   constexpr explicit expected(in_place_expected_t, std::initializer_list<U> ilist, Args &&...args) noexcept(
-      std::is_nothrow_constructible_v<either<T, E>, in_place_left_t, std::initializer_list<U> &, Args...>)
-      : data_(in_place_left, ilist, std::forward<Args>(args)...)
+      std::is_nothrow_constructible_v<either<E, T>, in_place_right_t, std::initializer_list<U> &, Args...>)
+      : data_(in_place_right, ilist, std::forward<Args>(args)...)
   {
   }
 
   //! Create from the expected value in-place (void specialization).
   constexpr explicit expected(in_place_expected_t) noexcept(
-      std::is_nothrow_constructible_v<either<T, E>, in_place_left_t>)
+      std::is_nothrow_constructible_v<either<E, T>, in_place_right_t>)
     requires(detail::either_::IsVoid<T>)
-      : data_(in_place_left)
+      : data_(in_place_right)
   {
   }
 
@@ -530,8 +530,8 @@ struct [[nodiscard]] expected
   template <class... Args>
     requires(std::is_constructible_v<E, Args...>)
   constexpr explicit expected(in_place_unexpected_t, Args &&...args) noexcept(
-      std::is_nothrow_constructible_v<either<T, E>, in_place_right_t, Args...>)
-      : data_(in_place_right, std::forward<Args>(args)...)
+      std::is_nothrow_constructible_v<either<E, T>, in_place_left_t, Args...>)
+      : data_(in_place_left, std::forward<Args>(args)...)
   {
   }
 
@@ -539,19 +539,19 @@ struct [[nodiscard]] expected
   template <class U, class... Args>
     requires(std::is_constructible_v<E, std::initializer_list<U> &, Args...>)
   constexpr explicit expected(in_place_unexpected_t, std::initializer_list<U> ilist, Args &&...args) noexcept(
-      std::is_nothrow_constructible_v<either<T, E>, in_place_right_t, std::initializer_list<U> &, Args...>)
-      : data_(in_place_right, ilist, std::forward<Args>(args)...)
+      std::is_nothrow_constructible_v<either<E, T>, in_place_left_t, std::initializer_list<U> &, Args...>)
+      : data_(in_place_left, ilist, std::forward<Args>(args)...)
   {
   }
 
   //! Assign from another `expected` by copy.
-  expected &operator=(const expected &) noexcept(std::is_nothrow_copy_assignable_v<either<T, E>>)
-    requires(std::is_copy_assignable_v<either<T, E>>)
+  expected &operator=(const expected &) noexcept(std::is_nothrow_copy_assignable_v<either<E, T>>)
+    requires(std::is_copy_assignable_v<either<E, T>>)
   = default;
 
   //! Assign from another `expected` by move.
-  expected &operator=(expected &&) noexcept(std::is_nothrow_move_assignable_v<either<T, E>>)
-    requires(std::is_move_assignable_v<either<T, E>>)
+  expected &operator=(expected &&) noexcept(std::is_nothrow_move_assignable_v<either<E, T>>)
+    requires(std::is_move_assignable_v<either<E, T>>)
   = default;
 
   //! Assign from `either` by copy.
@@ -561,9 +561,9 @@ struct [[nodiscard]] expected
   operator=(const either<L, R> &src) noexcept(detail::expected_::NothrowCopyAssignableFromEither<T, E, L, R>)
   {
     if (src.is_left()) {
-      data_.emplaceLeft(src.left());
+      data_.emplaceRight(src.left());
     } else {
-      data_.emplaceRight(src.right());
+      data_.emplaceLeft(src.right());
     }
 
     return *this;
@@ -576,9 +576,9 @@ struct [[nodiscard]] expected
   operator=(either<L, R> &&src) noexcept(detail::expected_::NothrowMoveAssignableFromEither<T, E, L, R>)
   {
     if (src.is_left()) {
-      data_.emplaceLeft(std::move(src).left());
+      data_.emplaceRight(std::move(src).left());
     } else {
-      data_.emplaceRight(std::move(src).right());
+      data_.emplaceLeft(std::move(src).right());
     }
 
     return *this;
@@ -589,7 +589,7 @@ struct [[nodiscard]] expected
     requires(detail::expected_::IsNotVoid<T>)
   {
     FRT_INTERNAL_ASSERT(has_value(), "must contain value");
-    return std::addressof(data_.left());
+    return std::addressof(data_.right());
   }
 
   //! Access the contained value through a pointer. Pre-condition: it must contain a value.
@@ -597,7 +597,7 @@ struct [[nodiscard]] expected
     requires(detail::expected_::IsNotVoid<T>)
   {
     FRT_INTERNAL_ASSERT(has_value(), "must contain value");
-    return std::addressof(data_.left());
+    return std::addressof(data_.right());
   }
 
   //! Access the contained value. Pre-condition: it must contain a value.
@@ -606,7 +606,7 @@ struct [[nodiscard]] expected
   [[nodiscard]] constexpr auto &&operator*(this Self &&self) noexcept
   {
     FRT_INTERNAL_ASSERT(self.has_value(), "must contain value");
-    return std::forward_like<Self>(self.data_).left();
+    return std::forward_like<Self>(self.data_).right();
   }
 
   //! Access the contained value (void specialization). Pre-condition: it must contain a value.
@@ -622,7 +622,7 @@ struct [[nodiscard]] expected
   [[nodiscard]] constexpr auto &&value(this Self &&self) noexcept
   {
     FRT_INTERNAL_ASSERT(self.has_value(), "must contain value");
-    return std::forward_like<Self>(self.data_).left();
+    return std::forward_like<Self>(self.data_).right();
   }
 
   //! Returns the contained value or \p default_value if the object contains an error.
@@ -649,7 +649,7 @@ struct [[nodiscard]] expected
   [[nodiscard]] constexpr auto &&error(this Self &&self) noexcept
   {
     FRT_INTERNAL_ASSERT(!self.has_value(), "must contain error");
-    return std::forward_like<Self>(self.data_).right();
+    return std::forward_like<Self>(self.data_).left();
   }
 
   //! Returns the contained error or \p default_value if the object contains a value.
@@ -674,7 +674,7 @@ struct [[nodiscard]] expected
   [[nodiscard]] constexpr explicit operator bool() const noexcept { return has_value(); }
 
   //! Checks whether the object contains an expected value.
-  [[nodiscard]] constexpr bool has_value() const noexcept { return data_.is_left(); }
+  [[nodiscard]] constexpr bool has_value() const noexcept { return data_.is_right(); }
 
   /*!
    * \brief Applies \p f to the contained value and returns the result.
@@ -1156,7 +1156,7 @@ struct [[nodiscard]] expected
     requires(detail::common_::IsNotVoid<T> && std::constructible_from<T, Args...>)
   constexpr decltype(auto) emplace(Args &&...args) noexcept(std::is_nothrow_constructible_v<T, Args...>)
   {
-    return data_.emplaceLeft(std::forward<Args>(args)...);
+    return data_.emplaceRight(std::forward<Args>(args)...);
   }
 
   /*!
@@ -1171,7 +1171,7 @@ struct [[nodiscard]] expected
   emplace(std::initializer_list<U> il,
           Args &&...args) noexcept(std::is_nothrow_constructible_v<T, std::initializer_list<U> &, Args...>)
   {
-    return data_.emplaceLeft(il, std::forward<Args>(args)...);
+    return data_.emplaceRight(il, std::forward<Args>(args)...);
   }
 
   /*!
@@ -1182,7 +1182,7 @@ struct [[nodiscard]] expected
   constexpr void emplace() noexcept
     requires(detail::common_::IsVoid<T>)
   {
-    data_.emplaceLeft();
+    data_.emplaceRight();
   }
 
   /*!
@@ -1257,7 +1257,7 @@ private:
     return Ret{in_place_unexpected, std::forward<Self>(self).error()};
   }
 
-  either<T, E> data_;
+  either<E, T> data_;
 };
 
 } // namespace frt
