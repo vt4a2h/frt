@@ -5,16 +5,8 @@
 
 #include <frt/expected.hpp>
 
+#include <test/helpers/data.hpp>
 #include <test/helpers/types.hpp>
-
-constexpr auto makeExpectedInt() { return 42; }
-constexpr auto makeExpectedString()
-{
-  return std::string{
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore "
-      "magna aliqua"};
-}
-constexpr auto makeExpectedVector() { return std::vector{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}; }
 
 TEST_CASE("Create constexpr", "[unexpected][constexpr]")
 {

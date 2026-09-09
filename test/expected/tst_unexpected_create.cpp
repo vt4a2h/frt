@@ -5,18 +5,13 @@
 
 #include <frt/expected.hpp>
 
+#include <test/helpers/data.hpp>
 #include <test/helpers/types.hpp>
 
 TEST_CASE("Create", "[unexpected]")
 {
   using namespace test::helpers;
   using namespace std::literals;
-
-  const int expectedIntValue = 42;
-  const std::string expectedStringValue =
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore "
-      "magna aliqua";
-  const std::vector expectedVectorValue{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
 
   SECTION("Value constructor (same type - int)")
   {
@@ -48,7 +43,6 @@ TEST_CASE("Create", "[unexpected]")
   SECTION("Value constructor (convertible type - int to double)")
   {
     const int intVal = 42;
-    const double expectedDoubleValue = 42.0;
     frt::unexpected<double> u{intVal};
     REQUIRE(u.error() == expectedDoubleValue);
   }
