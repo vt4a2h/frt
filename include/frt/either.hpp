@@ -427,7 +427,7 @@ struct [[nodiscard]] either
                                                                  detail::either_::SelectedType<AnotherLeft>,
                                                                  detail::either_::SelectedType<AnotherRight>>)
   {
-    initDataFrom(src);
+    initFrom(src);
   }
 
   //! Move construct from another either.
@@ -440,7 +440,7 @@ struct [[nodiscard]] either
                                                                  detail::either_::SelectedType<AnotherLeft>,
                                                                  detail::either_::SelectedType<AnotherRight>>)
   {
-    initDataFrom(std::move(src));
+    initFrom(std::move(src));
   }
 
   //! Create from the left alternative in-place (with arguments).
