@@ -11,7 +11,6 @@
 #pragma once
 
 #include <concepts>
-#include <format>
 #include <functional>
 #include <type_traits>
 #include <utility>
