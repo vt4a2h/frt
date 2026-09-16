@@ -21,3 +21,5 @@
 #include <frt/format/optional-fmt.hpp>
 #include <frt/hash/optional-hash.hpp>
 #include <frt/optional.hpp>
+
+#include <frt/algorithm/traverse.hpp>
