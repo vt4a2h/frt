@@ -1124,31 +1124,7 @@ struct [[nodiscard]] either
       detail::either_::NothrowInvocableV<LeftFunc, detail::either_::ForwardAlternativeT<Self, left_t>> &&
       detail::either_::NothrowInvocableV<RightFunc, detail::either_::ForwardAlternativeT<Self, right_t>>)
   {
-    using fwd_left_t = detail::either_::ForwardAlternativeT<Self, left_t>;
-    using fwd_right_t = detail::either_::ForwardAlternativeT<Self, right_t>;
-
-    static_assert(detail::either_::InvocableV<LeftFunc, fwd_left_t>,
-                  "The left function must be invocable for the left alternative. If the alternative has type void, "
-                  "then the left function must take no arguments.");
-    static_assert(detail::either_::InvocableV<RightFunc, fwd_right_t>,
-                  "The right function must be invocable for the right alternative. If the alternative has type void, "
-                  "then the right function must take no arguments.");
-    static_assert(detail::either_::SameReturnType<LeftFunc, fwd_left_t, RightFunc, fwd_right_t>,
-                  "Both left and right functions must have the same return type.");
-
-    if (self.is_left()) {
-      if constexpr (detail::either_::IsVoid<left_t>) {
-        return std::invoke(lf);
-      } else {
-        return std::invoke(lf, std::forward<Self>(self).left());
-      }
-    } else {
-      if constexpr (detail::either_::IsVoid<right_t>) {
-        return std::invoke(rf);
-      } else {
-        return std::invoke(rf, std::forward<Self>(self).right());
-      }
-    }
+    return std::forward<Self>(self).foldImpl(lf, rf);
   }
 
   /*!
@@ -1175,31 +1151,7 @@ struct [[nodiscard]] either
       detail::either_::NothrowInvocableV<LeftFunc, detail::either_::ForwardAlternativeT<Self, left_t>> &&
       detail::either_::NothrowInvocableV<RightFunc, detail::either_::ForwardAlternativeT<Self, right_t>>)
   {
-    using fwd_left_t = detail::either_::ForwardAlternativeT<Self, left_t>;
-    using fwd_right_t = detail::either_::ForwardAlternativeT<Self, right_t>;
-
-    static_assert(detail::either_::InvocableV<LeftFunc, fwd_left_t>,
-                  "The left function must be invocable for the left alternative. If the alternative has type void, "
-                  "then the left function must take no arguments.");
-    static_assert(detail::either_::InvocableV<RightFunc, fwd_right_t>,
-                  "The right function must be invocable for the right alternative. If the alternative has type void, "
-                  "then the right function must take no arguments.");
-    static_assert(detail::either_::SameReturnType<LeftFunc, fwd_left_t, RightFunc, fwd_right_t>,
-                  "Both left and right functions must not return.");
-
-    if (self.is_left()) {
-      if constexpr (detail::either_::IsVoid<left_t>) {
-        std::invoke(lf);
-      } else {
-        std::invoke(lf, std::forward<Self>(self).left());
-      }
-    } else {
-      if constexpr (detail::either_::IsVoid<right_t>) {
-        std::invoke(rf);
-      } else {
-        std::invoke(rf, std::forward<Self>(self).right());
-      }
-    }
+    std::forward<Self>(self).foldImpl(lf, rf);
   }
 
   /*!
@@ -1293,6 +1245,38 @@ private:
       return Ret{in_place_right};
     } else {
       return Ret{in_place_right, std::forward<Self>(self).right()};
+    }
+  }
+
+  template <class Self, class LeftFunc, class RightFunc>
+  constexpr decltype(auto) foldImpl(this Self &&self, LeftFunc lf, RightFunc rf) noexcept(
+      detail::either_::NothrowInvocableV<LeftFunc, detail::either_::ForwardAlternativeT<Self, left_t>> &&
+      detail::either_::NothrowInvocableV<RightFunc, detail::either_::ForwardAlternativeT<Self, right_t>>)
+  {
+    using fwd_left_t = detail::either_::ForwardAlternativeT<Self, left_t>;
+    using fwd_right_t = detail::either_::ForwardAlternativeT<Self, right_t>;
+
+    static_assert(detail::either_::InvocableV<LeftFunc, fwd_left_t>,
+                  "The left function must be invocable for the left alternative. If the alternative has type void, "
+                  "then the left function must take no arguments.");
+    static_assert(detail::either_::InvocableV<RightFunc, fwd_right_t>,
+                  "The right function must be invocable for the right alternative. If the alternative has type void, "
+                  "then the right function must take no arguments.");
+    static_assert(detail::either_::SameReturnType<LeftFunc, fwd_left_t, RightFunc, fwd_right_t>,
+                  "Both left and right functions must have the same return type.");
+
+    if (self.is_left()) {
+      if constexpr (detail::either_::IsVoid<left_t>) {
+        return std::invoke(lf);
+      } else {
+        return std::invoke(lf, std::forward<Self>(self).left());
+      }
+    } else {
+      if constexpr (detail::either_::IsVoid<right_t>) {
+        return std::invoke(rf);
+      } else {
+        return std::invoke(rf, std::forward<Self>(self).right());
+      }
     }
   }
 
