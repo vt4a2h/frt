@@ -174,21 +174,6 @@ concept ExplicitFromAnotherCref = explicit_from_another_impl<T, E, c_l_ref_t<U>,
 template <class T, class E, class U, class G>
 concept ExplicitFromAnother = explicit_from_another_impl<T, E, bare_t<U>, bare_t<G>>;
 
-// NOTE: it might be nice to have an appropriate ctor in either for this scenario
-template <class T, class E, IsExpected Other>
-constexpr auto fromOther(Other &&other) -> either<E, T>
-{
-  if (!other.has_value())
-    FRT_UNLIKELY { return {in_place_left, std::forward<Other>(other).error()}; }
-  else {
-    if constexpr (IsVoid<T> && IsVoid<typename bare_t<Other>::value_type>) {
-      return {in_place_right};
-    } else {
-      return {in_place_right, std::forward<Other>(other).value()};
-    }
-  }
-}
-
 template <class T, class E, class U, class G>
 concept EqualityComparable = requires(const expected<T, E> &lhs, const expected<U, G> &rhs) {
   { lhs.asEither() == rhs.asEither() };
@@ -458,7 +443,7 @@ struct [[nodiscard]] expected
   constexpr explicit(detail::expected_::ExplicitFromAnotherCref<T, E, U, G>)
       expected(const expected<U, G> &other) noexcept(detail::expected_::NoexceptFromAnotherCref<T, E, U, G>)
     requires(detail::expected_::ConstructableFromAnotherExpectedCref<T, E, U, G>)
-      : data_(detail::expected_::fromOther<T, E>(other))
+      : data_(other.asEither())
   {
   }
 
@@ -467,7 +452,7 @@ struct [[nodiscard]] expected
   constexpr explicit(detail::expected_::ExplicitFromAnother<T, E, U, G>)
       expected(expected<U, G> &&other) noexcept(detail::expected_::NoexceptFromAnother<T, E, U, G>)
     requires(detail::expected_::ConstructableFromAnotherExpected<T, E, U, G>)
-      : data_(detail::expected_::fromOther<T, E>(std::move(other)))
+      : data_(std::move(other).asEither())
   {
   }
 
