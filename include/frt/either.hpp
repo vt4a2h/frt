@@ -357,6 +357,12 @@ struct [[nodiscard]] either
   using left_t = detail::either_::bare_t<Left>;
   using right_t = detail::either_::bare_t<Right>;
 
+  template <class AnotherLeft>
+  using rebind_left = either<AnotherLeft, right_t>;
+
+  template <class AnotherRight>
+  using rebind_right = either<left_t, AnotherRight>;
+
   //! The object must be created of either Left or Right. The uninitialized state is not permitted.
   either() = delete;
 
