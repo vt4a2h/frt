@@ -78,8 +78,8 @@
     },
     {
       "name": "linux-gcc-16-non-hardened",
-      "displayName": "Linux GCC 16",
-      "description": "Configuring for Linux with GCC 16",
+      "displayName": "Linux GCC 16 (non-hardened)",
+      "description": "Configuring for Linux with GCC 16 (Non hardened)",
       "inherits": "base-ci",
       "cacheVariables": {
         "CMAKE_C_COMPILER": "gcc-16",
