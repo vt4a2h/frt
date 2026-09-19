@@ -20,7 +20,8 @@
         "FRT_ENABLE_TESTING": "ON",
         "FRT_ENABLE_BENCHMARKING": "OFF",
         "FRT_DEV_MODE": "ON",
-        "FRT_DEPENDENCIES_FROM_CPM": "OFF"
+        "FRT_DEPENDENCIES_FROM_CPM": "OFF",
+        "FRT_OPTIMIZE_EXECUTION_PATH": "ON"
       }
     },
     {
@@ -84,6 +85,26 @@
         "CMAKE_C_COMPILER": "gcc-16",
         "CMAKE_CXX_COMPILER": "g++-16",
         "FRT_HARDENED": "OFF"
+      },
+      "environment": {
+        "CC": "gcc-16",
+        "CXX": "g++-16"
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
+    },
+    {
+      "name": "linux-gcc-16-no-optimize-exec-path",
+      "displayName": "Linux GCC 16 (no-opt-exec-path)",
+      "description": "Configuring for Linux with GCC 16 (no optimize execution path)",
+      "inherits": "base-ci",
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "gcc-16",
+        "CMAKE_CXX_COMPILER": "g++-16",
+        "FRT_OPTIMIZE_EXECUTION_PATH": "OFF"
       },
       "environment": {
         "CC": "gcc-16",
@@ -186,6 +207,10 @@
       "configurePreset": "linux-gcc-16-non-hardened"
     },
     {
+      "name": "linux-gcc-16-no-optimize-exec-path",
+      "configurePreset": "linux-gcc-16-no-optimize-exec-path"
+    },
+    {
       "name": "linux-clang-23",
       "configurePreset": "linux-clang-23"
     },
@@ -236,6 +261,16 @@
     {
       "name": "linux-gcc-16-non-hardened",
       "configurePreset": "linux-gcc-16-non-hardened",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error"
+      }
+    },
+    {
+      "name": "linux-gcc-16-no-optimize-exec-path",
+      "configurePreset": "linux-gcc-16-no-optimize-exec-path",
       "output": {
         "outputOnFailure": true
       },

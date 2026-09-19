@@ -72,3 +72,8 @@ OPTION(FRT_HARDENED "Contract violations terminate a program" ON)
 if (FRT_HARDENED)
     target_compile_definitions(frt INTERFACE FRT_HARDENED=1)
 endif ()
+
+OPTION(FRT_OPTIMIZE_EXECUTION_PATH "Use [[likely]] and [[unlikely]] attributes to allow compiler to optimize" ON)
+if (FRT_OPTIMIZE_EXECUTION_PATH)
+    target_compile_definitions(frt INTERFACE FRT_OPTIMIZE_EXECUTION_PATH=1)
+endif()

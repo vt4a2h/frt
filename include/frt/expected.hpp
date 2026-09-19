@@ -178,9 +178,9 @@ concept ExplicitFromAnother = explicit_from_another_impl<T, E, bare_t<U>, bare_t
 template <class T, class E, IsExpected Other>
 constexpr auto fromOther(Other &&other) -> either<E, T>
 {
-  if (!other.has_value()) {
-    return {in_place_left, std::forward<Other>(other).error()};
-  } else {
+  if (!other.has_value())
+    FRT_UNLIKELY { return {in_place_left, std::forward<Other>(other).error()}; }
+  else {
     if constexpr (IsVoid<T> && IsVoid<typename bare_t<Other>::value_type>) {
       return {in_place_right};
     } else {
@@ -560,9 +560,9 @@ struct [[nodiscard]] expected
   constexpr expected &
   operator=(const either<L, R> &src) noexcept(detail::expected_::NothrowCopyAssignableFromEither<T, E, L, R>)
   {
-    if (src.is_left()) {
-      data_.emplaceRight(src.left());
-    } else {
+    if (src.is_left())
+      FRT_UNLIKELY { data_.emplaceRight(src.left()); }
+    else {
       data_.emplaceLeft(src.right());
     }
 
@@ -575,9 +575,9 @@ struct [[nodiscard]] expected
   constexpr expected &
   operator=(either<L, R> &&src) noexcept(detail::expected_::NothrowMoveAssignableFromEither<T, E, L, R>)
   {
-    if (src.is_left()) {
-      data_.emplaceRight(std::move(src).left());
-    } else {
+    if (src.is_left())
+      FRT_UNLIKELY { data_.emplaceRight(std::move(src).left()); }
+    else {
       data_.emplaceLeft(std::move(src).right());
     }
 
@@ -726,10 +726,13 @@ struct [[nodiscard]] expected
     static_assert(detail::expected_::same_error_type<expected, ret_t>,
                   "The function must return an expected with the same error type");
 
-    if (self.has_value()) {
-      return detail::common_::invoke_with_extra_args(std::forward<F>(f), std::forward<Self>(self).value(),
-                                                     std::forward<Args>(args)...);
-    } else {
+    if (self.has_value())
+      FRT_LIKELY
+      {
+        return detail::common_::invoke_with_extra_args(std::forward<F>(f), std::forward<Self>(self).value(),
+                                                       std::forward<Args>(args)...);
+      }
+    else {
       return std::forward<Self>(self).template forwardError<ret_t>();
     }
   }
@@ -772,9 +775,9 @@ struct [[nodiscard]] expected
     static_assert(detail::expected_::same_error_type<expected, ret_t>,
                   "The function must return an expected with the same error type");
 
-    if (self.has_value()) {
-      return std::invoke(std::forward<F>(f), std::forward<Args>(args)...);
-    } else {
+    if (self.has_value())
+      FRT_LIKELY { return std::invoke(std::forward<F>(f), std::forward<Args>(args)...); }
+    else {
       return std::forward<Self>(self).template forwardError<ret_t>();
     }
   }
@@ -829,10 +832,13 @@ struct [[nodiscard]] expected
     static_assert(detail::expected_::same_value_type<expected, ret_t>,
                   "The function must return an expected with the same value type");
 
-    if (!self.has_value()) {
-      return detail::common_::invoke_with_extra_args(std::forward<F>(f), std::forward<Self>(self).error(),
-                                                     std::forward<Args>(args)...);
-    } else {
+    if (!self.has_value())
+      FRT_UNLIKELY
+      {
+        return detail::common_::invoke_with_extra_args(std::forward<F>(f), std::forward<Self>(self).error(),
+                                                       std::forward<Args>(args)...);
+      }
+    else {
       return std::forward<Self>(self).template forwardValue<ret_t>();
     }
   }
@@ -887,17 +893,20 @@ struct [[nodiscard]] expected
     using func_ret_t = detail::common_::invoke_result_t<F, fwd_t, Args...>;
     using ret_t = expected<detail::common_::bare_t<func_ret_t>, error_type>;
 
-    if (self.has_value()) {
-      if constexpr (detail::expected_::IsVoid<func_ret_t>) {
-        detail::common_::invoke_with_extra_args(std::forward<F>(f), std::forward<Self>(self).value(),
-                                                std::forward<Args>(args)...);
-        return ret_t{in_place_expected};
-      } else {
-        return ret_t{in_place_expected,
-                     detail::common_::invoke_with_extra_args(std::forward<F>(f), std::forward<Self>(self).value(),
-                                                             std::forward<Args>(args)...)};
+    if (self.has_value())
+      FRT_LIKELY
+      {
+        if constexpr (detail::expected_::IsVoid<func_ret_t>) {
+          detail::common_::invoke_with_extra_args(std::forward<F>(f), std::forward<Self>(self).value(),
+                                                  std::forward<Args>(args)...);
+          return ret_t{in_place_expected};
+        } else {
+          return ret_t{in_place_expected,
+                       detail::common_::invoke_with_extra_args(std::forward<F>(f), std::forward<Self>(self).value(),
+                                                               std::forward<Args>(args)...)};
+        }
       }
-    } else {
+    else {
       return std::forward<Self>(self).template forwardError<ret_t>();
     }
   }
@@ -940,14 +949,17 @@ struct [[nodiscard]] expected
     using func_ret_t = std::invoke_result_t<F, Args...>;
     using ret_t = expected<detail::common_::bare_t<func_ret_t>, error_type>;
 
-    if (self.has_value()) {
-      if constexpr (detail::expected_::IsVoid<func_ret_t>) {
-        std::invoke(std::forward<F>(f), std::forward<Args>(args)...);
-        return ret_t{in_place_expected};
-      } else {
-        return ret_t{in_place_expected, std::invoke(std::forward<F>(f), std::forward<Args>(args)...)};
+    if (self.has_value())
+      FRT_LIKELY
+      {
+        if constexpr (detail::expected_::IsVoid<func_ret_t>) {
+          std::invoke(std::forward<F>(f), std::forward<Args>(args)...);
+          return ret_t{in_place_expected};
+        } else {
+          return ret_t{in_place_expected, std::invoke(std::forward<F>(f), std::forward<Args>(args)...)};
+        }
       }
-    } else {
+    else {
       return std::forward<Self>(self).template forwardError<ret_t>();
     }
   }
@@ -1002,11 +1014,14 @@ struct [[nodiscard]] expected
     using func_ret_t = detail::common_::invoke_result_t<F, fwd_t, Args...>;
     using ret_t = expected<value_type, detail::common_::bare_t<func_ret_t>>;
 
-    if (!self.has_value()) {
-      return ret_t{in_place_unexpected,
-                   detail::common_::invoke_with_extra_args(std::forward<F>(f), std::forward<Self>(self).error(),
-                                                           std::forward<Args>(args)...)};
-    } else {
+    if (!self.has_value())
+      FRT_UNLIKELY
+      {
+        return ret_t{in_place_unexpected,
+                     detail::common_::invoke_with_extra_args(std::forward<F>(f), std::forward<Self>(self).error(),
+                                                             std::forward<Args>(args)...)};
+      }
+    else {
       return std::forward<Self>(self).template forwardValue<ret_t>();
     }
   }
@@ -1045,13 +1060,16 @@ struct [[nodiscard]] expected
     static_assert(detail::common_::SameReturnType<ValueFunc, fwd_val_t, ErrorFunc, fwd_err_t>,
                   "Both value and error functions must have the same return type.");
 
-    if (self.has_value()) {
-      if constexpr (detail::expected_::IsVoid<value_type>) {
-        return std::invoke(vf);
-      } else {
-        return std::invoke(vf, std::forward<Self>(self).value());
+    if (self.has_value())
+      FRT_LIKELY
+      {
+        if constexpr (detail::expected_::IsVoid<value_type>) {
+          return std::invoke(vf);
+        } else {
+          return std::invoke(vf, std::forward<Self>(self).value());
+        }
       }
-    } else {
+    else {
       return std::invoke(ef, std::forward<Self>(self).error());
     }
   }
@@ -1090,13 +1108,16 @@ struct [[nodiscard]] expected
     static_assert(detail::common_::SameReturnType<ValueFunc, fwd_val_t, ErrorFunc, fwd_err_t>,
                   "Both value and error functions must not return.");
 
-    if (self.has_value()) {
-      if constexpr (detail::expected_::IsVoid<value_type>) {
-        std::invoke(vf);
-      } else {
-        std::invoke(vf, std::forward<Self>(self).value());
+    if (self.has_value())
+      FRT_LIKELY
+      {
+        if constexpr (detail::expected_::IsVoid<value_type>) {
+          std::invoke(vf);
+        } else {
+          std::invoke(vf, std::forward<Self>(self).value());
+        }
       }
-    } else {
+    else {
       return std::invoke(ef, std::forward<Self>(self).error());
     }
   }

@@ -25,6 +25,8 @@
 #include <source_location>
 #include <string_view>
 
+#include <frt/detail/attributes.hpp>
+
 namespace frt::detail
 {
 
@@ -37,9 +39,8 @@ template <bool_testable Condition>
 constexpr void expects(const Condition &condition, [[maybe_unused]] std::string_view message = "",
                        [[maybe_unused]] std::source_location loc = std::source_location::current()) noexcept
 {
-  if (condition) [[likely]] {
-    return;
-  }
+  if (condition)
+    FRT_LIKELY { return; }
 
   if consteval {
     try {

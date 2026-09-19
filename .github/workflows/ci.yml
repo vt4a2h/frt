@@ -17,6 +17,8 @@ jobs:
           - os: ubuntu-26.04
             preset: linux-gcc-16-non-hardened
           - os: ubuntu-26.04
+            preset: linux-gcc-16-no-optimize-exec-path
+          - os: ubuntu-26.04
             preset: linux-clang-23
           - os: macos-latest
             preset: mac-clang

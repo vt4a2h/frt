@@ -15,6 +15,7 @@
 #include <type_traits>
 #include <utility>
 
+#include <frt/detail/attributes.hpp>
 #include <frt/expects.hpp>
 
 namespace frt
@@ -554,11 +555,9 @@ struct [[nodiscard]] either
   operator==(const either &lhs,
              const either<L, R> &rhs) noexcept(detail::either_::NothrowEqualityComparable<Left, Right, L, R>)
   {
-    if (lhs.is_left() != rhs.is_left()) {
-      return false;
-    }
-
-    if (lhs.is_left()) {
+    if (lhs.is_left() != rhs.is_left())
+      FRT_UNLIKELY { return false; }
+    else if (lhs.is_left()) {
       return lhs.left() == rhs.left();
     } else {
       return lhs.right() == rhs.right();
@@ -572,13 +571,16 @@ struct [[nodiscard]] either
   operator<=>(const either &lhs,
               const either<L, R> &rhs) noexcept(detail::either_::NothrowThreeWayComparable<Left, Right, L, R>)
   {
-    if (lhs.is_left() == rhs.is_left()) {
-      if (lhs.is_left()) {
-        return lhs.left() <=> rhs.left();
-      } else {
-        return lhs.right() <=> rhs.right();
+    if (lhs.is_left() == rhs.is_left())
+      FRT_LIKELY
+      {
+        if (lhs.is_left()) {
+          return lhs.left() <=> rhs.left();
+        } else {
+          return lhs.right() <=> rhs.right();
+        }
       }
-    } else {
+    else {
       return std::partial_ordering::unordered;
     }
   }
@@ -588,19 +590,22 @@ struct [[nodiscard]] either
                                             std::is_nothrow_swappable_v<right_internal_t>)
   {
     using std::swap;
-    if (is_left_ != rhs.is_left_) {
-      auto tmp = *this;
+    if (is_left_ != rhs.is_left_)
+      FRT_UNLIKELY
+      {
+        auto tmp = *this;
 
-      this->destroy();
-      this->initFrom(rhs);
+        this->destroy();
+        this->initFrom(rhs);
 
-      rhs.destroy();
-      if constexpr (std::is_move_constructible_v<left_internal_t> && std::is_move_constructible_v<right_internal_t>) {
-        rhs.initFrom(std::move(tmp));
-      } else {
-        rhs.initFrom(tmp);
+        rhs.destroy();
+        if constexpr (std::is_move_constructible_v<left_internal_t> && std::is_move_constructible_v<right_internal_t>) {
+          rhs.initFrom(std::move(tmp));
+        } else {
+          rhs.initFrom(tmp);
+        }
       }
-    } else if (is_left_) {
+    else if (is_left_) {
       swap(left_, rhs.left_);
     } else {
       swap(right_, rhs.right_);
@@ -711,10 +716,13 @@ struct [[nodiscard]] either
     static_assert(detail::either_::same_right_alternative<either, ret_t>,
                   "The function must return an either with the same right alternative");
 
-    if (self.is_left()) {
-      return detail::either_::invoke_with_extra_args(std::forward<F>(f), std::forward<Self>(self).left(),
-                                                     std::forward<Args>(args)...);
-    } else {
+    if (self.is_left())
+      FRT_UNLIKELY
+      {
+        return detail::either_::invoke_with_extra_args(std::forward<F>(f), std::forward<Self>(self).left(),
+                                                       std::forward<Args>(args)...);
+      }
+    else {
       return std::forward<Self>(self).template forwardRight<ret_t>();
     }
   }
@@ -758,9 +766,9 @@ struct [[nodiscard]] either
     static_assert(detail::either_::same_right_alternative<either, ret_t>,
                   "The function must return an either with the same right alternative");
 
-    if (self.is_left()) {
-      return std::invoke(std::forward<F>(f), std::forward<Args>(args)...);
-    } else {
+    if (self.is_left())
+      FRT_UNLIKELY { return std::invoke(std::forward<F>(f), std::forward<Args>(args)...); }
+    else {
       return std::forward<Self>(self).template forwardRight<ret_t>();
     }
   }
@@ -815,10 +823,13 @@ struct [[nodiscard]] either
     static_assert(detail::either_::same_left_alternative<either, ret_t>,
                   "The function must return an either with the same left alternative");
 
-    if (self.is_right()) {
-      return detail::either_::invoke_with_extra_args(std::forward<F>(f), std::forward<Self>(self).right(),
-                                                     std::forward<Args>(args)...);
-    } else {
+    if (self.is_right())
+      FRT_LIKELY
+      {
+        return detail::either_::invoke_with_extra_args(std::forward<F>(f), std::forward<Self>(self).right(),
+                                                       std::forward<Args>(args)...);
+      }
+    else {
       return std::forward<Self>(self).template forwardLeft<ret_t>();
     }
   }
@@ -862,9 +873,9 @@ struct [[nodiscard]] either
     static_assert(detail::either_::same_left_alternative<either, ret_t>,
                   "The function must return an either with the same left alternative");
 
-    if (self.is_right()) {
-      return std::invoke(std::forward<F>(f), std::forward<Args>(args)...);
-    } else {
+    if (self.is_right())
+      FRT_LIKELY { return std::invoke(std::forward<F>(f), std::forward<Args>(args)...); }
+    else {
       return std::forward<Self>(self).template forwardLeft<ret_t>();
     }
   }
@@ -919,17 +930,20 @@ struct [[nodiscard]] either
     using func_ret_t = detail::either_::invoke_result_t<F, fwd_t, Args...>;
     using ret_t = either<detail::common_::bare_t<func_ret_t>, right_t>;
 
-    if (self.is_left()) {
-      if constexpr (detail::either_::IsVoid<func_ret_t>) {
-        detail::either_::invoke_with_extra_args(std::forward<F>(f), std::forward<Self>(self).left(),
-                                                std::forward<Args>(args)...);
-        return ret_t{in_place_left};
-      } else {
-        return ret_t{in_place_left,
-                     detail::either_::invoke_with_extra_args(std::forward<F>(f), std::forward<Self>(self).left(),
-                                                             std::forward<Args>(args)...)};
+    if (self.is_left())
+      FRT_UNLIKELY
+      {
+        if constexpr (detail::either_::IsVoid<func_ret_t>) {
+          detail::either_::invoke_with_extra_args(std::forward<F>(f), std::forward<Self>(self).left(),
+                                                  std::forward<Args>(args)...);
+          return ret_t{in_place_left};
+        } else {
+          return ret_t{in_place_left,
+                       detail::either_::invoke_with_extra_args(std::forward<F>(f), std::forward<Self>(self).left(),
+                                                               std::forward<Args>(args)...)};
+        }
       }
-    } else {
+    else {
       return std::forward<Self>(self).template forwardRight<ret_t>();
     }
   }
@@ -972,14 +986,17 @@ struct [[nodiscard]] either
     using func_ret_t = std::invoke_result_t<F, Args...>;
     using ret_t = either<detail::common_::bare_t<func_ret_t>, right_t>;
 
-    if (self.is_left()) {
-      if constexpr (detail::either_::IsVoid<func_ret_t>) {
-        std::invoke(std::forward<F>(f), std::forward<Args>(args)...);
-        return ret_t{in_place_left};
-      } else {
-        return ret_t{in_place_left, std::invoke(std::forward<F>(f), std::forward<Args>(args)...)};
+    if (self.is_left())
+      FRT_UNLIKELY
+      {
+        if constexpr (detail::either_::IsVoid<func_ret_t>) {
+          std::invoke(std::forward<F>(f), std::forward<Args>(args)...);
+          return ret_t{in_place_left};
+        } else {
+          return ret_t{in_place_left, std::invoke(std::forward<F>(f), std::forward<Args>(args)...)};
+        }
       }
-    } else {
+    else {
       return std::forward<Self>(self).template forwardRight<ret_t>();
     }
   }
@@ -1034,17 +1051,20 @@ struct [[nodiscard]] either
     using func_ret_t = detail::either_::invoke_result_t<F, fwd_t, Args...>;
     using ret_t = either<left_t, detail::common_::bare_t<func_ret_t>>;
 
-    if (self.is_right()) {
-      if constexpr (detail::either_::IsVoid<func_ret_t>) {
-        detail::either_::invoke_with_extra_args(std::forward<F>(f), std::forward<Self>(self).right(),
-                                                std::forward<Args>(args)...);
-        return ret_t{in_place_right};
-      } else {
-        return ret_t{in_place_right,
-                     detail::either_::invoke_with_extra_args(std::forward<F>(f), std::forward<Self>(self).right(),
-                                                             std::forward<Args>(args)...)};
+    if (self.is_right())
+      FRT_LIKELY
+      {
+        if constexpr (detail::either_::IsVoid<func_ret_t>) {
+          detail::either_::invoke_with_extra_args(std::forward<F>(f), std::forward<Self>(self).right(),
+                                                  std::forward<Args>(args)...);
+          return ret_t{in_place_right};
+        } else {
+          return ret_t{in_place_right,
+                       detail::either_::invoke_with_extra_args(std::forward<F>(f), std::forward<Self>(self).right(),
+                                                               std::forward<Args>(args)...)};
+        }
       }
-    } else {
+    else {
       return std::forward<Self>(self).template forwardLeft<ret_t>();
     }
   }
@@ -1087,14 +1107,17 @@ struct [[nodiscard]] either
     using func_ret_t = std::invoke_result_t<F, Args...>;
     using ret_t = either<left_t, detail::common_::bare_t<func_ret_t>>;
 
-    if (self.is_right()) {
-      if constexpr (detail::either_::IsVoid<func_ret_t>) {
-        std::invoke(std::forward<F>(f), std::forward<Args>(args)...);
-        return ret_t{in_place_right};
-      } else {
-        return ret_t{in_place_right, std::invoke(std::forward<F>(f), std::forward<Args>(args)...)};
+    if (self.is_right())
+      FRT_LIKELY
+      {
+        if constexpr (detail::either_::IsVoid<func_ret_t>) {
+          std::invoke(std::forward<F>(f), std::forward<Args>(args)...);
+          return ret_t{in_place_right};
+        } else {
+          return ret_t{in_place_right, std::invoke(std::forward<F>(f), std::forward<Args>(args)...)};
+        }
       }
-    } else {
+    else {
       return std::forward<Self>(self).template forwardLeft<ret_t>();
     }
   }
@@ -1205,9 +1228,9 @@ private:
   // Destroy the contained alternative
   constexpr void destroy()
   {
-    if (is_left_) {
-      std::destroy_at(std::addressof(left_));
-    } else {
+    if (is_left_)
+      FRT_UNLIKELY { std::destroy_at(std::addressof(left_)); }
+    else {
       std::destroy_at(std::addressof(right_));
     }
   }
@@ -1216,9 +1239,9 @@ private:
   template <class D>
   constexpr void initFrom(D &&data)
   {
-    if (data.is_left()) {
-      std::construct_at(std::addressof(left_), std::forward<D>(data).left());
-    } else {
+    if (data.is_left())
+      FRT_UNLIKELY { std::construct_at(std::addressof(left_), std::forward<D>(data).left()); }
+    else {
       std::construct_at(std::addressof(right_), std::forward<D>(data).right());
     }
 
@@ -1264,13 +1287,16 @@ private:
     static_assert(detail::either_::SameReturnType<LeftFunc, fwd_left_t, RightFunc, fwd_right_t>,
                   "Both left and right functions must have the same return type.");
 
-    if (self.is_left()) {
-      if constexpr (detail::either_::IsVoid<left_t>) {
-        return std::invoke(lf);
-      } else {
-        return std::invoke(lf, std::forward<Self>(self).left());
+    if (self.is_left())
+      FRT_UNLIKELY
+      {
+        if constexpr (detail::either_::IsVoid<left_t>) {
+          return std::invoke(lf);
+        } else {
+          return std::invoke(lf, std::forward<Self>(self).left());
+        }
       }
-    } else {
+    else {
       if constexpr (detail::either_::IsVoid<right_t>) {
         return std::invoke(rf);
       } else {

@@ -248,9 +248,9 @@ struct [[nodiscard]] optional
   constexpr optional &
   operator=(const either<void, U> &other) noexcept(detail::optional_::NothrowCopyAssignableFromEither<T, U>)
   {
-    if (other.is_right()) {
-      data_.emplaceRight(other.right());
-    } else {
+    if (other.is_right())
+      FRT_LIKELY { data_.emplaceRight(other.right()); }
+    else {
       reset();
     }
 
@@ -261,9 +261,9 @@ struct [[nodiscard]] optional
   template <detail::optional_::CopyConstructibleFromOtherOptional<T> U>
   constexpr optional &operator=(const optional<U> &other) noexcept(std::is_nothrow_constructible_v<T, const U &>)
   {
-    if (other.has_value()) {
-      data_.emplaceRight(other.value());
-    } else {
+    if (other.has_value())
+      FRT_LIKELY { data_.emplaceRight(other.value()); }
+    else {
       reset();
     }
 
@@ -283,9 +283,9 @@ struct [[nodiscard]] optional
   constexpr optional &
   operator=(either<void, U> &&other) noexcept(detail::optional_::NothrowMoveAssignableFromEither<T, U>)
   {
-    if (other.is_right()) {
-      data_.emplaceRight(std::move(other).right());
-    } else {
+    if (other.is_right())
+      FRT_LIKELY { data_.emplaceRight(std::move(other).right()); }
+    else {
       reset();
     }
 
@@ -296,9 +296,9 @@ struct [[nodiscard]] optional
   template <detail::optional_::MoveConstructibleFromOtherOptional<T> U>
   constexpr optional &operator=(optional<U> &&other) noexcept(std::is_nothrow_constructible_v<T, const U &>)
   {
-    if (other.has_value()) {
-      data_.emplaceRight(std::move(other).value());
-    } else {
+    if (other.has_value())
+      FRT_LIKELY { data_.emplaceRight(std::move(other).value()); }
+    else {
       reset();
     }
 
@@ -493,10 +493,13 @@ struct [[nodiscard]] optional
 
     static_assert(IsOptional<ret_t>, "The function must return optional");
 
-    if (self.has_value()) {
-      return detail::common_::invoke_with_extra_args(std::forward<F>(f), std::forward<Self>(self).value(),
-                                                     std::forward<Args>(args)...);
-    } else {
+    if (self.has_value())
+      FRT_LIKELY
+      {
+        return detail::common_::invoke_with_extra_args(std::forward<F>(f), std::forward<Self>(self).value(),
+                                                       std::forward<Args>(args)...);
+      }
+    else {
       return ret_t{};
     }
   }
@@ -537,9 +540,9 @@ struct [[nodiscard]] optional
 
     static_assert(IsOptional<ret_t>, "The function must return optional");
 
-    if (!self.has_value()) {
-      return std::invoke(std::forward<F>(f), std::forward<Args>(args)...);
-    } else {
+    if (!self.has_value())
+      FRT_UNLIKELY { return std::invoke(std::forward<F>(f), std::forward<Args>(args)...); }
+    else {
       return ret_t{in_place_opt, std::forward<Self>(self).value()};
     }
   }
@@ -596,11 +599,14 @@ struct [[nodiscard]] optional
 
     using ret_t = optional<detail::common_::bare_t<func_ret_t>>;
 
-    if (self.has_value()) {
-      return ret_t{in_place_opt,
-                   detail::common_::invoke_with_extra_args(std::forward<F>(f), std::forward<Self>(self).value(),
-                                                           std::forward<Args>(args)...)};
-    } else {
+    if (self.has_value())
+      FRT_LIKELY
+      {
+        return ret_t{in_place_opt,
+                     detail::common_::invoke_with_extra_args(std::forward<F>(f), std::forward<Self>(self).value(),
+                                                             std::forward<Args>(args)...)};
+      }
+    else {
       return ret_t{};
     }
   }
@@ -632,9 +638,9 @@ struct [[nodiscard]] optional
     static_assert(std::same_as<std::invoke_result_t<ValueFunc, fwd_val_t>, std::invoke_result_t<NullOptFunc>>,
                   "Both value and nullopt functions must have the same return type.");
 
-    if (self.has_value()) {
-      return std::invoke(vf, std::forward<Self>(self).value());
-    } else {
+    if (self.has_value())
+      FRT_LIKELY { return std::invoke(vf, std::forward<Self>(self).value()); }
+    else {
       return std::invoke(nf);
     }
   }
