@@ -45,7 +45,7 @@ TEST_CASE("Hashable void value", "[expected]")
   const frt::expected<void, std::string> exp{};
 
   const auto actualHash = std::hash<frt::expected<void, std::string>>{}(exp);
-  const auto expectedHash = std::hash<frt::detail::either_::Void>{}(frt::detail::either_::void_val);
+  const auto expectedHash = std::hash<frt::detail::either_::Void>{}(frt::void_val);
 
   REQUIRE(actualHash == expectedHash);
 }

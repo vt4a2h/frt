@@ -41,7 +41,6 @@ struct Void
   friend constexpr bool operator==(Void, Void) noexcept = default;
   friend constexpr std::partial_ordering operator<=>(Void, Void) noexcept = default;
 };
-inline constexpr Void void_val;
 
 template <class T>
 concept is_internal_void_ = std::same_as<bare_t<T>, Void>;
@@ -330,6 +329,9 @@ inline constexpr unwrapped_t unwrapped{unwrapped_t::Secret{}};
 
 template <class T>
 concept IsEither = detail::either_::is_either_<detail::either_::bare_t<T>>;
+
+using void_t = detail::common_::Void;
+inline constexpr detail::common_::Void void_val;
 
 /*!
  * \brief An object of this type can contain a value of either Left or Right type.

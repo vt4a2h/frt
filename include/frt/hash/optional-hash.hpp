@@ -24,7 +24,7 @@ struct std::hash<frt::optional<T>>
     if (opt.has_value()) {
       return std::hash<frt::detail::common_::bare_t<T>>{}(opt.value());
     } else {
-      return std::hash<frt::detail::either_::Void>{}(frt::detail::either_::void_val);
+      return std::hash<frt::detail::either_::Void>{}(frt::void_val);
     }
   }
 };

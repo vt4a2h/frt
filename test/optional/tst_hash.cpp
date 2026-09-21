@@ -32,7 +32,7 @@ TEST_CASE("Hashable nullopt", "[optional]")
   const frt::optional<int> opt{};
 
   const auto actualHash = std::hash<frt::optional<int>>{}(opt);
-  const auto expectedHash = std::hash<frt::detail::either_::Void>{}(frt::detail::either_::void_val);
+  const auto expectedHash = std::hash<frt::detail::either_::Void>{}(frt::void_val);
 
   REQUIRE(actualHash == expectedHash);
 }

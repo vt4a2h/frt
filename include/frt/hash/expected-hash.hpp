@@ -24,7 +24,7 @@ struct std::hash<frt::expected<T, E>>
   {
     if (e.has_value()) {
       if constexpr (frt::detail::common_::IsVoid<T>) {
-        return std::hash<frt::detail::either_::Void>{}(frt::detail::either_::void_val);
+        return std::hash<frt::detail::either_::Void>{}(frt::void_val);
       } else {
         return std::hash<frt::detail::common_::bare_t<T>>{}(e.value());
       }
