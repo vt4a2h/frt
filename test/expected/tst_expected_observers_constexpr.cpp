@@ -201,7 +201,8 @@ TEST_CASE("Observers (value / operator* / operator->) constexpr", "[expected][co
     {
       constexpr auto valid = [] {
         const ExpectedVoid voidExpected;
-        *voidExpected;
+
+        [[maybe_unused]] auto v = *voidExpected;
         return voidExpected.has_value();
       }();
       STATIC_REQUIRE(valid);

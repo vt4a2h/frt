@@ -594,11 +594,12 @@ struct [[nodiscard]] expected
     return std::forward_like<Self>(self.data_).right();
   }
 
-  //! Access the contained value (void specialization). Pre-condition: it must contain a value.
-  constexpr void operator*() const noexcept
+  //! Access the contained value. The specialization for void. Pre-condition: it must contain a value.
+  constexpr void_t operator*() const noexcept
     requires(detail::expected_::IsVoid<T>)
   {
     FRT_INTERNAL_ASSERT(has_value(), "must contain value");
+    return void_val;
   }
 
   //! Get value. Pre-condition: it must contain a value.
@@ -608,6 +609,14 @@ struct [[nodiscard]] expected
   {
     FRT_INTERNAL_ASSERT(self.has_value(), "must contain value");
     return std::forward_like<Self>(self.data_).right();
+  }
+
+  //! Get value. The specialization for void. Pre-condition: it must contain a value.
+  constexpr void_t value() const noexcept
+    requires(detail::expected_::IsVoid<T>)
+  {
+    FRT_INTERNAL_ASSERT(has_value(), "must contain value");
+    return void_val;
   }
 
   //! Returns the contained value or \p default_value if the object contains an error.

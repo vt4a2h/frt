@@ -89,13 +89,10 @@ TEST_CASE("Observers (value / operator* / operator->)", "[expected]")
 
     SECTION("invocability for void")
     {
-      SECTION("non-invocable for ExpectedVoid &") { STATIC_REQUIRE_FALSE(ValueInvocable<ExpectedVoid &>); }
-      SECTION("non-invocable for const ExpectedVoid &") { STATIC_REQUIRE_FALSE(ValueInvocable<const ExpectedVoid &>); }
-      SECTION("non-invocable for ExpectedVoid &&") { STATIC_REQUIRE_FALSE(ValueInvocable<ExpectedVoid &&>); }
-      SECTION("non-invocable for const ExpectedVoid &&")
-      {
-        STATIC_REQUIRE_FALSE(ValueInvocable<const ExpectedVoid &&>);
-      }
+      SECTION("invocable for ExpectedVoid &") { STATIC_REQUIRE(ValueInvocable<ExpectedVoid &>); }
+      SECTION("invocable for const ExpectedVoid &") { STATIC_REQUIRE(ValueInvocable<const ExpectedVoid &>); }
+      SECTION("invocable for ExpectedVoid &&") { STATIC_REQUIRE(ValueInvocable<ExpectedVoid &&>); }
+      SECTION("invocable for const ExpectedVoid &&") { STATIC_REQUIRE(ValueInvocable<const ExpectedVoid &&>); }
     }
   }
 
@@ -132,7 +129,7 @@ TEST_CASE("Observers (value / operator* / operator->)", "[expected]")
     SECTION("invocable for void value (const)")
     {
       const ExpectedVoid voidExpected;
-      *voidExpected;
+      [[maybe_unused]] auto v = *voidExpected;
       REQUIRE(voidExpected.has_value());
     }
 
