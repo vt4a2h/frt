@@ -88,29 +88,6 @@ struct meta_either<expected<T, E>>
   static constexpr auto make_right = []<class U>(U &&val) { return Self{in_place_expected, std::forward<U>(val)}; };
 };
 
-template <class E>
-struct meta_either<expected<void, E>>
-{
-  using Self = expected<void, E>;
-
-  using right_t = Self::value_type;
-  using left_t = void;
-
-  template <class U>
-  using rebind_right = Self::template rebind_value_type<U>;
-
-  static constexpr auto left = []<std::same_as<Self> T>(T &&self) -> decltype(auto) {
-    return std::forward<T>(self).error();
-  };
-  static constexpr auto right = [] {};
-
-  static constexpr auto is_left = [](const Self &self) { return !self.has_value(); };
-  static constexpr auto is_right = [](const Self &self) { return self.has_value(); };
-
-  static constexpr auto make_left = []<class U>(U &&val) { return Self{in_place_unexpected, std::forward<U>(val)}; };
-  static constexpr auto make_right = [] {};
-};
-
 template <class L>
 struct meta_either<optional<L>>
 {
@@ -122,7 +99,10 @@ struct meta_either<optional<L>>
   template <class U>
   using rebind_right = optional<U>;
 
-  static constexpr auto left = [] {};
+  template <class>
+  using rebind_left = optional<L>;
+
+  static constexpr auto left = []<std::same_as<Self> T>(T &&) { return void_val; };
   static constexpr auto right = []<std::same_as<Self> T>(T &&self) -> decltype(auto) {
     return std::forward<T>(self).value();
   };
@@ -130,7 +110,7 @@ struct meta_either<optional<L>>
   static constexpr auto is_left = [](const Self &self) { return !self.has_value(); };
   static constexpr auto is_right = [](const Self &self) { return self.has_value(); };
 
-  static constexpr auto make_left = [] { return Self{}; };
+  static constexpr auto make_left = []<class U>(U &&) { return Self{}; };
   static constexpr auto make_right = []<class U>(U &&val) { return Self{in_place_opt, std::forward<U>(val)}; };
 };
 
@@ -171,11 +151,7 @@ template <template <typename...> class OutputContainer = std::vector, std::range
       // TODO: if has emplace
       resultContainer.emplace_back(meta_t{}.right(std::move(res)));
     } else {
-      if constexpr (IsNotVoid<typename meta_t::left_t>) {
-        return output_meta_t{}.make_left(meta_t{}.left(std::move(res)));
-      } else {
-        return output_meta_t{}.make_left();
-      }
+      return output_meta_t{}.make_left(meta_t{}.left(std::move(res)));
     }
   }
 
