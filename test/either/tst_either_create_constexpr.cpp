@@ -653,6 +653,26 @@ TEST_CASE("Create either<void, T> constexpr", "[either][constexpr]")
     STATIC_REQUIRE(valid);
   }
 
+  SECTION("in_place_right (empty)")
+  {
+    constexpr auto valid = [] {
+      EitherVoidLeft either{frt::in_place_left};
+      return either.left() == frt::void_val;
+    }();
+
+    STATIC_REQUIRE(valid);
+  }
+
+  SECTION("in_place_right (void)")
+  {
+    constexpr auto valid = [] {
+      EitherVoidLeft either{frt::in_place_left, frt::void_val};
+      return either.left() == frt::void_val;
+    }();
+
+    STATIC_REQUIRE(valid);
+  }
+
   SECTION("in_place_right (is_right)")
   {
     constexpr auto valid = [] {
@@ -854,6 +874,16 @@ TEST_CASE("Create either<T, void> constexpr", "[either][constexpr]")
     constexpr auto valid = [] {
       EitherVoidRight either{frt::in_place_right};
       return either.is_right();
+    }();
+
+    STATIC_REQUIRE(valid);
+  }
+
+  SECTION("in_place_right (void)")
+  {
+    constexpr auto valid = [] {
+      EitherVoidRight either{frt::in_place_right, frt::void_val};
+      return either.right() == frt::void_val;
     }();
 
     STATIC_REQUIRE(valid);

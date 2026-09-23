@@ -493,6 +493,20 @@ TEST_CASE("Create either<void, T>", "[either]")
     REQUIRE(either.is_left());
   }
 
+  SECTION("in_place_right (empty)")
+  {
+    EitherVoidLeft either{frt::in_place_left};
+
+    REQUIRE(either.left() == frt::void_val);
+  }
+
+  SECTION("in_place_right (void)")
+  {
+    EitherVoidLeft either{frt::in_place_left, frt::void_val};
+
+    REQUIRE(either.left() == frt::void_val);
+  }
+
   SECTION("in_place_right (is_right)")
   {
     EitherVoidLeft either{frt::in_place_right, expectedRightValue};
@@ -645,6 +659,13 @@ TEST_CASE("Create either<T, void>", "[either]")
     EitherVoidRight either{frt::in_place_right};
 
     REQUIRE(either.is_right());
+  }
+
+  SECTION("in_place_right (void)")
+  {
+    EitherVoidRight either{frt::in_place_right, frt::void_val};
+
+    REQUIRE(either.right() == frt::void_val);
   }
 
   SECTION("copy constructor (left) (is_left)")
