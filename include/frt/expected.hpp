@@ -487,7 +487,7 @@ struct [[nodiscard]] expected
 
   //! Create from the expected value in-place (with arguments).
   template <class... Args>
-    requires(detail::either_::IsNotVoid<T> && std::is_constructible_v<T, Args...>)
+    requires(std::is_constructible_v<detail::common_::SelectedType<T>, Args...>)
   constexpr explicit expected(in_place_expected_t, Args &&...args) noexcept(
       std::is_nothrow_constructible_v<either<E, T>, in_place_right_t, Args...>)
       : data_(in_place_right, std::forward<Args>(args)...)
@@ -500,14 +500,6 @@ struct [[nodiscard]] expected
   constexpr explicit expected(in_place_expected_t, std::initializer_list<U> ilist, Args &&...args) noexcept(
       std::is_nothrow_constructible_v<either<E, T>, in_place_right_t, std::initializer_list<U> &, Args...>)
       : data_(in_place_right, ilist, std::forward<Args>(args)...)
-  {
-  }
-
-  //! Create from the expected value in-place (void specialization).
-  constexpr explicit expected(in_place_expected_t) noexcept(
-      std::is_nothrow_constructible_v<either<E, T>, in_place_right_t>)
-    requires(detail::either_::IsVoid<T>)
-      : data_(in_place_right)
   {
   }
 

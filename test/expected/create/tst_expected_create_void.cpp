@@ -23,6 +23,20 @@ TEST_CASE("Create expected<void, E> in_place_expected (has_value)", "[expected]"
   REQUIRE(e.has_value());
 }
 
+TEST_CASE("Create expected<void, E> in_place_expected (from frt::void)", "[expected]")
+{
+  const ExpectedVoid e{frt::in_place_expected, frt::void_val};
+
+  REQUIRE(e.value() == frt::void_val);
+}
+
+TEST_CASE("Create expected<void, E> in_place_expected (no extra arg)", "[expected]")
+{
+  const ExpectedVoid e{frt::in_place_expected};
+
+  REQUIRE(e.value() == frt::void_val);
+}
+
 TEST_CASE("Create expected<void, E> unexpected copy constructor (has_value)", "[expected]")
 {
   const frt::unexpected u{expectedError};

@@ -32,6 +32,26 @@ TEST_CASE("Create expected<void, E> in_place_expected (has_value) constexpr", "[
   STATIC_REQUIRE(valid);
 }
 
+TEST_CASE("Create expected<void, E> in_place_expected (from frt::void) constexpr", "[expected][constexpr]")
+{
+  constexpr auto valid = [] {
+    const ExpectedVoid e{frt::in_place_expected, frt::void_val};
+    return e.value() == frt::void_val;
+  }();
+
+  STATIC_REQUIRE(valid);
+}
+
+TEST_CASE("Create expected<void, E> in_place_expected (no extra arg) constexpr", "[expected][constexpr]")
+{
+  constexpr auto valid = [] {
+    const ExpectedVoid e{frt::in_place_expected};
+    return e.value() == frt::void_val;
+  }();
+
+  STATIC_REQUIRE(valid);
+}
+
 TEST_CASE("Create expected<void, E> unexpected copy constructor (has_value) constexpr", "[expected][constexpr]")
 {
   constexpr auto valid = [] {
