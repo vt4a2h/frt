@@ -1,2 +1,3 @@
 frt_add_test(algorithm_traverse)
+frt_add_test(algorithm_traverse_std_types)
 
