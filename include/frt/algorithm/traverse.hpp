@@ -114,6 +114,48 @@ struct meta_either<optional<L>>
   static constexpr auto make_right = []<class U>(U &&val) { return Self{in_place_opt, std::forward<U>(val)}; };
 };
 
+template <class C, class U>
+concept HasPushBack = requires(C c, U u) { c.push_back(u); };
+
+template <class C, class U>
+concept HasEmplaceBack = requires(C c, U u) { c.emplace_back(u); };
+
+template <class C, class U>
+concept HasInsert = requires(C c, U u) { c.insert(u); };
+
+template <class C>
+concept HasReserve = requires(C c, std::size_t n) { c.reserve(n); };
+
+template <class C, class E>
+struct meta_container
+{
+  static_assert(
+      HasPushBack<C, E> || HasEmplaceBack<C, E> || HasInsert<C, E>,
+      "The result container must support push_back, or emplace_back, or insert interface for adding elements. To "
+      "support alternative interface, provide a frt::meta_container specialization for your type, please.");
+
+  static constexpr auto add_element = []<std::convertible_to<E> ElemT>(C &c, ElemT &&e) {
+    if constexpr (HasPushBack<C, ElemT>)
+      c.push_back(std::forward<ElemT>(e));
+    else if constexpr (HasEmplaceBack<C, ElemT>)
+      c.emplace_back(std::forward<ElemT>(e));
+    else if constexpr (HasInsert<C, ElemT>)
+      c.insert(std::forward<ElemT>(e));
+  };
+
+  static constexpr auto reserve = [](C &c, std::size_t n) {
+    if constexpr (HasReserve<C>) {
+      c.reserve(n);
+    }
+  };
+};
+
+template <class C, class E>
+concept MetaContainerHasAddElement = requires(meta_container<C, E> mc, C c, E e) { mc.add_element(c, e); };
+
+template <class C, class E>
+concept MetaContainerHasReserve = requires(meta_container<C, E> mc, C c, std::size_t n) { mc.reserve(c, n); };
+
 namespace detail::trav_alg_
 {
 
@@ -130,32 +172,39 @@ template <template <typename...> class OutputContainer = std::vector, std::range
   static_assert(
       IsResultType<bare_t<func_ret_result_t>>,
       "The return type of te function must be a result type. Specialize frt::is_result_type for your type as needed.");
+  static_assert(std::move_constructible<bare_t<func_ret_result_t>>,
+                "The return type of te function must be move constructible.");
 
   using meta_t = meta_either<bare_t<func_ret_result_t>>;
 
   using func_ret_right_t = meta_t::right_t;
   static_assert(IsNotVoid<func_ret_right_t>,
                 "The type of the right alternative of the function return type must not be void.");
+
+  // FIXME: doesn't work for map-like
   using container_t = OutputContainer<func_ret_right_t>;
+  static_assert(std::move_constructible<container_t>, "The result container must be move constructible.");
 
   using output_t = meta_t::template rebind_right<container_t>;
   using output_meta_t = meta_either<output_t>;
 
+  using meta_container_t = meta_container<container_t, func_ret_right_t>;
+  static_assert(MetaContainerHasAddElement<container_t, func_ret_right_t>,
+                "The ftr::meta_container must provide an add_element interface.");
+
   container_t resultContainer;
-  // TODO: if supports reserve
-  // TODO: if sized range
-  resultContainer.reserve(std::ranges::size(inputRange));
+  if constexpr (std::ranges::sized_range<container_t> && MetaContainerHasReserve<container_t, func_ret_right_t>) {
+    meta_container_t{}.reserve(resultContainer, std::ranges::size(inputRange));
+  }
 
   for (auto &&v : std::forward<InputRange>(inputRange)) {
     if (auto res = std::invoke(f, std::forward<decltype(v)>(v)); meta_t{}.is_right(res)) {
-      // TODO: if has emplace
-      resultContainer.emplace_back(meta_t{}.right(std::move(res)));
+      meta_container_t{}.add_element(resultContainer, meta_t{}.right(std::move(res)));
     } else {
       return output_meta_t{}.make_left(meta_t{}.left(std::move(res)));
     }
   }
 
-  // TODO: if movable
   return output_meta_t{}.make_right(std::move(resultContainer));
 }
 
