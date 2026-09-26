@@ -32,7 +32,7 @@ concept HasReserve = requires(C c, std::size_t n) { c.reserve(n); };
 
 template <class C, class E>
   requires(HasPushBack<C, E> && !HasEmplaceBack<C, E>)
-void add_elem_impl(C &c, E &&e)
+constexpr void add_elem_impl(C &c, E &&e)
 {
   c.push_back(std::forward<E>(e));
 }
@@ -40,7 +40,7 @@ void add_elem_impl(C &c, E &&e)
 // Prefer emplace_back over push_back for the sequential containers
 template <class C, class E>
   requires(HasEmplaceBack<C, E>)
-void add_elem_impl(C &c, E &&e)
+constexpr void add_elem_impl(C &c, E &&e)
 {
   c.emplace_back(std::forward<E>(e));
 }
@@ -48,20 +48,20 @@ void add_elem_impl(C &c, E &&e)
 // Prefer emplace over insert for the associative containers
 template <class C, class E>
   requires(HasInsert<C, E> && !HasEmplace<C, E>)
-void add_elem_impl(C &c, E &&e)
+constexpr void add_elem_impl(C &c, E &&e)
 {
   c.insert(std::forward<E>(e));
 }
 
 template <class C, class E>
   requires(HasEmplace<C, E>)
-void add_elem_impl(C &c, E &&e)
+constexpr void add_elem_impl(C &c, E &&e)
 {
   c.emplace(std::forward<E>(e));
 }
 
 template <class C, class E>
-void add_elem_impl(C &, E &&)
+constexpr void add_elem_impl(C &, E &&)
 {
   static_assert(
       false, "The result container must support push_back, or emplace_back, or insert interface for adding elements. "
@@ -71,13 +71,13 @@ void add_elem_impl(C &, E &&)
 // TODO: add a customization point to provide a custom function for adding an element to a container
 
 template <HasReserve C>
-void reserve_impl(C &c, std::size_t n)
+constexpr void reserve_impl(C &c, std::size_t n)
 {
   c.reserve(n);
 }
 
 template <class C>
-void reserve_impl(C &, std::size_t)
+constexpr void reserve_impl(C &, std::size_t)
 {
   // Do nothing if we cannot reserve
 }

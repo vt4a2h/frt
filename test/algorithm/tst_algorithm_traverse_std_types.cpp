@@ -3,6 +3,7 @@
 #include <frt/algorithm/traverse.hpp>
 
 #include <expected>
+#include <functional>
 #include <optional>
 #include <utility>
 #include <vector>
@@ -80,7 +81,7 @@ inline constexpr bool is_result_type<std::optional<T>> = true;
 
 } // namespace frt
 
-TEST_CASE("frt::traverse -- std::expected", "[algorithm]")
+TEST_CASE("frt::traverse -- std::expected", "[algorithm][traverse]")
 {
   using Result = std::expected<int, std::string>;
 
@@ -98,7 +99,7 @@ TEST_CASE("frt::traverse -- std::expected", "[algorithm]")
   REQUIRE(actualResult.value() == expectedResult.value());
 }
 
-TEST_CASE("frt::traverse -- std::expected<void, ...>", "[algorithm]")
+TEST_CASE("frt::traverse -- std::expected<void, ...>", "[algorithm][traverse]")
 {
   using Result = std::expected<void, std::string>;
 
@@ -116,7 +117,7 @@ TEST_CASE("frt::traverse -- std::expected<void, ...>", "[algorithm]")
   REQUIRE(actualResult.value() == expectedResult.value());
 }
 
-TEST_CASE("frt::traverse -- optional", "[algorithm]")
+TEST_CASE("frt::traverse -- optional", "[algorithm][traverse]")
 {
   using Result = std::optional<int>;
 

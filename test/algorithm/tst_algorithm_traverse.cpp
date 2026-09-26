@@ -2,7 +2,11 @@
 
 #include <frt/algorithm/traverse.hpp>
 
-TEST_CASE("frt::traverse -- either", "[algorithm]")
+#include <functional>
+#include <string>
+#include <vector>
+
+TEST_CASE("frt::traverse -- either", "[algorithm][traverse]")
 {
   using Result = frt::either<std::string, int>;
 
@@ -20,7 +24,7 @@ TEST_CASE("frt::traverse -- either", "[algorithm]")
   REQUIRE(actualResult == expectedResult);
 }
 
-TEST_CASE("frt::traverse -- expected", "[algorithm]")
+TEST_CASE("frt::traverse -- expected", "[algorithm][traverse]")
 {
   using Result = frt::expected<int, std::string>;
 
@@ -38,7 +42,7 @@ TEST_CASE("frt::traverse -- expected", "[algorithm]")
   REQUIRE(actualResult == expectedResult);
 }
 
-TEST_CASE("frt::traverse -- expected<void, ...>", "[algorithm]")
+TEST_CASE("frt::traverse -- expected<void, ...>", "[algorithm][traverse]")
 {
   using Result = frt::expected<void, std::string>;
 
@@ -56,7 +60,7 @@ TEST_CASE("frt::traverse -- expected<void, ...>", "[algorithm]")
   REQUIRE(actualResult == expectedResult);
 }
 
-TEST_CASE("frt::traverse -- optional", "[algorithm]")
+TEST_CASE("frt::traverse -- optional", "[algorithm][traverse]")
 {
   using Result = frt::optional<int>;
 

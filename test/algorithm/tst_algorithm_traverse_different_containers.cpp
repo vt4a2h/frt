@@ -23,7 +23,7 @@ struct meta_container<std::forward_list<E>>
 
 } // namespace frt
 
-TEST_CASE("frt::traverse -- either - std::list", "[algorithm]")
+TEST_CASE("frt::traverse -- either - std::list", "[algorithm][traverse]")
 {
   using Result = frt::either<std::string, int>;
 
@@ -41,7 +41,7 @@ TEST_CASE("frt::traverse -- either - std::list", "[algorithm]")
   REQUIRE(actualResult == expectedResult);
 }
 
-TEST_CASE("frt::traverse -- either - std::forward_list", "[algorithm]")
+TEST_CASE("frt::traverse -- either - std::forward_list", "[algorithm][traverse]")
 {
   using Result = frt::either<std::string, int>;
 
@@ -61,7 +61,7 @@ TEST_CASE("frt::traverse -- either - std::forward_list", "[algorithm]")
   REQUIRE(actualResult == expectedResult);
 }
 
-TEST_CASE("frt::traverse -- either - std::map", "[algorithm]")
+TEST_CASE("frt::traverse -- either - std::map", "[algorithm][traverse]")
 {
   using P = std::pair<int, int>;
   using Result = frt::either<std::string, std::pair<int, int>>;
@@ -80,7 +80,7 @@ TEST_CASE("frt::traverse -- either - std::map", "[algorithm]")
   REQUIRE(actualResult == expectedResult);
 }
 
-TEST_CASE("frt::traverse -- optional - std::map", "[algorithm]")
+TEST_CASE("frt::traverse -- optional - std::map", "[algorithm][traverse]")
 {
   using P = std::pair<int, int>;
   using Result = frt::optional<std::pair<int, int>>;
@@ -100,7 +100,7 @@ TEST_CASE("frt::traverse -- optional - std::map", "[algorithm]")
   REQUIRE(actualResult == expectedResult);
 }
 
-TEST_CASE("frt::traverse -- either - std::unordered_map", "[algorithm]")
+TEST_CASE("frt::traverse -- either - std::unordered_map", "[algorithm][traverse]")
 {
   using P = std::pair<int, int>;
   using Result = frt::either<std::string, std::pair<int, int>>;
@@ -115,7 +115,7 @@ TEST_CASE("frt::traverse -- either - std::unordered_map", "[algorithm]")
   REQUIRE(actualResult == expectedResult);
 }
 
-TEST_CASE("frt::traverse -- either - std::set", "[algorithm]")
+TEST_CASE("frt::traverse -- either - std::set", "[algorithm][traverse]")
 {
   using Result = frt::either<std::string, int>;
 
