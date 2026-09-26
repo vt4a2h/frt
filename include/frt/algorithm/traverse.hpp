@@ -44,8 +44,11 @@ struct meta_either<either<L, R>>
 {
   using Self = either<L, R>;
 
-  using right_t = Self::right_t;
   using left_t = Self::left_t;
+  using right_t = Self::right_t;
+
+  template <class U>
+  using rebind_left = Self::template rebind_left<U>;
 
   template <class U>
   using rebind_right = Self::template rebind_right<U>;
@@ -69,8 +72,11 @@ struct meta_either<expected<T, E>>
 {
   using Self = expected<T, E>;
 
-  using right_t = Self::value_type;
   using left_t = Self::error_type;
+  using right_t = Self::value_type;
+
+  template <class U>
+  using rebind_left = Self::template rebind_error_type<U>;
 
   template <class U>
   using rebind_right = Self::template rebind_value_type<U>;
@@ -94,14 +100,14 @@ struct meta_either<optional<L>>
 {
   using Self = optional<L>;
 
-  using right_t = Self::value_type;
   using left_t = void;
-
-  template <class U>
-  using rebind_right = optional<U>;
+  using right_t = Self::value_type;
 
   template <class>
   using rebind_left = optional<L>;
+
+  template <class U>
+  using rebind_right = optional<U>;
 
   static constexpr auto left = []<std::same_as<Self> T>(T &&) { return void_val; };
   static constexpr auto right = []<std::same_as<Self> T>(T &&self) -> decltype(auto) {
