@@ -67,6 +67,68 @@ template <template <typename...> class OutputContainer = std::vector, std::range
   return output_meta_t{}.make_right(std::move(resultContainer));
 }
 
+template <class F>
+struct traverse_closure_fn
+{
+  F f_;
+
+  template <std::ranges::input_range R>
+  friend constexpr decltype(auto) operator|(R &&r, const traverse_closure_fn &c) noexcept
+  {
+    return traverse<std::vector>(std::forward<R>(r), c.f_);
+  }
+};
+
+struct traverse_fn
+{
+  template <std::ranges::input_range InputRange, class F>
+  [[nodiscard]] constexpr decltype(auto) operator()(InputRange &&inputRange, F f) const noexcept
+  {
+    return traverse<std::vector>(std::forward<InputRange>(inputRange), std::forward<F>(f));
+  }
+
+  template <class F>
+  [[nodiscard]] constexpr decltype(auto) operator()(F f) const noexcept
+  {
+    return traverse_closure_fn{.f_ = f};
+  }
+};
+
+template <template <typename...> class OutputContainer, class F>
+struct traverse_into_closure_fn
+{
+  F f_;
+
+  template <std::ranges::input_range R>
+  friend constexpr decltype(auto) operator|(R &&r, const traverse_into_closure_fn &c) noexcept
+  {
+    return traverse<OutputContainer>(std::forward<R>(r), c.f_);
+  }
+};
+
+template <template <typename...> class OutputContainer>
+struct traverse_into_fn
+{
+  template <std::ranges::input_range InputRange, class F>
+  [[nodiscard]] constexpr decltype(auto) operator()(InputRange &&inputRange, F f) const noexcept
+  {
+    return traverse<OutputContainer>(std::forward<InputRange>(inputRange), std::forward<F>(f));
+  }
+
+  template <class F>
+  [[nodiscard]] constexpr decltype(auto) operator()(F f) const noexcept
+  {
+    return traverse_into_closure_fn<OutputContainer, F>{.f_ = f};
+  }
+};
+
 } // namespace detail::trav_alg_
+
+//! The traverse algorithm. TODO: add better doc
+inline constexpr detail::trav_alg_::traverse_fn traverse{};
+
+//! The traverse algorithm with the possibility of specifying an output container. TODO: add better doc
+template <template <typename...> class OutputContainer>
+inline constexpr detail::trav_alg_::traverse_into_fn<OutputContainer> traverse_into{};
 
 } // namespace frt
