@@ -80,6 +80,26 @@ TEST_CASE("frt::traverse -- either - std::map", "[algorithm]")
   REQUIRE(actualResult == expectedResult);
 }
 
+TEST_CASE("frt::traverse -- optional - std::map", "[algorithm]")
+{
+  using P = std::pair<int, int>;
+  using Result = frt::optional<std::pair<int, int>>;
+
+  std::vector input{
+      Result{frt::in_place_opt, P{42, 42}},
+      Result{frt::in_place_opt, P{41, 41}},
+      Result{frt::in_place_opt, P{40, 40}},
+  };
+
+  const auto actualResult = frt::traverse_into<std::map>(
+      input, [](Result v) -> Result { return Result{frt::in_place_opt, P{++v.value().first, ++v.value().second}}; });
+
+  using ExpectedResultType = frt::optional<std::map<int, int>>;
+  const auto expectedResult = ExpectedResultType{frt::in_place_opt, std::map{P{43, 43}, P{42, 42}, P{41, 41}}};
+
+  REQUIRE(actualResult == expectedResult);
+}
+
 TEST_CASE("frt::traverse -- either - std::unordered_map", "[algorithm]")
 {
   using P = std::pair<int, int>;
