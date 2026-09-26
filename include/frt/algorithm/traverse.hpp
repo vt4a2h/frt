@@ -31,9 +31,9 @@ template <template <typename...> class OutputContainer = std::vector, std::range
   using func_ret_result_t = std::invoke_result_t<F, range_val_t>;
   static_assert(
       IsResultType<bare_t<func_ret_result_t>>,
-      "The return type of te function must be a result type. Specialize frt::is_result_type for your type as needed.");
+      "The return type of the function must be a result type. Specialize frt::is_result_type for your type as needed.");
   static_assert(std::move_constructible<bare_t<func_ret_result_t>>,
-                "The return type of te function must be move constructible.");
+                "The return type of the function must be move constructible.");
 
   using meta_t = meta_either<bare_t<func_ret_result_t>>;
 
@@ -49,7 +49,7 @@ template <template <typename...> class OutputContainer = std::vector, std::range
 
   using meta_container_t = meta_container<container_t>;
   static_assert(meta_container_::MetaContainerHasAddElement<container_t>,
-                "The ftr::meta_container must provide an add_element interface.");
+                "The frt::meta_container must provide an add_element interface.");
 
   container_t resultContainer;
   if constexpr (std::ranges::sized_range<container_t> && meta_container_::MetaContainerHasReserve<container_t>) {
@@ -124,10 +124,101 @@ struct traverse_into_fn
 
 } // namespace detail::trav_alg_
 
-//! The traverse algorithm. TODO: add better doc
+/*!
+ * \brief The traverse algorithm.
+ *
+ * The traverse algorithm takes a range of objects of a result-like type, applies the passed function to each element,
+ * and collects the unwrapped success values into a `std::vector` wrapped in the result type. If any function call
+ * yields an error or empty state (the left alternative), traversal short-circuits and immediately returns that failure.
+ *
+ * If all operations succeed, the returned object contains a `std::vector` of the transformed values:
+ * \code{.cpp}
+ * using Result = frt::optional<int>;
+ * using Output = frt::optional<std::vector<int>>;
+ *
+ * std::vector input{Result{1}, Result{2}, Result{3}};
+ * Output result = frt::traverse(input, [](const Result &v) { return Result{v.value() + 1}; });
+ *
+ * // result contains std::vector{2, 3, 4}
+ * \endcode
+ *
+ * If any element is in an error or empty state, the result will contain that failure:
+ * \code{.cpp}
+ * using Result = frt::optional<int>;
+ * using Output = frt::optional<std::vector<int>>;
+ *
+ * std::vector input{Result{1}, Result{}, Result{3}};
+ * Output result = frt::traverse(input, [](const Result &v) -> Result {
+ *   if (!v) {
+ *     return {};
+ *   }
+ *   return v.value() + 1;
+ * });
+ *
+ * // result contains nothing (empty optional)
+ * \endcode
+ *
+ * The function works with all either-like result types (such as \c frt::either, \c frt::expected, \c frt::optional,
+ * \c std::expected, or \c std::optional). Custom result types require specializing \c frt::meta_either and
+ * \c frt::is_result_type. By convention, the left alternative represents an error or empty state, while the right
+ * alternative represents a success value.
+ *
+ * Pipe syntax for partial application is also supported:
+ * \code{.cpp}
+ * using Result = frt::optional<int>;
+ * using Output = frt::optional<std::vector<int>>;
+ *
+ * std::vector input{Result{1}, Result{2}, Result{3}};
+ * Output result = input | frt::traverse([](const Result &v) { return Result{v.value() + 1}; });
+ *
+ * // result contains std::vector{2, 3, 4}
+ * \endcode
+ * Note that this is an eager operation evaluated immediately; it returns a container wrapped in a result type, not a
+ * view.
+ *
+ * The default output container is `std::vector`. To collect into a different container, use \c frt::traverse_into.
+ */
 inline constexpr detail::trav_alg_::traverse_fn traverse{};
 
-//! The traverse algorithm with the possibility of specifying an output container. TODO: add better doc
+/*!
+ * \brief The traverse algorithm with a customizable output container.
+ *
+ * This function behaves identically to \c frt::traverse, but allows specifying a custom output container template.
+ *
+ * It supports standard sequential and associative containers out-of-the-box. Custom container types require
+ * a specialization of \c frt::meta_container.
+ *
+ * For example, elements can be collected into a `std::list` instead of a `std::vector`:
+ * \code{.cpp}
+ * using Result = frt::optional<int>;
+ * using Output = frt::optional<std::list<int>>;
+ *
+ * std::vector input{Result{1}, Result{2}, Result{3}};
+ * Output result = frt::traverse_into<std::list>(input, [](const Result &v) { return Result{v.value() + 1}; });
+ *
+ * // result contains std::list{2, 3, 4}
+ * \endcode
+ *
+ * When collecting into an associative container (such as `std::map`), the right alternative of the function's return
+ * type must be a `std::pair` matching the container's key and value types:
+ * \code{.cpp}
+ * using P = std::pair<int, int>;
+ * using Result = frt::optional<P>;
+ * using Output = frt::optional<std::map<int, int>>;
+ *
+ * std::vector input{Result{P{1, 1}}, Result{P{2, 2}}, Result{P{3, 3}}};
+ * Output result = frt::traverse_into<std::map>(input, [](const Result &v) {
+ *   return Result{P{v.value().first + 1, v.value().second + 1}};
+ * });
+ *
+ * // result contains std::map{P{2, 2}, P{3, 3}, P{4, 4}}
+ * \endcode
+ *
+ * Pipe syntax is also supported:
+ * \code{.cpp}
+ * auto result = input | frt::traverse_into<std::list>([](const Result &v) { return Result{v.value() + 1}; });
+ * \endcode
+ */
 template <template <typename...> class OutputContainer>
 inline constexpr detail::trav_alg_::traverse_into_fn<OutputContainer> traverse_into{};
 
