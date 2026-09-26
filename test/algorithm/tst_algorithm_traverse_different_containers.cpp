@@ -4,13 +4,17 @@
 
 #include <forward_list>
 #include <list>
+
 #include <map>
+#include <unordered_map>
+
+#include <set>
 
 namespace frt
 {
 
 template <class E>
-struct meta_container<std::forward_list<E>, E>
+struct meta_container<std::forward_list<E>>
 {
   static constexpr auto add_element = []<class ElemT>(std::forward_list<E> &c, ElemT &&e) {
     c.push_front(std::forward<ElemT>(e));
@@ -35,7 +39,7 @@ TEST_CASE("frt::traverse -- either - std::list", "[algorithm]")
   const auto expectedResult = ExpectedResultType{frt::in_place_right, std::list{42, 41, 40}};
 
   REQUIRE(actualResult == expectedResult);
-} // namespace frt TEST_CASE("frt::traverse -- either - std::list","[algorithm]")
+}
 
 TEST_CASE("frt::traverse -- either - std::forward_list", "[algorithm]")
 {
@@ -57,22 +61,54 @@ TEST_CASE("frt::traverse -- either - std::forward_list", "[algorithm]")
   REQUIRE(actualResult == expectedResult);
 }
 
-// FIXME: doesn't work for map-like
-// TEST_CASE("frt::traverse -- either - std::map", "[algorithm]")
-// {
-//   using P = std::pair<int, int>;
-//   using Result = frt::either<std::string, std::pair<int, int>>;
-//
-//   std::vector input{
-//       Result{frt::in_place_right, P{42, 42}},
-//       Result{frt::in_place_right, P{41, 41}},
-//       Result{frt::in_place_right, P{40, 40}},
-//   };
-//
-//   const auto actualResult = frt::detail::trav_alg_::traverse<std::map>(input, std::identity{});
-//
-//   using ExpectedResultType = frt::either<std::string, std::map<int, int>>;
-//   const auto expectedResult = ExpectedResultType{frt::in_place_right, std::map{P{42, 42}, P{41, 42}, P{40, 40}}};
-//
-//   REQUIRE(actualResult == expectedResult);
-// }
+TEST_CASE("frt::traverse -- either - std::map", "[algorithm]")
+{
+  using P = std::pair<int, int>;
+  using Result = frt::either<std::string, std::pair<int, int>>;
+
+  std::vector input{
+      Result{frt::in_place_right, P{42, 42}},
+      Result{frt::in_place_right, P{41, 41}},
+      Result{frt::in_place_right, P{40, 40}},
+  };
+
+  const auto actualResult = frt::detail::trav_alg_::traverse<std::map>(input, std::identity{});
+
+  using ExpectedResultType = frt::either<std::string, std::map<int, int>>;
+  const auto expectedResult = ExpectedResultType{frt::in_place_right, std::map{P{42, 42}, P{41, 41}, P{40, 40}}};
+
+  REQUIRE(actualResult == expectedResult);
+}
+
+TEST_CASE("frt::traverse -- either - std::unordered_map", "[algorithm]")
+{
+  using P = std::pair<int, int>;
+  using Result = frt::either<std::string, std::pair<int, int>>;
+
+  std::vector input{Result{frt::in_place_right, P{42, 42}}};
+
+  const auto actualResult = frt::detail::trav_alg_::traverse<std::unordered_map>(input, std::identity{});
+
+  using ExpectedResultType = frt::either<std::string, std::unordered_map<int, int>>;
+  const auto expectedResult = ExpectedResultType{frt::in_place_right, std::unordered_map{P{42, 42}}};
+
+  REQUIRE(actualResult == expectedResult);
+}
+
+TEST_CASE("frt::traverse -- either - std::set", "[algorithm]")
+{
+  using Result = frt::either<std::string, int>;
+
+  std::vector input{
+      Result{frt::in_place_right, 42},
+      Result{frt::in_place_right, 41},
+      Result{frt::in_place_right, 40},
+  };
+
+  const auto actualResult = frt::detail::trav_alg_::traverse<std::set>(input, std::identity{});
+
+  using ExpectedResultType = frt::either<std::string, std::set<int>>;
+  const auto expectedResult = ExpectedResultType{frt::in_place_right, std::set{42, 41, 40}};
+
+  REQUIRE(actualResult == expectedResult);
+}
