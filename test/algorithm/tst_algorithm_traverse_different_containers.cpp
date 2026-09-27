@@ -16,9 +16,7 @@ namespace frt
 template <class E>
 struct meta_container<std::forward_list<E>>
 {
-  static constexpr auto add_element = []<class ElemT>(std::forward_list<E> &c, ElemT &&e) {
-    c.push_front(std::forward<ElemT>(e));
-  };
+  static constexpr auto add_element = [](std::forward_list<E> &c, E &&e) { c.push_front(std::move(e)); };
 };
 
 } // namespace frt

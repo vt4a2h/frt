@@ -16,16 +16,16 @@ namespace frt
 namespace detail::meta_container_
 {
 template <class C, class U>
-concept HasPushBack = requires(C c, U u) { c.push_back(u); };
+concept HasPushBack = requires(C c, U &&u) { c.push_back(std::forward<U>(u)); };
 
 template <class C, class U>
-concept HasEmplaceBack = requires(C c, U u) { c.emplace_back(u); };
+concept HasEmplaceBack = requires(C c, U &&u) { c.emplace_back(std::forward<U>(u)); };
 
 template <class C, class U>
-concept HasInsert = requires(C c, U u) { c.insert(u); };
+concept HasInsert = requires(C c, U &&u) { c.insert(std::forward<U>(u)); };
 
 template <class C, class U>
-concept HasEmplace = requires(C c, U u) { c.emplace(u); };
+concept HasEmplace = requires(C c, U &&u) { c.emplace(std::forward<U>(u)); };
 
 template <class C>
 concept HasReserve = requires(C c, std::size_t n) { c.reserve(n); };
@@ -68,8 +68,6 @@ constexpr void add_elem_impl(C &, E &&)
              "To support alternative interface, provide a frt::meta_container specialization for your type, please.");
 }
 
-// TODO: add a customization point to provide a custom function for adding an element to a container
-
 template <HasReserve C>
 constexpr void reserve_impl(C &c, std::size_t n)
 {
@@ -82,7 +80,6 @@ constexpr void reserve_impl(C &, std::size_t)
   // Do nothing if we cannot reserve
 }
 
-// TODO: add a customization point to provide a custom function for reserving space in a container
 } // namespace detail::meta_container_
 
 template <class C>
@@ -100,12 +97,12 @@ struct meta_container
 namespace detail::meta_container_
 {
 
-template <class C>
+template <class C, class E = std::ranges::range_value_t<C>>
 concept MetaContainerHasAddElement =
-    requires(meta_container<C> mc, C c, std::ranges::range_value_t<C> e) { mc.add_element(c, e); };
+    requires(meta_container<C> mc, C &c, E &&e) { mc.add_element(c, std::forward<E>(e)); };
 
 template <class C>
-concept MetaContainerHasReserve = requires(meta_container<C> mc, C c, std::size_t n) { mc.reserve(c, n); };
+concept MetaContainerHasReserve = requires(meta_container<C> mc, C &c, std::size_t n) { mc.reserve(c, n); };
 
 template <template <class...> class, class>
 struct select_container
