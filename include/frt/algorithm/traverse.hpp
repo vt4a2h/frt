@@ -19,6 +19,24 @@ namespace frt
 namespace detail::trav_alg_
 {
 
+template <class MetaEither, class ResT>
+concept ValidMetaEitherFuncRetT = requires(MetaEither me, ResT &&r) {
+  typename MetaEither::right_t;
+  typename MetaEither::left_t;
+  typename MetaEither::template rebind_right<ResT>;
+
+  me.is_right(r);
+
+  me.right(std::forward<ResT>(r));
+  me.left(std::forward<ResT>(r));
+};
+
+template <class MetaEither, class Left, class Right>
+concept ValidMetaEitherResC = requires(MetaEither me, Left &&l, Right &&r) {
+  me.make_left(std::forward<Left>(l));
+  me.make_right(std::forward<Right>(r));
+};
+
 template <template <typename...> class OutputContainer = std::vector, std::ranges::input_range InputRange, class F>
 [[nodiscard]] constexpr decltype(auto) traverse(InputRange &&inputRange, F f) noexcept
 {
@@ -36,6 +54,12 @@ template <template <typename...> class OutputContainer = std::vector, std::range
                 "The return type of the function must be move constructible.");
 
   using meta_t = meta_either<bare_t<func_ret_result_t>>;
+  static_assert(
+      ValidMetaEitherFuncRetT<meta_t, func_ret_result_t>,
+      "frt::meta_either for the function return type T must provide the following interface: "
+      "typename left_t, typename right_t, typename template rebind_right<U>, is_right(T{}), right(T{}), left(T{}).");
+  static_assert(IsNotVoid<typename meta_t::left_t>, "The type of the left alternative of the function return type must "
+                                                    "not be void. Use frt::void_t as needed instead.");
 
   using func_ret_right_t = meta_t::right_t;
   static_assert(IsNotVoid<func_ret_right_t>,
@@ -46,6 +70,10 @@ template <template <typename...> class OutputContainer = std::vector, std::range
 
   using output_t = meta_t::template rebind_right<container_t>;
   using output_meta_t = meta_either<output_t>;
+  static_assert(ValidMetaEitherResC<output_meta_t, typename meta_t::left_t, container_t>,
+                "The frt::meta_either for the output type must provide the following interface: make_left(Left{}) and "
+                "make_right(Right{}). Where Left -- the same left alternative type as before, Right -- the output "
+                "container type.");
 
   using meta_container_t = meta_container<container_t>;
   static_assert(meta_container_::MetaContainerHasAddElement<container_t>,
