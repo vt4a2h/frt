@@ -99,7 +99,7 @@ struct meta_either<optional<L>>
 {
   using Self = optional<L>;
 
-  using left_t = void;
+  using left_t = void_t;
   using right_t = Self::value_type;
 
   template <class>

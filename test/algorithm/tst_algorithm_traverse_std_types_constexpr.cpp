@@ -54,7 +54,7 @@ struct meta_either<std::optional<L>>
   using Self = std::optional<L>;
 
   using right_t = Self::value_type;
-  using left_t = void;
+  using left_t = void_t;
 
   template <class U>
   using rebind_right = std::optional<U>;
