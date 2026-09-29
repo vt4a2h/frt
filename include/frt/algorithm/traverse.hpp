@@ -13,6 +13,8 @@
 #include <frt/meta/meta_container.hpp>
 #include <frt/meta/meta_either.hpp>
 
+#include <vector>
+
 namespace frt
 {
 
