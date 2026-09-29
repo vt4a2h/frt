@@ -22,4 +22,5 @@
 #include <frt/hash/optional-hash.hpp>
 #include <frt/optional.hpp>
 
+#include <frt/algorithm/sequence.hpp>
 #include <frt/algorithm/traverse.hpp>
