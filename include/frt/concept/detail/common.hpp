@@ -18,4 +18,10 @@ namespace frt::detail::common_
 template <class T>
 using bare_t = std::remove_cvref_t<T>;
 
+template <class T>
+concept IsVoid = std::is_void_v<bare_t<T>>;
+
+template <class T>
+concept IsNotVoid = !IsVoid<T>;
+
 } // namespace frt::detail::common_

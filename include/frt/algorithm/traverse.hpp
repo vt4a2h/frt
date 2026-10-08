@@ -13,7 +13,6 @@
 #include <frt/concept/detail/common.hpp>
 
 #include <frt/concept/concept.hpp>
-#include <frt/either.hpp>
 #include <frt/meta/meta_container.hpp>
 #include <frt/meta/meta_either.hpp>
 

@@ -44,12 +44,6 @@ template <class T>
 concept is_internal_void_ = std::same_as<bare_t<T>, Void>;
 
 template <class T>
-concept IsVoid = std::is_void_v<bare_t<T>>;
-
-template <class T>
-concept IsNotVoid = !IsVoid<T>;
-
-template <class T>
 using SelectedType = std::conditional_t<IsVoid<T>, Void, bare_t<T>>;
 
 struct UnwrappedTag
