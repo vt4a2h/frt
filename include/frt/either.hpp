@@ -18,6 +18,7 @@
 #include <frt/concept/detail/common.hpp>
 #include <frt/detail/attributes.hpp>
 #include <frt/expects.hpp>
+#include <frt/util/void.hpp>
 
 namespace frt
 {
@@ -33,12 +34,6 @@ using c_l_ref_t = std::add_lvalue_reference_t<std::add_const_t<bare_t<T>>>;
 
 template <class T>
 using r_ref_t = std::add_rvalue_reference_t<bare_t<T>>;
-
-struct Void
-{
-  friend constexpr bool operator==(Void, Void) noexcept = default;
-  friend constexpr std::partial_ordering operator<=>(Void, Void) noexcept = default;
-};
 
 template <class T>
 concept is_internal_void_ = std::same_as<bare_t<T>, Void>;
@@ -243,8 +238,6 @@ concept ValidConstructableFrom = requires {
   requires !is_tag_<bare_t<U>>;
 };
 
-inline constexpr std::size_t void_hash{};
-
 template <class E1, class E2>
 constexpr inline bool same_right_alternative = std::same_as<typename bare_t<E1>::right_t, typename bare_t<E2>::right_t>;
 
@@ -321,9 +314,6 @@ inline constexpr unwrapped_t unwrapped{unwrapped_t::Secret{}};
 
 template <class T>
 concept IsEither = detail::either_::is_either_<detail::either_::bare_t<T>>;
-
-using void_t = detail::common_::Void;
-inline constexpr detail::common_::Void void_val;
 
 /*!
  * \brief An object of this type can contain a value of either Left or Right type.

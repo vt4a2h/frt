@@ -15,6 +15,8 @@
 namespace frt::detail::common_
 {
 
+inline constexpr std::size_t void_hash{};
+
 template <class T>
 concept IsHashable = requires(T v) {
   { std::hash<T>{}(v) } -> std::same_as<std::size_t>;
@@ -22,6 +24,7 @@ concept IsHashable = requires(T v) {
 
 } // namespace frt::detail::common_
 
+//! Hasher for `frt::void_t`.
 template <>
 struct std::hash<frt::detail::either_::Void>
 {
