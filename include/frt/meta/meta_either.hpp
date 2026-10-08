@@ -10,7 +10,6 @@
  */
 #pragma once
 
-#include <frt/either.hpp>
 #include <frt/expected.hpp>
 #include <frt/optional.hpp>
 
@@ -18,9 +17,6 @@
 
 namespace frt
 {
-
-template <class L, class R>
-inline constexpr bool is_result_type<either<L, R>> = true;
 
 template <class T, class E>
 inline constexpr bool is_result_type<expected<T, E>> = true;
@@ -80,34 +76,6 @@ struct meta_either
 {
   static_assert(false, "The result type must be representable as Either. Provide a frt::meta_either specialization for "
                        "your type, please.");
-};
-
-template <class L, class R>
-struct meta_either<either<L, R>>
-{
-  using Self = either<L, R>;
-
-  using left_t = Self::left_t;
-  using right_t = Self::right_t;
-
-  template <class U>
-  using rebind_left = Self::template rebind_left<U>;
-
-  template <class U>
-  using rebind_right = Self::template rebind_right<U>;
-
-  static constexpr auto left = []<std::same_as<Self> T>(T &&self) -> decltype(auto) {
-    return std::forward<T>(self).left();
-  };
-  static constexpr auto right = []<std::same_as<Self> T>(T &&self) -> decltype(auto) {
-    return std::forward<T>(self).right();
-  };
-
-  static constexpr auto is_left = [](const Self &self) { return self.is_left(); };
-  static constexpr auto is_right = [](const Self &self) { return self.is_right(); };
-
-  static constexpr auto make_left = []<class U>(U &&val) { return Self{in_place_left, std::forward<U>(val)}; };
-  static constexpr auto make_right = []<class U>(U &&val) { return Self{in_place_right, std::forward<U>(val)}; };
 };
 
 template <class T, class E>

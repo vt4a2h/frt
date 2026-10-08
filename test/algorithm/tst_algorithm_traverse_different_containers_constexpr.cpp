@@ -1,5 +1,7 @@
 #include <catch2/catch_all.hpp>
 
+#include <frt/meta/meta_either_either.hpp>
+
 #include <frt/algorithm/traverse.hpp>
 #include <frt/either.hpp>
 
