@@ -82,15 +82,34 @@ constexpr void reserve_impl(C &, std::size_t)
 
 } // namespace detail::meta_container_
 
+/*!
+ * \brief An interface for container types to enable generic container operations required by algorithms.
+ *
+ * Most of the containers should work with the default implementation out of the box. If this is not the case, then you
+ * need to specialize this structure for your container.
+ */
 template <class C>
 struct meta_container
 {
+  //! The element type.
   using E = std::ranges::range_value_t<C>;
 
+  /*!
+   * \brief Add the element \c e to the container \c c.
+   *
+   * When implementing your own function:
+   * - The container must always be passed by reference.
+   * - The element is recommended to be passed by a forwarding reference.
+   */
   static constexpr auto add_element = []<std::convertible_to<E> ElemT>(C &c, ElemT &&e) {
     detail::meta_container_::add_elem_impl(c, std::forward<ElemT>(e));
   };
 
+  /*!
+   * \brief A function to pre-allocate space in the container \c c for the number of elements \c n.
+   *
+   * This is an optional function: if it is not provided or is not invocable, it will be ignored.
+   */
   static constexpr auto reserve = [](C &c, std::size_t n) { detail::meta_container_::reserve_impl(c, n); };
 };
 
@@ -104,13 +123,14 @@ concept MetaContainerHasAddElement =
 template <class C>
 concept MetaContainerHasReserve = requires(meta_container<C> mc, C &c, std::size_t n) { mc.reserve(c, n); };
 
+//! A helper to select either an associative or a sequential container.
 template <template <class...> class, class>
 struct select_container
 {
   static_assert(false, "Cannot select a container for the given type.");
 };
 
-// A sequential container of any elements (possibly pairs)
+//! A sequential container of any elements (possibly pairs).
 template <template <class...> class Container, class ElemT>
   requires(requires { typename Container<ElemT>; })
 struct select_container<Container, ElemT>
@@ -118,7 +138,7 @@ struct select_container<Container, ElemT>
   using type = Container<ElemT>;
 };
 
-// An associative container of any keys and values. The element type must be a pair-like (not a tuple-like).
+//! An associative container of any keys and values. The element type must be a pair-like (not a tuple-like).
 template <template <class...> class Container, class ElemT>
   requires(requires {
     typename ElemT::first_type;
@@ -130,6 +150,11 @@ struct select_container<Container, ElemT>
   using type = Container<typename ElemT::first_type, typename ElemT::second_type>;
 };
 
+/*!
+ * \brief  A type of container to use.
+ *
+ * \note Non-customizable by library users yet.
+ */
 template <template <class...> class Container, class ElemT>
 using select_container_t = select_container<Container, ElemT>::type;
 
