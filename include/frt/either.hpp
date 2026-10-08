@@ -15,6 +15,7 @@
 #include <type_traits>
 #include <utility>
 
+#include <frt/concept/detail/common.hpp>
 #include <frt/detail/attributes.hpp>
 #include <frt/expects.hpp>
 
@@ -23,9 +24,6 @@ namespace frt
 
 namespace detail::common_
 {
-
-template <class T>
-using bare_t = std::remove_cvref_t<T>;
 
 template <class T>
 using l_ref_t = std::add_lvalue_reference_t<bare_t<T>>;

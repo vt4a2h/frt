@@ -14,10 +14,10 @@
 #include <frt/expected.hpp>
 #include <frt/optional.hpp>
 
+#include <frt/concept/concept.hpp>
+
 namespace frt
 {
-template <class T>
-inline constexpr bool is_result_type = false;
 
 template <class L, class R>
 inline constexpr bool is_result_type<either<L, R>> = true;
@@ -27,9 +27,6 @@ inline constexpr bool is_result_type<expected<T, E>> = true;
 
 template <class T>
 inline constexpr bool is_result_type<optional<T>> = true;
-
-template <class T>
-concept IsResultType = is_result_type<detail::common_::bare_t<T>>;
 
 /*!
  * \brief An interface for working with a custom type as if it were an Either monad.
