@@ -1,6 +1,8 @@
 #include <catch2/catch_all.hpp>
 
 #include <frt/algorithm/traverse.hpp>
+#include <frt/concept/concept.hpp>
+#include <frt/either.hpp>
 
 #include <expected>
 #include <functional>

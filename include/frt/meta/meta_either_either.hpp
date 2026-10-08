@@ -10,6 +10,7 @@
  */
 #pragma once
 
+#include <frt/concept/concept.hpp>
 #include <frt/either.hpp>
 #include <frt/meta/meta_either.hpp>
 
