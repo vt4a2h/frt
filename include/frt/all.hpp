@@ -24,3 +24,7 @@
 
 #include <frt/algorithm/sequence.hpp>
 #include <frt/algorithm/traverse.hpp>
+
+#include <frt/concept/concept.hpp>
+
+#include <frt/meta/meta_all.hpp>
