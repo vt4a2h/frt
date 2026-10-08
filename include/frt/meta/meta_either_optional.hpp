@@ -17,6 +17,7 @@
 namespace frt
 {
 
+//! The \c frt::meta_either interface implementation for \c frt::optional.
 template <class T>
 inline constexpr bool is_result_type<optional<T>> = true;
 

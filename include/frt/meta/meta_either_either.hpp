@@ -19,6 +19,7 @@ namespace frt
 template <class L, class R>
 inline constexpr bool is_result_type<either<L, R>> = true;
 
+//! The \c frt::meta_either interface implementation for \c frt::either.implementation for \c frt::either.
 template <class L, class R>
 struct meta_either<either<L, R>>
 {

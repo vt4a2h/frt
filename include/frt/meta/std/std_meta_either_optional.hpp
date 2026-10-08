@@ -22,6 +22,7 @@ namespace frt
 template <class T>
 inline constexpr bool is_result_type<std::optional<T>> = true;
 
+//! The \c frt::meta_either interface implementation for \c std::optional.
 template <class L>
 struct meta_either<std::optional<L>>
 {

@@ -20,6 +20,7 @@ namespace frt
 template <class T, class E>
 inline constexpr bool is_result_type<expected<T, E>> = true;
 
+//! The \c frt::meta_either interface implementation for \c frt::expected.
 template <class T, class E>
 struct meta_either<expected<T, E>>
 {
