@@ -10,7 +10,7 @@
  */
 #pragma once
 
-#include <frt/format/either-fmt.hpp>
+#include <frt/format/std_fmt_either.hpp>
 
 #include <frt/expected.hpp>
 

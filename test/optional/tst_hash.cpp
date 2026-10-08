@@ -1,4 +1,4 @@
-#include <frt/hash/optional-hash.hpp>
+#include <frt/hash/std_hash_optional.hpp>
 
 #include <catch2/catch_all.hpp>
 

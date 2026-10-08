@@ -1,4 +1,4 @@
-#include <frt/hash/either-hash.hpp>
+#include <frt/hash/std_hash_either.hpp>
 
 #include <catch2/catch_all.hpp>
 

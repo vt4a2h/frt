@@ -4,7 +4,7 @@
 #include <iterator>
 #include <string>
 
-#include <frt/format/optional-fmt.hpp>
+#include <frt/format/std_fmt_optional.hpp>
 
 namespace
 {

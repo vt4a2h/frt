@@ -1,4 +1,4 @@
-#include <frt/hash/expected-hash.hpp>
+#include <frt/hash/std_hash_expected.hpp>
 
 #include <catch2/catch_all.hpp>
 

@@ -12,7 +12,7 @@
 
 #include <frt/expected.hpp>
 
-#include <frt/hash/either-hash.hpp>
+#include <frt/hash/std_hash_either.hpp>
 
 //! Hasher for `frt::expected<T, E>`.
 template <class T, class E>

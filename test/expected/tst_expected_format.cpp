@@ -4,7 +4,7 @@
 #include <iterator>
 #include <string>
 
-#include <frt/format/expected-fmt.hpp>
+#include <frt/format/std_fmt_expected.hpp>
 
 namespace
 {

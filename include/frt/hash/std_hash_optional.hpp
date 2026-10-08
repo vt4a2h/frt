@@ -12,7 +12,7 @@
 
 #include <frt/optional.hpp>
 
-#include <frt/hash/either-hash.hpp>
+#include <frt/hash/std_hash_either.hpp>
 
 //! Hasher for `frt::optional<T>`.
 template <class T>
