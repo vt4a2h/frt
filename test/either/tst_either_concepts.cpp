@@ -176,7 +176,7 @@ TEMPLATE_TEST_CASE_SIG("is_unwrapped", "[either]", ((class T, bool Valid), T, Va
                        (const int &, false), (std::string, false), (std::vector<int>, false), (void, false),
                        (frt::in_place_left_t, false), (frt::in_place_right_t, false), (frt::either<int, double>, false))
 {
-  STATIC_REQUIRE(frt::detail::either_::is_unwrapped_<T> == Valid);
+  STATIC_REQUIRE(frt::IsUnwrapped<T> == Valid);
 }
 
 TEST_CASE("single_arg_is_unwrapped", "[either]")

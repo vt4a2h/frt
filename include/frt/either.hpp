@@ -18,6 +18,7 @@
 #include <frt/concept/detail/common.hpp>
 #include <frt/detail/attributes.hpp>
 #include <frt/expects.hpp>
+#include <frt/util/unwrapped.hpp>
 #include <frt/util/void.hpp>
 
 namespace frt
@@ -41,20 +42,8 @@ concept is_internal_void_ = std::same_as<bare_t<T>, Void>;
 template <class T>
 using SelectedType = std::conditional_t<IsVoid<T>, Void, bare_t<T>>;
 
-struct UnwrappedTag
-{
-  struct Secret
-  {
-    constexpr Secret() noexcept = default;
-  };
-  constexpr explicit UnwrappedTag(Secret) noexcept {}
-};
-
-template <class T>
-inline constexpr bool is_unwrapped_ = std::same_as<bare_t<T>, UnwrappedTag>;
-
 template <class... Args>
-constexpr inline std::size_t unwrapped_count = (std::size_t{} + ... + static_cast<std::size_t>(is_unwrapped_<Args>));
+constexpr inline std::size_t unwrapped_count = (std::size_t{} + ... + static_cast<std::size_t>(IsUnwrapped<Args>));
 
 template <class... Args>
 constexpr inline bool single_arg_is_unwrapped = sizeof...(Args) == 1 && unwrapped_count<Args...> == 1;
@@ -63,7 +52,7 @@ template <class... Args>
 constexpr inline bool contains_zero_or_one_unwrapped = unwrapped_count<Args...> <= 1;
 
 template <class... Args>
-inline constexpr bool contains_unwrapped = (... || is_unwrapped_<Args>);
+inline constexpr bool contains_unwrapped = (... || IsUnwrapped<Args>);
 
 template <class F, class T, class... Args>
 constexpr inline bool is_invocable_with_extra_args = std::is_invocable_v<F, T, Args...>;
@@ -71,7 +60,7 @@ constexpr inline bool is_invocable_with_extra_args = std::is_invocable_v<F, T, A
 template <class F, class T, class... Args>
   requires(contains_unwrapped<Args...>)
 constexpr inline bool is_invocable_with_extra_args<F, T, Args...> =
-    std::is_invocable_v<F, std::conditional_t<is_unwrapped_<Args>, T, Args>...>;
+    std::is_invocable_v<F, std::conditional_t<IsUnwrapped<Args>, T, Args>...>;
 
 template <class F, class T, class... Args>
 constexpr inline bool is_nothrow_invocable_with_extra_args = std::is_nothrow_invocable_v<F, T, Args...>;
@@ -79,7 +68,7 @@ constexpr inline bool is_nothrow_invocable_with_extra_args = std::is_nothrow_inv
 template <class F, class T, class... Args>
   requires(contains_unwrapped<Args...>)
 constexpr inline bool is_nothrow_invocable_with_extra_args<F, T, Args...> =
-    std::is_nothrow_invocable_v<F, std::conditional_t<is_unwrapped_<Args>, T, Args>...>;
+    std::is_nothrow_invocable_v<F, std::conditional_t<IsUnwrapped<Args>, T, Args>...>;
 
 template <class F, class T, class... Args>
 struct invoke_result
@@ -93,7 +82,7 @@ struct invoke_result<F, T, Args...>
 {
   static_assert(is_invocable_with_extra_args<F, T, Args...>);
 
-  using type = std::invoke_result_t<F, std::conditional_t<is_unwrapped_<Args>, T, Args>...>;
+  using type = std::invoke_result_t<F, std::conditional_t<IsUnwrapped<Args>, T, Args>...>;
 };
 
 template <class F, class T, class... Args>
@@ -103,7 +92,7 @@ template <class T, class Arg>
 constexpr auto &&forward(T &&t, Arg &&arg) noexcept
 {
   // We can have only 0 or 1 unwrapped argument. Hence, it will be forwarded only once
-  if constexpr (is_unwrapped_<Arg>) {
+  if constexpr (IsUnwrapped<Arg>) {
     return std::forward<T>(t);
   } else {
     return std::forward<Arg>(arg);
@@ -251,7 +240,7 @@ concept ValidType = requires {
   requires !std::is_array_v<bare_t<T>>;
   requires !is_tag_<bare_t<T>>;
   requires !is_internal_void_<bare_t<T>>;
-  requires !is_unwrapped_<bare_t<T>>;
+  requires !IsUnwrapped<bare_t<T>>;
 };
 
 template <class Left, class Right, class AnotherLeft, class AnotherRight>
@@ -306,11 +295,9 @@ concept NothrowMoveAssignableFromAnotherEither =
 
 using in_place_left_t = detail::either_::InPlaceLeftTag;
 using in_place_right_t = detail::either_::InPlaceRightTag;
-using unwrapped_t = detail::common_::UnwrappedTag;
 
 inline constexpr in_place_left_t in_place_left{in_place_left_t::Secret{}};
 inline constexpr in_place_right_t in_place_right{in_place_right_t::Secret{}};
-inline constexpr unwrapped_t unwrapped{unwrapped_t::Secret{}};
 
 template <class T>
 concept IsEither = detail::either_::is_either_<detail::either_::bare_t<T>>;
