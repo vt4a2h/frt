@@ -10,8 +10,6 @@
  */
 #pragma once
 
-#include <frt/concept/detail/common.hpp>
-
 namespace frt
 {
 
@@ -33,6 +31,6 @@ using unwrapped_t = detail::unwrapped_::UnwrappedTag;
 inline constexpr unwrapped_t unwrapped{unwrapped_t::Secret{}};
 
 template <class T>
-concept IsUnwrapped = std::same_as<detail::common_::bare_t<T>, unwrapped_t>;
+concept IsUnwrapped = std::same_as<std::remove_cvref_t<T>, unwrapped_t>;
 
 } // namespace frt
