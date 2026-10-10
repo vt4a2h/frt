@@ -34,12 +34,12 @@ struct meta_either<either<L, R>>
   template <class U>
   using rebind_right = Self::template rebind_right<U>;
 
-  static constexpr auto left = []<std::same_as<Self> T>(T &&self) -> decltype(auto) {
-    return std::forward<T>(self).left();
-  };
-  static constexpr auto right = []<std::same_as<Self> T>(T &&self) -> decltype(auto) {
-    return std::forward<T>(self).right();
-  };
+  static constexpr auto left = []<class S>(S &&self) -> decltype(auto)
+    requires(std::same_as<detail::common_::bare_t<S>, Self>)
+  { return std::forward<S>(self).left(); };
+  static constexpr auto right = []<class S>(S &&self) -> decltype(auto)
+    requires(std::same_as<detail::common_::bare_t<S>, Self>)
+  { return std::forward<S>(self).right(); };
 
   static constexpr auto is_left = [](const Self &self) { return self.is_left(); };
   static constexpr auto is_right = [](const Self &self) { return self.is_right(); };

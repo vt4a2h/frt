@@ -34,10 +34,12 @@ struct meta_either<std::expected<T, E>>
   template <class U>
   using rebind_right = Self::template rebind<U>;
 
-  static constexpr auto left = []<std::same_as<Self> S>(S &&self) -> decltype(auto) {
-    return std::forward<S>(self).error();
-  };
-  static constexpr auto right = []<std::same_as<Self> S>(S &&self) -> decltype(auto) {
+  static constexpr auto left = []<class S>(S &&self) -> decltype(auto)
+    requires(std::same_as<detail::common_::bare_t<S>, Self>)
+  { return std::forward<S>(self).error(); };
+  static constexpr auto right = []<class S>(S &&self) -> decltype(auto)
+    requires(std::same_as<detail::common_::bare_t<S>, Self>)
+  {
     if constexpr (std::is_void_v<std::remove_cvref_t<right_t>>) {
       return void_val;
     } else {
