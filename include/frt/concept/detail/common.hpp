@@ -13,6 +13,7 @@
 #include <type_traits>
 
 #include <frt/util/unwrapped.hpp>
+#include <frt/util/void.hpp>
 
 namespace frt::detail::common_
 {
@@ -97,5 +98,11 @@ invoke_with_extra_args(F &&f, T &&t, Args &&...args) noexcept(is_nothrow_invocab
 {
   return std::invoke(f, forward(std::forward<T>(t), std::forward<Args>(args))...);
 }
+
+template <class Fwd, class T>
+using FwdT = decltype(std::forward_like<Fwd>(std::declval<T>()));
+
+template <class T>
+using SelectedType = std::conditional_t<IsVoid<T>, Void, bare_t<T>>;
 
 } // namespace frt::detail::common_

@@ -33,6 +33,9 @@ namespace frt
  * template <class U>
  * using rebind_right = ...;
  *
+ * // A unique non-template type to identify the meta object
+ * using tag_t = ...;
+ *
  * // A function to access the left alternative
  * // f: T&& -> left_t&&
  * static constexpr auto left = ...;
@@ -60,7 +63,7 @@ namespace frt
  *
  * Both frt and std result types are used via this interface. See their implementations as an example.
  */
-template <class>
+template <class...>
 struct meta_either
 {
   static_assert(false, "The result type must be representable as Either. Provide a frt::meta_either specialization for "

@@ -11,13 +11,26 @@
 #pragma once
 
 #include <frt/concept/concept.hpp>
-#include <frt/either.hpp>
 #include <frt/meta/meta_either.hpp>
+#include <frt/util/tag.hpp>
 
 namespace frt
 {
-template <class L, class R>
-inline constexpr bool is_result_type<either<L, R>> = true;
+namespace detail::meta_either_either
+{
+struct tag_t
+{
+  struct Secret
+  {
+    constexpr Secret() noexcept = default;
+  };
+
+  constexpr explicit tag_t(Secret) noexcept {}
+};
+} // namespace detail::meta_either_either
+
+template <class Left, class Right>
+struct [[nodiscard]] either;
 
 //! The \c frt::meta_either interface implementation for \c frt::either.implementation for \c frt::either.
 template <class L, class R>
@@ -33,6 +46,8 @@ struct meta_either<either<L, R>>
 
   template <class U>
   using rebind_right = Self::template rebind_right<U>;
+
+  using tag_t = detail::meta_either_either::tag_t;
 
   static constexpr auto left = []<class S>(S &&self) -> decltype(auto)
     requires(std::same_as<detail::common_::bare_t<S>, Self>)
