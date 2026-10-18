@@ -720,21 +720,7 @@ struct [[nodiscard]] either
   [[nodiscard]] constexpr auto and_then_right(this Self &&self, F &&f,
                                               Args &&...args) noexcept(std::is_nothrow_invocable_v<F, Args...>)
   {
-    static_assert(!detail::either_::contains_unwrapped<Args...>,
-                  "The trailing argument pack must not contain the frt::unwrapped if right_t is void");
-    static_assert(std::is_invocable_v<F, Args...>, "The function must be invocable with all extra arguments.");
-
-    using ret_t = std::invoke_result_t<F, Args...>;
-
-    static_assert(IsEither<ret_t>, "The function must return an either");
-    static_assert(detail::either_::same_left_alternative<either, ret_t>,
-                  "The function must return an either with the same left alternative");
-
-    if (self.is_right())
-      FRT_LIKELY { return std::invoke(std::forward<F>(f), std::forward<Args>(args)...); }
-    else {
-      return std::forward<Self>(self).template forwardLeft<ret_t>();
-    }
+    return detail::and_then_alg_::and_then(std::forward<Self>(self), std::forward<F>(f), std::forward<Args>(args)...);
   }
 
   /*!
