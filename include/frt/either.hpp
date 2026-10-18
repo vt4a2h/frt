@@ -15,9 +15,12 @@
 #include <type_traits>
 #include <utility>
 
+#include <frt/algorithm/and_then.hpp>
 #include <frt/concept/detail/common.hpp>
 #include <frt/detail/attributes.hpp>
 #include <frt/expects.hpp>
+#include <frt/meta/meta_either_either.hpp>
+#include <frt/util/tag.hpp>
 #include <frt/util/unwrapped.hpp>
 #include <frt/util/void.hpp>
 
@@ -38,9 +41,6 @@ using r_ref_t = std::add_rvalue_reference_t<bare_t<T>>;
 
 template <class T>
 concept is_internal_void_ = std::same_as<bare_t<T>, Void>;
-
-template <class T>
-using SelectedType = std::conditional_t<IsVoid<T>, Void, bare_t<T>>;
 
 template <class F, class Arg>
 concept InvocableV = (IsVoid<Arg> && std::invocable<F>) || std::invocable<F, Arg>;
@@ -112,7 +112,7 @@ concept NothrowThreeWayComparable =
 } // namespace detail::common_
 
 template <class Left, class Right>
-struct either;
+struct [[nodiscard]] either;
 
 namespace detail::either_
 {
@@ -127,26 +127,8 @@ inline constexpr bool is_either_<either<L, R>> = true;
 template <class T>
 concept IsNotEither = !is_either_<bare_t<T>>;
 
-struct InPlaceLeftTag
-{
-  struct Secret
-  {
-    constexpr Secret() noexcept = default;
-  };
-  constexpr explicit InPlaceLeftTag(Secret) noexcept {}
-};
-
-struct InPlaceRightTag
-{
-  struct Secret
-  {
-    constexpr Secret() noexcept = default;
-  };
-  constexpr explicit InPlaceRightTag(Secret) noexcept {}
-};
-
 template <class T>
-concept is_tag_ = std::same_as<T, InPlaceLeftTag> || std::same_as<T, InPlaceRightTag>;
+concept is_tag_ = std::same_as<T, in_place_left_t> || std::same_as<T, in_place_right_t>;
 
 template <class U, class T>
 concept ValidConstructableFrom = requires {
@@ -220,12 +202,6 @@ concept NothrowMoveAssignableFromAnotherEither =
     std::is_nothrow_assignable_v<l_ref_t<Right>, r_ref_t<AnotherRight>>;
 
 } // namespace detail::either_
-
-using in_place_left_t = detail::either_::InPlaceLeftTag;
-using in_place_right_t = detail::either_::InPlaceRightTag;
-
-inline constexpr in_place_left_t in_place_left{in_place_left_t::Secret{}};
-inline constexpr in_place_right_t in_place_right{in_place_right_t::Secret{}};
 
 template <class T>
 concept IsEither = detail::either_::is_either_<detail::either_::bare_t<T>>;
@@ -712,31 +688,7 @@ struct [[nodiscard]] either
       detail::either_::is_nothrow_invocable_with_extra_args<
           F, decltype(std::forward_like<Self>(std::declval<right_t>())), Args...>)
   {
-    using fwd_t = decltype(std::forward_like<Self>(std::declval<right_t>()));
-
-    static_assert(!detail::either_::single_arg_is_unwrapped<Args...>,
-                  "The trailing argument pack of a single argument must not contain frt::unwrapped.");
-    static_assert(detail::either_::contains_zero_or_one_unwrapped<Args...>,
-                  "The trailing argument pack must contain zero or one frt::unwrapped.");
-    static_assert(detail::either_::is_invocable_with_extra_args<F, fwd_t, Args...>,
-                  "The function must be invocable with a value of right_t and all extra arguments. "
-                  "Consider using frt::unwrapped if an argument of right_t shouldn't go first.");
-
-    using ret_t = detail::either_::invoke_result_t<F, fwd_t, Args...>;
-
-    static_assert(IsEither<ret_t>, "The function must return an either");
-    static_assert(detail::either_::same_left_alternative<either, ret_t>,
-                  "The function must return an either with the same left alternative");
-
-    if (self.is_right())
-      FRT_LIKELY
-      {
-        return detail::either_::invoke_with_extra_args(std::forward<F>(f), std::forward<Self>(self).right(),
-                                                       std::forward<Args>(args)...);
-      }
-    else {
-      return std::forward<Self>(self).template forwardLeft<ret_t>();
-    }
+    return detail::and_then_alg_::and_then(std::forward<Self>(self), std::forward<F>(f), std::forward<Args>(args)...);
   }
 
   /*!
@@ -1217,5 +1169,8 @@ private:
   };
   bool is_left_;
 };
+
+template <class L, class R>
+inline constexpr bool is_result_type<either<L, R>> = true;
 
 } // namespace frt
