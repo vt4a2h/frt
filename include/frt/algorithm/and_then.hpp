@@ -43,8 +43,11 @@ concept ValidMetaAndThenOutResut = requires(MetaEither me, Left &&left) {
 template <class R>
 using FwdRightT = common_::FwdT<R, typename meta_either<common_::bare_t<R>>::right_t>;
 
+template <class R>
+using RightT = meta_either<common_::bare_t<R>>::right_t;
+
 template <IsResultType Result, class F, class... Args>
-  requires(ValidMetaAndThenInResut<Result> && !common_::IsVoid<FwdRightT<Result>>)
+  requires(ValidMetaAndThenInResut<Result> && !common_::IsVoid<RightT<Result>>)
 [[nodiscard]] constexpr auto
 and_then(Result &&result, F &&f,
          Args &&...args) noexcept(common_::is_nothrow_invocable_with_extra_args<F, FwdRightT<Result>, Args...>)
@@ -85,6 +88,43 @@ and_then(Result &&result, F &&f,
       return invoke_with_extra_args(std::forward<F>(f), meta_t{}.right(std::forward<Result>(result)),
                                     std::forward<Args>(args)...);
     }
+  else {
+    return meta_ret_t{}.make_left(meta_t{}.left(std::forward<Result>(result)));
+  }
+}
+
+template <IsResultType Result, class F, class... Args>
+  requires(ValidMetaAndThenInResut<Result> && common_::IsVoid<RightT<Result>>)
+[[nodiscard]] constexpr auto and_then(Result &&result, F &&f,
+                                      Args &&...args) noexcept(std::is_nothrow_invocable_v<F, Args...>)
+{
+  using namespace detail::common_;
+
+  using meta_t = meta_either<bare_t<Result>>;
+  static_assert(ValidMetaAndThenInResut<Result>,
+                "frt::meta_either for the incoming result type Result must provide the following interface: typename "
+                "left_t, typename right_t, typename tag_t, is_right(Result{}), right(Result{}), and left(Result{}).");
+
+  static_assert(!contains_unwrapped<Args...>, "The trailing argument pack must not contain frt::unwrapped.");
+  static_assert(std::invocable<F, Args...>,
+                "The function must be invocable with a value of left_t and all extra arguments. "
+                "Consider using frt::unwrapped if an argument of left_t shouldn't go first.");
+
+  using ret_t = std::invoke_result_t<F, Args...>;
+  using meta_ret_t = meta_either<bare_t<ret_t>>;
+
+  static_assert(
+      ValidMetaAndThenOutResut<meta_ret_t, SelectedType<typename meta_t::left_t>>,
+      "frt::meta_either for the return result type R must provide the following interface: typename left_t, "
+      "make_left(L{}), typename tag_t. Where L is the type of the left alternative of the function f return type.");
+
+  static_assert(std::same_as<typename meta_ret_t::tag_t, typename meta_t::tag_t>,
+                "The function must return an object of the same result type.");
+  static_assert(std::same_as<typename meta_ret_t::left_t, typename meta_t::left_t>,
+                "The function must return an object of a result type with the same left alternative");
+
+  if (meta_t{}.is_right(result))
+    FRT_LIKELY { return std::invoke(std::forward<F>(f), std::forward<Args>(args)...); }
   else {
     return meta_ret_t{}.make_left(meta_t{}.left(std::forward<Result>(result)));
   }
