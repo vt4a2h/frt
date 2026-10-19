@@ -15,7 +15,7 @@
 #include <type_traits>
 #include <utility>
 
-#include <frt/algorithm/and_then.hpp>
+#include <frt/algorithm/and_then_right.hpp>
 #include <frt/concept/detail/common.hpp>
 #include <frt/detail/attributes.hpp>
 #include <frt/expects.hpp>
@@ -688,7 +688,7 @@ struct [[nodiscard]] either
       detail::either_::is_nothrow_invocable_with_extra_args<
           F, decltype(std::forward_like<Self>(std::declval<right_t>())), Args...>)
   {
-    return detail::and_then_alg_::and_then(std::forward<Self>(self), std::forward<F>(f), std::forward<Args>(args)...);
+    return frt::and_then_right(std::forward<Self>(self), std::forward<F>(f), std::forward<Args>(args)...);
   }
 
   /*!
@@ -720,7 +720,7 @@ struct [[nodiscard]] either
   [[nodiscard]] constexpr auto and_then_right(this Self &&self, F &&f,
                                               Args &&...args) noexcept(std::is_nothrow_invocable_v<F, Args...>)
   {
-    return detail::and_then_alg_::and_then(std::forward<Self>(self), std::forward<F>(f), std::forward<Args>(args)...);
+    return frt::and_then_right(std::forward<Self>(self), std::forward<F>(f), std::forward<Args>(args)...);
   }
 
   /*!

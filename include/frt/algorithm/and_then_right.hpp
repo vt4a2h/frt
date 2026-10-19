@@ -18,7 +18,7 @@
 namespace frt
 {
 
-namespace detail::and_then_alg_
+namespace detail::and_then_right_alg_
 {
 
 template <class ResT, class MetaEither = meta_either<common_::bare_t<ResT>>>
@@ -49,8 +49,8 @@ using RightT = meta_either<common_::bare_t<R>>::right_t;
 template <IsResultType Result, class F, class... Args>
   requires(ValidMetaAndThenInResut<Result> && !common_::IsVoid<RightT<Result>>)
 [[nodiscard]] constexpr auto
-and_then(Result &&result, F &&f,
-         Args &&...args) noexcept(common_::is_nothrow_invocable_with_extra_args<F, FwdRightT<Result>, Args...>)
+and_then_right(Result &&result, F &&f,
+               Args &&...args) noexcept(common_::is_nothrow_invocable_with_extra_args<F, FwdRightT<Result>, Args...>)
 {
   using namespace detail::common_;
 
@@ -95,8 +95,8 @@ and_then(Result &&result, F &&f,
 
 template <IsResultType Result, class F, class... Args>
   requires(ValidMetaAndThenInResut<Result> && common_::IsVoid<RightT<Result>>)
-[[nodiscard]] constexpr auto and_then(Result &&result, F &&f,
-                                      Args &&...args) noexcept(std::is_nothrow_invocable_v<F, Args...>)
+[[nodiscard]] constexpr auto and_then_right(Result &&result, F &&f,
+                                            Args &&...args) noexcept(std::is_nothrow_invocable_v<F, Args...>)
 {
   using namespace detail::common_;
 
@@ -130,6 +130,41 @@ template <IsResultType Result, class F, class... Args>
   }
 }
 
-} // namespace detail::and_then_alg_
+template <class F, class... Args>
+struct and_then_right_closure_fn
+{
+  F f_;
+  std::tuple<Args &&...> func_and_args_;
+
+  template <IsResultType Result, class Cf = and_then_right_closure_fn>
+  friend constexpr decltype(auto) operator|(Result &&result, Cf &&c) noexcept
+  {
+    return std::apply(
+        [&result, &c]<class... Ts>(Ts &&...ts) mutable {
+          return and_then_right(std::forward<Result>(result), std::forward<Cf>(c).f_, std::forward<Ts>(ts)...);
+        },
+        std::forward<Cf>(c).func_and_args_);
+  }
+};
+
+struct and_then_right_fn
+{
+  template <IsResultType Result, class F, class... Args>
+  [[nodiscard]] constexpr decltype(auto) operator()(Result &&result, F &&f, Args &&...args) const
+  {
+    return and_then_right(std::forward<Result>(result), std::forward<F>(f), std::forward<Args>(args)...);
+  }
+
+  template <class F, class... Args>
+  [[nodiscard]] constexpr decltype(auto) operator()(F &&f, Args &&...args) const noexcept
+  {
+    return and_then_right_closure_fn<F, Args...>{.f_ = std::forward<F>(f),
+                                                 .func_and_args_ = std::forward_as_tuple(std::forward<Args>(args)...)};
+  }
+};
+
+} // namespace detail::and_then_right_alg_
+
+inline constexpr detail::and_then_right_alg_::and_then_right_fn and_then_right{};
 
 } // namespace frt
