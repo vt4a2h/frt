@@ -165,6 +165,70 @@ struct and_then_right_fn
 
 } // namespace detail::and_then_right_alg_
 
+/*!
+ * \brief Applies a function to the right alternative of a result object and returns the result.
+ *
+ * Has no effect if the result object contains the left alternative; in that case, the function is not invoked and a
+ * new result object of the return type containing the existing left alternative is returned.
+ *
+ * It is possible to supply an optional pack of extra arguments to the function \p f. All arguments are forwarded to
+ * \p f preserving their value category and constness.
+ *
+ * When the right alternative is not \p void:
+ * \code{.cpp}
+ * auto f(right, a, b, c) -> Result;
+ *
+ * // Equivalent to f(right, a, b, c)
+ * frt::and_then_right(resultObj, f, a, b, c);
+ *
+ * // Equivalent to f(a, right, b, c)
+ * frt::and_then_right(resultObj, f, a, frt::unwrapped, b, c);
+ * \endcode
+ *
+ * The \c frt::unwrapped placeholder is replaced with the right alternative. The extra argument pack must contain zero
+ * or one \c frt::unwrapped object. If it is a single-argument pack, that argument must not be \c frt::unwrapped.
+ *
+ * When the right alternative is \p void, using \c frt::unwrapped as an argument is prohibited, and the function is
+ * invoked only with the supplied extra arguments:
+ * \code{.cpp}
+ * auto f(a, b, c) -> Result;
+ *
+ * // Equivalent to f(a, b, c)
+ * frt::and_then_right(resultObj, f, a, b, c);
+ * \endcode
+ *
+ * The function \p f must be invocable with the final combination of arguments and must return a result object of the
+ * same result type family (matching \c tag_t in \c frt::meta_either) and with the same left alternative type (\c left_t
+ * in \c frt::meta_either). The right alternative type (\c right_t in \c frt::meta_either) may differ from the original
+ * one.
+ *
+ * Pipe syntax for partial application is also supported:
+ * \code{.cpp}
+ * // Without extra arguments
+ * auto res1 = resultObj | frt::and_then_right(f);
+ *
+ * // With extra arguments and frt::unwrapped
+ * auto res2 = resultObj | frt::and_then_right(f, a, frt::unwrapped, b, c);
+ * \endcode
+ *
+ * The algorithm works with all either-like result types (such as \c frt::either, \c frt::expected, \c frt::optional,
+ * \c std::expected, or \c std::optional). By convention, the left alternative represents an error or empty state, while
+ * the right alternative represents a success value.
+ *
+ * To use \c frt::and_then_right with a custom result type, specialize \c frt::is_result_type (set to \c true) and
+ * \c frt::meta_either:
+ * - For the input result type \c Result, the \c frt::meta_either specialization must provide:
+ *   - \c left_t -- the type of the left alternative,
+ *   - \c right_t -- the type of the right alternative,
+ *   - \c tag_t -- a unique non-template tag type identifying the result type family,
+ *   - \c is_right(result) -- a callable checking whether the object contains the right alternative,
+ *   - \c right(result) -- a callable accessing the right alternative,
+ *   - \c left(result) -- a callable accessing the left alternative.
+ * - For the return result type of \p f, the \c frt::meta_either specialization must provide:
+ *   - \c left_t -- must be the same type as the input result type's \c left_t,
+ *   - \c tag_t -- must be the same type as the input result type's \c tag_t,
+ *   - \c make_left(left) -- a callable constructing the return result object from the left alternative.
+ */
 inline constexpr detail::and_then_right_alg_::and_then_right_fn and_then_right{};
 
 } // namespace frt
