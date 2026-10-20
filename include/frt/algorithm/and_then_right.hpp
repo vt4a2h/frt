@@ -130,20 +130,15 @@ template <IsResultType Result, class F, class... Args>
   }
 }
 
-template <class F, class... Args>
+template <class F>
 struct and_then_right_closure_fn
 {
   F f_;
-  std::tuple<Args &&...> func_and_args_;
 
   template <IsResultType Result, class Cf = and_then_right_closure_fn>
   friend constexpr decltype(auto) operator|(Result &&result, Cf &&c) noexcept
   {
-    return std::apply(
-        [&result, &c]<class... Ts>(Ts &&...ts) mutable {
-          return and_then_right(std::forward<Result>(result), std::forward<Cf>(c).f_, std::forward<Ts>(ts)...);
-        },
-        std::forward<Cf>(c).func_and_args_);
+    return std::invoke(std::forward<Cf>(c).f_, std::forward<Result>(result));
   }
 };
 
@@ -156,10 +151,15 @@ struct and_then_right_fn
   }
 
   template <class F, class... Args>
+    requires((std::is_move_constructible_v<std::remove_cvref_t<Args>> && ...) &&
+             (std::is_constructible_v<std::remove_cvref_t<Args>, Args> && ...) &&
+             std::is_move_constructible_v<std::remove_cvref_t<F>> && std::is_constructible_v<std::remove_cvref_t<F>, F>)
   [[nodiscard]] constexpr decltype(auto) operator()(F &&f, Args &&...args) const noexcept
   {
-    return and_then_right_closure_fn<F, Args...>{.f_ = std::forward<F>(f),
-                                                 .func_and_args_ = std::forward_as_tuple(std::forward<Args>(args)...)};
+    return and_then_right_closure_fn{
+        .f_ = [... args = std::forward<Args>(args), f = std::forward<F>(f)]<IsResultType Result>(Result &&result) {
+          return and_then_right(std::forward<Result>(result), f, std::move<Args>(args)...);
+        }};
   }
 };
 
@@ -210,6 +210,16 @@ struct and_then_right_fn
  * // With extra arguments and frt::unwrapped
  * auto res2 = resultObj | frt::and_then_right(f, a, frt::unwrapped, b, c);
  * \endcode
+ *
+ * For partial application, the callable \p f and each extra argument type \c T in \p Args must satisfy the same type
+ * requirements as \c std::bind_front and \c std::bind_back: \c std::remove_cvref_t<T> must be move-constructible and
+ * constructible from \c T (\c std::is_move_constructible_v<std::remove_cvref_t<T>> and
+ * \c std::is_constructible_v<std::remove_cvref_t<T>, T>).
+ *
+ * \note Partial application captures the callable and all extra arguments by value into an intermediate closure object,
+ * which may incur a performance penalty due to copying or moving (even if the result object contains the left
+ * alternative and \p f is never invoked). Prefer direct invocation or \c std::ref / \c std::cref when passing
+ * expensive-to-copy arguments.
  *
  * The algorithm works with all either-like result types (such as \c frt::either, \c frt::expected, \c frt::optional,
  * \c std::expected, or \c std::optional). By convention, the left alternative represents an error or empty state, while
