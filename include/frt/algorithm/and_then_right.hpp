@@ -144,6 +144,7 @@ struct and_then_right_fn
 {
   template <IsResultType Result, class F, class... Args>
   [[nodiscard]] constexpr decltype(auto) operator()(Result &&result, F &&f, Args &&...args) const
+      noexcept(noexcept(and_then_right(std::forward<Result>(result), std::forward<F>(f), std::forward<Args>(args)...)))
   {
     return and_then_right(std::forward<Result>(result), std::forward<F>(f), std::forward<Args>(args)...);
   }
