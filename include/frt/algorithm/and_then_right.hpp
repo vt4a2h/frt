@@ -135,10 +135,10 @@ struct and_then_right_closure_fn
 {
   F f_;
 
-  template <IsResultType Result, class Cf = and_then_right_closure_fn>
-  friend constexpr decltype(auto) operator|(Result &&result, Cf &&c) noexcept
+  template <IsResultType Result>
+  friend constexpr decltype(auto) operator|(Result &&result, and_then_right_closure_fn c) noexcept
   {
-    return std::invoke(std::forward<Cf>(c).f_, std::forward<Result>(result));
+    return std::invoke(c.f_, std::forward<Result>(result));
   }
 };
 
@@ -158,7 +158,7 @@ struct and_then_right_fn
   {
     return and_then_right_closure_fn{
         .f_ = [... args = std::forward<Args>(args), f = std::forward<F>(f)]<IsResultType Result>(Result &&result) {
-          return and_then_right(std::forward<Result>(result), f, std::move<Args>(args)...);
+          return and_then_right(std::forward<Result>(result), f, std::move(args)...);
         }};
   }
 };

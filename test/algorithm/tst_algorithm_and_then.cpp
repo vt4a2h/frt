@@ -28,3 +28,19 @@ TEST_CASE("and_then_right partial alg -- either", "[algorithm][and_then]")
 
   REQUIRE(finalObj.right() == expectedContainedValue);
 }
+
+TEST_CASE("and_then_right partial alg with args -- either", "[algorithm][and_then]")
+{
+  using Result = frt::either<std::string, int>;
+
+  constexpr auto init = 42;
+  constexpr auto add = 1;
+
+  auto er = Result{frt::in_place_right, init} |
+            frt::and_then_right([](int v, int s, int s1) -> Result { return Result{frt::in_place_right, v + s + s1}; },
+                                add, add);
+
+  constexpr auto expectedRight = init + add + add;
+
+  REQUIRE(er.right() == expectedRight);
+}
