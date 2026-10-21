@@ -88,7 +88,7 @@ template <class F, class T, class... Args>
 [[nodiscard]] constexpr auto
 invoke_with_extra_args(F &&f, T &&t, Args &&...args) noexcept(is_nothrow_invocable_with_extra_args<F, T, Args...>)
 {
-  return std::invoke(f, std::forward<T>(t), std::forward<Args>(args)...);
+  return std::invoke(std::forward<F>(f), std::forward<T>(t), std::forward<Args>(args)...);
 }
 
 template <class F, class T, class... Args>
@@ -96,7 +96,7 @@ template <class F, class T, class... Args>
 [[nodiscard]] constexpr auto
 invoke_with_extra_args(F &&f, T &&t, Args &&...args) noexcept(is_nothrow_invocable_with_extra_args<F, T, Args...>)
 {
-  return std::invoke(f, forward(std::forward<T>(t), std::forward<Args>(args))...);
+  return std::invoke(std::forward<F>(f), forward(std::forward<T>(t), std::forward<Args>(args))...);
 }
 
 template <class Fwd, class T>
