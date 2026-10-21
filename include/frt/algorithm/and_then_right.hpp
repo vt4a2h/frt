@@ -133,10 +133,12 @@ struct and_then_right_closure_fn
 {
   F f_;
 
-  template <IsResultType Result>
-  friend constexpr decltype(auto) operator|(Result &&result, and_then_right_closure_fn c) noexcept
+  template <IsResultType Result, class Self>
+    requires std::same_as<common_::bare_t<Self>, and_then_right_closure_fn>
+  friend constexpr decltype(auto)
+  operator|(Result &&result, Self &&c) noexcept(std::is_nothrow_invocable_v<common_::FwdT<Self, F>, Result>)
   {
-    return std::invoke(c.f_, std::forward<Result>(result));
+    return std::invoke(std::forward_like<Self>(c.f_), std::forward<Result>(result));
   }
 };
 
@@ -150,14 +152,20 @@ struct and_then_right_fn
   }
 
   template <class F, class... Args>
-    requires((std::is_move_constructible_v<std::remove_cvref_t<Args>> && ...) &&
-             (std::is_constructible_v<std::remove_cvref_t<Args>, Args> && ...) &&
-             std::is_move_constructible_v<std::remove_cvref_t<F>> && std::is_constructible_v<std::remove_cvref_t<F>, F>)
-  [[nodiscard]] constexpr decltype(auto) operator()(F &&f, Args &&...args) const noexcept
+    requires(!IsResultType<F> && (std::is_move_constructible_v<std::decay_t<Args>> && ...) &&
+             (std::is_constructible_v<std::decay_t<Args>, Args> && ...) &&
+             std::is_move_constructible_v<std::decay_t<F>> && std::is_constructible_v<std::decay_t<F>, F>)
+  [[nodiscard]] constexpr decltype(auto) operator()(F &&f, Args &&...args) const
+      noexcept(std::is_nothrow_constructible_v<std::decay_t<F>, F> &&
+               (std::is_nothrow_constructible_v<std::decay_t<Args>, Args> && ...))
   {
     return and_then_right_closure_fn{
-        .f_ = [... args = std::forward<Args>(args), f = std::forward<F>(f)]<IsResultType Result>(Result &&result) {
-          return and_then_right(std::forward<Result>(result), f, std::move(args)...);
+        .f_ = [... args = std::forward<Args>(args), f = std::forward<F>(f)]<class Self, IsResultType Result>(
+                  this Self &&, Result &&result) noexcept(noexcept(and_then_right(std::forward<Result>(result),
+                                                                                  std::forward_like<Self>(f),
+                                                                                  std::forward_like<Self>(args)...))) {
+          return and_then_right(std::forward<Result>(result), std::forward_like<Self>(f),
+                                std::forward_like<Self>(args)...);
         }};
   }
 };
@@ -211,9 +219,9 @@ struct and_then_right_fn
  * \endcode
  *
  * For partial application, the callable \p f and each extra argument type \c T in \p Args must satisfy the same type
- * requirements as \c std::bind_front and \c std::bind_back: \c std::remove_cvref_t<T> must be move-constructible and
- * constructible from \c T (\c std::is_move_constructible_v<std::remove_cvref_t<T>> and
- * \c std::is_constructible_v<std::remove_cvref_t<T>, T>).
+ * requirements as \c std::bind_front and \c std::bind_back: \c std::decay_t<T> must be move-constructible and
+ * constructible from \c T (\c std::is_move_constructible_v<std::decay_t<T>> and
+ * \c std::is_constructible_v<std::decay_t<T>, T>).
  *
  * \note Partial application captures the callable and all extra arguments by value into an intermediate closure object,
  * which may incur a performance penalty due to copying or moving (even if the result object contains the left
