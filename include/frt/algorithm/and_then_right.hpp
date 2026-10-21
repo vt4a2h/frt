@@ -160,13 +160,16 @@ struct and_then_right_fn
                (std::is_nothrow_constructible_v<std::decay_t<Args>, Args> && ...))
   {
     return and_then_right_closure_fn{
-        .f_ = [... args = std::forward<Args>(args), f = std::forward<F>(f)]<class Self, IsResultType Result>(
-                  this Self &&, Result &&result) noexcept(noexcept(and_then_right(std::forward<Result>(result),
-                                                                                  std::forward_like<Self>(f),
-                                                                                  std::forward_like<Self>(args)...))) {
-          return and_then_right(std::forward<Result>(result), std::forward_like<Self>(f),
-                                std::forward_like<Self>(args)...);
-        }};
+        .f_ =
+            [... args = std::forward<Args>(args), f = std::forward<F>(f)]<class Self, IsResultType Result>(
+                this Self &&,
+                Result &&result) noexcept(noexcept(and_then_right(std::forward<Result>(result),
+                                                                  std::declval<common_::FwdT<Self, std::decay_t<F>>>(),
+                                                                  std::declval<
+                                                                      common_::FwdT<Self, std::decay_t<Args>>>()...))) {
+              return and_then_right(std::forward<Result>(result), std::forward_like<Self>(f),
+                                    std::forward_like<Self>(args)...);
+            }};
   }
 };
 
