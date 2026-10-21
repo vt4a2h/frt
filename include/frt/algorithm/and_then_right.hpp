@@ -66,8 +66,8 @@ and_then_right(Result &&result, F &&f,
   static_assert(contains_zero_or_one_unwrapped<Args...>,
                 "The trailing argument pack must contain zero or one frt::unwrapped.");
   static_assert(is_invocable_with_extra_args<F, fwd_t, Args...>,
-                "The function must be invocable with a value of left_t and all extra arguments. "
-                "Consider using frt::unwrapped if an argument of left_t shouldn't go first.");
+                "The function must be invocable with a value of right_t and all extra arguments. "
+                "Consider using frt::unwrapped if an argument of right_t shouldn't go first.");
 
   using ret_t = invoke_result_t<F, fwd_t, Args...>;
   using meta_ret_t = meta_either<bare_t<ret_t>>;
@@ -106,9 +106,7 @@ template <IsResultType Result, class F, class... Args>
                 "left_t, typename right_t, typename tag_t, is_right(Result{}), right(Result{}), and left(Result{}).");
 
   static_assert(!contains_unwrapped<Args...>, "The trailing argument pack must not contain frt::unwrapped.");
-  static_assert(std::invocable<F, Args...>,
-                "The function must be invocable with a value of left_t and all extra arguments. "
-                "Consider using frt::unwrapped if an argument of left_t shouldn't go first.");
+  static_assert(std::invocable<F, Args...>, "The function must be invocable with all extra arguments.");
 
   using ret_t = std::invoke_result_t<F, Args...>;
   using meta_ret_t = meta_either<bare_t<ret_t>>;
