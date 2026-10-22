@@ -11,7 +11,10 @@
 #pragma once
 
 #include <initializer_list>
+#include <memory>
 #include <string>
+#include <type_traits>
+#include <utility>
 #include <vector>
 
 namespace test::helpers
@@ -73,6 +76,108 @@ template <class T>
 concept HasWidthAndHeight = requires(T t) {
   t.width;
   t.height;
+};
+
+struct CopyMoveTracker
+{
+  int value{};
+  int *copies{};
+  int *moves{};
+
+  constexpr CopyMoveTracker(int v, int *c, int *m) noexcept : value{v}, copies{c}, moves{m} {}
+
+  constexpr CopyMoveTracker(const CopyMoveTracker &other) noexcept
+      : value{other.value}, copies{other.copies}, moves{other.moves}
+  {
+    if (copies != nullptr) {
+      ++(*copies);
+    }
+  }
+
+  constexpr CopyMoveTracker(CopyMoveTracker &&other) noexcept
+      : value{other.value}, copies{other.copies}, moves{other.moves}
+  {
+    if (moves != nullptr) {
+      ++(*moves);
+    }
+  }
+
+  constexpr CopyMoveTracker &operator=(const CopyMoveTracker &) noexcept = default;
+  constexpr CopyMoveTracker &operator=(CopyMoveTracker &&) noexcept = default;
+};
+
+struct NonMovable
+{
+  NonMovable() = default;
+  NonMovable(const NonMovable &) = delete;
+  NonMovable &operator=(const NonMovable &) = delete;
+  NonMovable(NonMovable &&) = delete;
+  NonMovable &operator=(NonMovable &&) = delete;
+};
+
+struct NoTag
+{
+};
+
+template <class Result, auto Tag = NoTag{}>
+struct QualAwareCallable
+{
+  constexpr Result operator()(int v) &
+  {
+    if constexpr (std::is_same_v<decltype(Tag), NoTag>) {
+      return Result{v + 1};
+    } else {
+      return Result{Tag, v + 1};
+    }
+  }
+
+  constexpr Result operator()(int v) const &
+  {
+    if constexpr (std::is_same_v<decltype(Tag), NoTag>) {
+      return Result{v + 2};
+    } else {
+      return Result{Tag, v + 2};
+    }
+  }
+
+  constexpr Result operator()(int v) &&
+  {
+    if constexpr (std::is_same_v<decltype(Tag), NoTag>) {
+      return Result{v + 3};
+    } else {
+      return Result{Tag, v + 3};
+    }
+  }
+
+  constexpr Result operator()(int v) const &&
+  {
+    if constexpr (std::is_same_v<decltype(Tag), NoTag>) {
+      return Result{v + 4};
+    } else {
+      return Result{Tag, v + 4};
+    }
+  }
+};
+
+template <class Result, auto Tag = NoTag{}>
+struct MoveOnlyCallable
+{
+  std::unique_ptr<int> factor;
+
+  constexpr explicit MoveOnlyCallable(int f) : factor{std::make_unique<int>(f)} {}
+  MoveOnlyCallable(const MoveOnlyCallable &) = delete;
+  MoveOnlyCallable &operator=(const MoveOnlyCallable &) = delete;
+  constexpr MoveOnlyCallable(MoveOnlyCallable &&) noexcept = default;
+  constexpr MoveOnlyCallable &operator=(MoveOnlyCallable &&) noexcept = default;
+
+  constexpr Result operator()(int v) &&
+  {
+    if constexpr (std::is_same_v<decltype(Tag), NoTag>) {
+      return Result{v * (*factor)};
+    } else {
+      return Result{Tag, v * (*factor)};
+    }
+  }
 };
 
 } // namespace test::helpers

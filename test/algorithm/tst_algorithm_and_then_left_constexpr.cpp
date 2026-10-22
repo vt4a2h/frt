@@ -10,6 +10,7 @@
 #include <frt/either.hpp>
 
 #include <test/helpers/data.hpp>
+#include <test/helpers/types.hpp>
 
 namespace
 {
@@ -24,65 +25,10 @@ constexpr auto makeExpectedTransformedValue()
   return std::string{"consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua"};
 }
 
-struct CopyMoveTracker
-{
-  int value{};
-  int *copies{};
-  int *moves{};
-
-  constexpr CopyMoveTracker(int v, int *c, int *m) noexcept : value{v}, copies{c}, moves{m} {}
-
-  constexpr CopyMoveTracker(const CopyMoveTracker &other) noexcept
-      : value{other.value}, copies{other.copies}, moves{other.moves}
-  {
-    if (copies != nullptr) {
-      ++(*copies);
-    }
-  }
-
-  constexpr CopyMoveTracker(CopyMoveTracker &&other) noexcept
-      : value{other.value}, copies{other.copies}, moves{other.moves}
-  {
-    if (moves != nullptr) {
-      ++(*moves);
-    }
-  }
-
-  constexpr CopyMoveTracker &operator=(const CopyMoveTracker &) noexcept = default;
-  constexpr CopyMoveTracker &operator=(CopyMoveTracker &&) noexcept = default;
-};
-
-struct QualAwareCallable
-{
-  using Result = frt::either<int, std::string>;
-
-  constexpr Result operator()(int v) & { return {frt::in_place_left, v + 1}; }
-  constexpr Result operator()(int v) const & { return {frt::in_place_left, v + 2}; }
-  constexpr Result operator()(int v) && { return {frt::in_place_left, v + 3}; }
-  constexpr Result operator()(int v) const && { return {frt::in_place_left, v + 4}; }
-};
-
-struct MoveOnlyCallable
-{
-  using Result = frt::either<int, std::string>;
-
-  std::unique_ptr<int> factor;
-
-  constexpr explicit MoveOnlyCallable(int f) : factor{std::make_unique<int>(f)} {}
-  MoveOnlyCallable(const MoveOnlyCallable &) = delete;
-  MoveOnlyCallable &operator=(const MoveOnlyCallable &) = delete;
-  constexpr MoveOnlyCallable(MoveOnlyCallable &&) noexcept = default;
-  constexpr MoveOnlyCallable &operator=(MoveOnlyCallable &&) noexcept = default;
-
-  constexpr Result operator()(int v) && { return {frt::in_place_left, v * (*factor)}; }
-};
-
-struct NonMovable
-{
-  NonMovable() = default;
-  NonMovable(const NonMovable &) = delete;
-  NonMovable(NonMovable &&) = delete;
-};
+using test::helpers::CopyMoveTracker;
+using test::helpers::NonMovable;
+using QualAwareCallable = test::helpers::QualAwareCallable<frt::either<int, std::string>, frt::in_place_left>;
+using MoveOnlyCallable = test::helpers::MoveOnlyCallable<frt::either<int, std::string>, frt::in_place_left>;
 
 constexpr frt::either<int, std::string> freeFunctionAdd(int a, int b) { return {frt::in_place_left, a + b}; }
 
