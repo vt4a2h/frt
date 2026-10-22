@@ -15,6 +15,7 @@
 #include <type_traits>
 #include <utility>
 
+#include <frt/algorithm/and_then_left.hpp>
 #include <frt/algorithm/and_then_right.hpp>
 #include <frt/concept/detail/common.hpp>
 #include <frt/detail/attributes.hpp>
@@ -581,31 +582,7 @@ struct [[nodiscard]] either
       detail::either_::is_nothrow_invocable_with_extra_args<
           F, decltype(std::forward_like<Self>(std::declval<left_t>())), Args...>)
   {
-    using fwd_t = decltype(std::forward_like<Self>(std::declval<left_t>()));
-
-    static_assert(!detail::either_::single_arg_is_unwrapped<Args...>,
-                  "The trailing argument pack of a single argument must not contain frt::unwrapped.");
-    static_assert(detail::either_::contains_zero_or_one_unwrapped<Args...>,
-                  "The trailing argument pack must contain zero or one frt::unwrapped.");
-    static_assert(detail::either_::is_invocable_with_extra_args<F, fwd_t, Args...>,
-                  "The function must be invocable with a value of left_t and all extra arguments. "
-                  "Consider using frt::unwrapped if an argument of left_t shouldn't go first.");
-
-    using ret_t = detail::either_::invoke_result_t<F, fwd_t, Args...>;
-
-    static_assert(IsEither<ret_t>, "The function must return an either");
-    static_assert(detail::either_::same_right_alternative<either, ret_t>,
-                  "The function must return an either with the same right alternative");
-
-    if (self.is_left())
-      FRT_UNLIKELY
-      {
-        return detail::either_::invoke_with_extra_args(std::forward<F>(f), std::forward<Self>(self).left(),
-                                                       std::forward<Args>(args)...);
-      }
-    else {
-      return std::forward<Self>(self).template forwardRight<ret_t>();
-    }
+    return frt::and_then_left(std::forward<Self>(self), std::forward<F>(f), std::forward<Args>(args)...);
   }
 
   /*!
@@ -637,21 +614,7 @@ struct [[nodiscard]] either
   [[nodiscard]] constexpr auto and_then_left(this Self &&self, F &&f,
                                              Args &&...args) noexcept(std::is_nothrow_invocable_v<F, Args...>)
   {
-    static_assert(!detail::either_::contains_unwrapped<Args...>,
-                  "The trailing argument pack must not contain the frt::unwrapped if left_t is void");
-    static_assert(std::is_invocable_v<F, Args...>, "The function must be invocable with all extra arguments.");
-
-    using ret_t = std::invoke_result_t<F, Args...>;
-
-    static_assert(IsEither<ret_t>, "The function must return an either");
-    static_assert(detail::either_::same_right_alternative<either, ret_t>,
-                  "The function must return an either with the same right alternative");
-
-    if (self.is_left())
-      FRT_UNLIKELY { return std::invoke(std::forward<F>(f), std::forward<Args>(args)...); }
-    else {
-      return std::forward<Self>(self).template forwardRight<ret_t>();
-    }
+    return frt::and_then_left(std::forward<Self>(self), std::forward<F>(f), std::forward<Args>(args)...);
   }
 
   /*!
