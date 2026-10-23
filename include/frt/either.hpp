@@ -17,6 +17,8 @@
 
 #include <frt/algorithm/and_then_left.hpp>
 #include <frt/algorithm/and_then_right.hpp>
+#include <frt/algorithm/transform_left.hpp>
+#include <frt/algorithm/transform_right.hpp>
 #include <frt/concept/detail/common.hpp>
 #include <frt/detail/attributes.hpp>
 #include <frt/expects.hpp>
@@ -723,35 +725,7 @@ struct [[nodiscard]] either
       detail::either_::is_nothrow_invocable_with_extra_args<
           F, decltype(std::forward_like<Self>(std::declval<left_t>())), Args...>)
   {
-    using fwd_t = decltype(std::forward_like<Self>(std::declval<left_t>()));
-
-    static_assert(!detail::either_::single_arg_is_unwrapped<Args...>,
-                  "The trailing argument pack of a single argument must not contain frt::unwrapped.");
-    static_assert(detail::either_::contains_zero_or_one_unwrapped<Args...>,
-                  "The trailing argument pack must contain zero or one frt::unwrapped.");
-    static_assert(detail::either_::is_invocable_with_extra_args<F, fwd_t, Args...>,
-                  "The function must be invocable with a value of left_t and all extra arguments. "
-                  "Consider using frt::unwrapped if an argument of left_t shouldn't go first.");
-
-    using func_ret_t = detail::either_::invoke_result_t<F, fwd_t, Args...>;
-    using ret_t = either<detail::common_::bare_t<func_ret_t>, right_t>;
-
-    if (self.is_left())
-      FRT_UNLIKELY
-      {
-        if constexpr (detail::either_::IsVoid<func_ret_t>) {
-          detail::either_::invoke_with_extra_args(std::forward<F>(f), std::forward<Self>(self).left(),
-                                                  std::forward<Args>(args)...);
-          return ret_t{in_place_left};
-        } else {
-          return ret_t{in_place_left,
-                       detail::either_::invoke_with_extra_args(std::forward<F>(f), std::forward<Self>(self).left(),
-                                                               std::forward<Args>(args)...)};
-        }
-      }
-    else {
-      return std::forward<Self>(self).template forwardRight<ret_t>();
-    }
+    return frt::transform_left(std::forward<Self>(self), std::forward<F>(f), std::forward<Args>(args)...);
   }
 
   /*!
@@ -785,26 +759,7 @@ struct [[nodiscard]] either
   [[nodiscard]] constexpr auto transform_left(this Self &&self, F &&f,
                                               Args &&...args) noexcept(std::is_nothrow_invocable_v<F, Args...>)
   {
-    static_assert(!detail::either_::contains_unwrapped<Args...>,
-                  "The trailing argument pack must not contain the frt::unwrapped if left_t is void");
-    static_assert(std::is_invocable_v<F, Args...>, "The function must be invocable with all extra arguments.");
-
-    using func_ret_t = std::invoke_result_t<F, Args...>;
-    using ret_t = either<detail::common_::bare_t<func_ret_t>, right_t>;
-
-    if (self.is_left())
-      FRT_UNLIKELY
-      {
-        if constexpr (detail::either_::IsVoid<func_ret_t>) {
-          std::invoke(std::forward<F>(f), std::forward<Args>(args)...);
-          return ret_t{in_place_left};
-        } else {
-          return ret_t{in_place_left, std::invoke(std::forward<F>(f), std::forward<Args>(args)...)};
-        }
-      }
-    else {
-      return std::forward<Self>(self).template forwardRight<ret_t>();
-    }
+    return frt::transform_left(std::forward<Self>(self), std::forward<F>(f), std::forward<Args>(args)...);
   }
 
   /*!
@@ -844,35 +799,7 @@ struct [[nodiscard]] either
       detail::either_::is_nothrow_invocable_with_extra_args<
           F, decltype(std::forward_like<Self>(std::declval<right_t>())), Args...>)
   {
-    using fwd_t = decltype(std::forward_like<Self>(std::declval<right_t>()));
-
-    static_assert(!detail::either_::single_arg_is_unwrapped<Args...>,
-                  "The trailing argument pack of a single argument must not contain frt::unwrapped.");
-    static_assert(detail::either_::contains_zero_or_one_unwrapped<Args...>,
-                  "The trailing argument pack must contain zero or one frt::unwrapped.");
-    static_assert(detail::either_::is_invocable_with_extra_args<F, fwd_t, Args...>,
-                  "The function must be invocable with a value of right_t and all extra arguments. "
-                  "Consider using frt::unwrapped if an argument of right_t shouldn't go first.");
-
-    using func_ret_t = detail::either_::invoke_result_t<F, fwd_t, Args...>;
-    using ret_t = either<left_t, detail::common_::bare_t<func_ret_t>>;
-
-    if (self.is_right())
-      FRT_LIKELY
-      {
-        if constexpr (detail::either_::IsVoid<func_ret_t>) {
-          detail::either_::invoke_with_extra_args(std::forward<F>(f), std::forward<Self>(self).right(),
-                                                  std::forward<Args>(args)...);
-          return ret_t{in_place_right};
-        } else {
-          return ret_t{in_place_right,
-                       detail::either_::invoke_with_extra_args(std::forward<F>(f), std::forward<Self>(self).right(),
-                                                               std::forward<Args>(args)...)};
-        }
-      }
-    else {
-      return std::forward<Self>(self).template forwardLeft<ret_t>();
-    }
+    return frt::transform_right(std::forward<Self>(self), std::forward<F>(f), std::forward<Args>(args)...);
   }
 
   /*!
@@ -906,26 +833,7 @@ struct [[nodiscard]] either
   [[nodiscard]] constexpr auto transform_right(this Self &&self, F &&f,
                                                Args &&...args) noexcept(std::is_nothrow_invocable_v<F, Args...>)
   {
-    static_assert(!detail::either_::contains_unwrapped<Args...>,
-                  "The trailing argument pack must not contain the frt::unwrapped if right_t is void");
-    static_assert(std::is_invocable_v<F, Args...>, "The function must be invocable with all extra arguments.");
-
-    using func_ret_t = std::invoke_result_t<F, Args...>;
-    using ret_t = either<left_t, detail::common_::bare_t<func_ret_t>>;
-
-    if (self.is_right())
-      FRT_LIKELY
-      {
-        if constexpr (detail::either_::IsVoid<func_ret_t>) {
-          std::invoke(std::forward<F>(f), std::forward<Args>(args)...);
-          return ret_t{in_place_right};
-        } else {
-          return ret_t{in_place_right, std::invoke(std::forward<F>(f), std::forward<Args>(args)...)};
-        }
-      }
-    else {
-      return std::forward<Self>(self).template forwardLeft<ret_t>();
-    }
+    return frt::transform_right(std::forward<Self>(self), std::forward<F>(f), std::forward<Args>(args)...);
   }
 
   /*!
