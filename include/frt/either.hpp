@@ -17,6 +17,7 @@
 
 #include <frt/algorithm/and_then_left.hpp>
 #include <frt/algorithm/and_then_right.hpp>
+#include <frt/algorithm/fold.hpp>
 #include <frt/algorithm/transform_left.hpp>
 #include <frt/algorithm/transform_right.hpp>
 #include <frt/concept/detail/common.hpp>
@@ -44,44 +45,6 @@ using r_ref_t = std::add_rvalue_reference_t<bare_t<T>>;
 
 template <class T>
 concept is_internal_void_ = std::same_as<bare_t<T>, Void>;
-
-template <class F, class Arg>
-concept InvocableV = (IsVoid<Arg> && std::invocable<F>) || std::invocable<F, Arg>;
-
-template <class F, class Arg>
-concept NothrowInvocableV = (IsVoid<Arg> && std::is_nothrow_invocable_v<F>) || std::is_nothrow_invocable_v<F, Arg>;
-
-template <class F, class Arg>
-struct InvocableResult : std::invoke_result<F, Arg>
-{
-};
-
-template <class F>
-struct InvocableResult<F, void> : std::invoke_result<F>
-{
-};
-
-template <class F, class Arg>
-using InvocableResultT = InvocableResult<F, Arg>::type;
-
-template <class FL, class ArgL, class FR, class ArgR>
-concept SameReturnType = InvocableV<FL, ArgL> && InvocableV<FR, ArgR> &&
-                         std::same_as<InvocableResultT<FL, ArgL>, InvocableResultT<FR, ArgR>>;
-
-template <class Self, class T>
-struct ForwardAlternative
-{
-  using type = decltype(std::forward_like<Self>(std::declval<T>()));
-};
-
-template <class Self>
-struct ForwardAlternative<Self, void>
-{
-  using type = void;
-};
-
-template <class Self, class T>
-using ForwardAlternativeT = ForwardAlternative<Self, T>::type;
 
 template <class L1, class R1, class L2, class R2>
 concept EqualityComparable =
@@ -854,13 +817,13 @@ struct [[nodiscard]] either
    * \param rf is a function to apply to the right alternative.
    */
   template <class Self, class LeftFunc, class RightFunc>
-    requires(!detail::either_::IsVoid<
-             detail::either_::InvocableResultT<LeftFunc, detail::either_::ForwardAlternativeT<Self, left_t>>>)
-  [[nodiscard]] constexpr decltype(auto) fold(this Self &&self, LeftFunc lf, RightFunc rf) noexcept(
-      detail::either_::NothrowInvocableV<LeftFunc, detail::either_::ForwardAlternativeT<Self, left_t>> &&
-      detail::either_::NothrowInvocableV<RightFunc, detail::either_::ForwardAlternativeT<Self, right_t>>)
+    requires(!detail::common_::IsVoid<
+             detail::common_::InvocableResultT<LeftFunc, detail::common_::ForwardAlternativeT<Self, left_t>>>)
+  [[nodiscard]] constexpr decltype(auto) fold(this Self &&self, LeftFunc &&lf, RightFunc &&rf) noexcept(
+      detail::common_::NothrowInvocableV<LeftFunc, detail::common_::ForwardAlternativeT<Self, left_t>> &&
+      detail::common_::NothrowInvocableV<RightFunc, detail::common_::ForwardAlternativeT<Self, right_t>>)
   {
-    return std::forward<Self>(self).foldImpl(lf, rf);
+    return frt::fold(std::forward<Self>(self), std::forward<LeftFunc>(lf), std::forward<RightFunc>(rf));
   }
 
   /*!
@@ -881,13 +844,13 @@ struct [[nodiscard]] either
    * \param rf is a function to apply to the right alternative.
    */
   template <class Self, class LeftFunc, class RightFunc>
-    requires(detail::either_::IsVoid<
-             detail::either_::InvocableResultT<LeftFunc, detail::either_::ForwardAlternativeT<Self, left_t>>>)
-  constexpr void fold(this Self &&self, LeftFunc lf, RightFunc rf) noexcept(
-      detail::either_::NothrowInvocableV<LeftFunc, detail::either_::ForwardAlternativeT<Self, left_t>> &&
-      detail::either_::NothrowInvocableV<RightFunc, detail::either_::ForwardAlternativeT<Self, right_t>>)
+    requires(detail::common_::IsVoid<
+             detail::common_::InvocableResultT<LeftFunc, detail::common_::ForwardAlternativeT<Self, left_t>>>)
+  constexpr void fold(this Self &&self, LeftFunc &&lf, RightFunc &&rf) noexcept(
+      detail::common_::NothrowInvocableV<LeftFunc, detail::common_::ForwardAlternativeT<Self, left_t>> &&
+      detail::common_::NothrowInvocableV<RightFunc, detail::common_::ForwardAlternativeT<Self, right_t>>)
   {
-    std::forward<Self>(self).foldImpl(lf, rf);
+    frt::fold(std::forward<Self>(self), std::forward<LeftFunc>(lf), std::forward<RightFunc>(rf));
   }
 
   /*!
@@ -904,14 +867,13 @@ struct [[nodiscard]] either
    * \endcode
    */
   template <class Self, class Func>
-    requires(!detail::either_::IsVoid<
-             detail::either_::InvocableResultT<Func, detail::either_::ForwardAlternativeT<Self, left_t>>>)
-  [[nodiscard]] constexpr decltype(auto)
-  fold(this Self &&self,
-       Func f) noexcept(detail::either_::NothrowInvocableV<Func, detail::either_::ForwardAlternativeT<Self, left_t>> &&
-                        detail::either_::NothrowInvocableV<Func, detail::either_::ForwardAlternativeT<Self, right_t>>)
+    requires(!detail::common_::IsVoid<
+             detail::common_::InvocableResultT<Func, detail::common_::ForwardAlternativeT<Self, left_t>>>)
+  [[nodiscard]] constexpr decltype(auto) fold(this Self &&self, Func &&f) noexcept(
+      detail::common_::NothrowInvocableV<Func, detail::common_::ForwardAlternativeT<Self, left_t>> &&
+      detail::common_::NothrowInvocableV<Func, detail::common_::ForwardAlternativeT<Self, right_t>>)
   {
-    return std::forward<Self>(self).fold(f, f);
+    return frt::fold(std::forward<Self>(self), std::forward<Func>(f));
   }
 
   /*!
@@ -928,14 +890,13 @@ struct [[nodiscard]] either
    * \endcode
    */
   template <class Self, class Func>
-    requires(detail::either_::IsVoid<
-             detail::either_::InvocableResultT<Func, detail::either_::ForwardAlternativeT<Self, left_t>>>)
-  constexpr void
-  fold(this Self &&self,
-       Func f) noexcept(detail::either_::NothrowInvocableV<Func, detail::either_::ForwardAlternativeT<Self, left_t>> &&
-                        detail::either_::NothrowInvocableV<Func, detail::either_::ForwardAlternativeT<Self, right_t>>)
+    requires(detail::common_::IsVoid<
+             detail::common_::InvocableResultT<Func, detail::common_::ForwardAlternativeT<Self, left_t>>>)
+  constexpr void fold(this Self &&self, Func &&f) noexcept(
+      detail::common_::NothrowInvocableV<Func, detail::common_::ForwardAlternativeT<Self, left_t>> &&
+      detail::common_::NothrowInvocableV<Func, detail::common_::ForwardAlternativeT<Self, right_t>>)
   {
-    std::forward<Self>(self).fold(f, f);
+    frt::fold(std::forward<Self>(self), std::forward<Func>(f));
   }
 
 private:
@@ -960,41 +921,6 @@ private:
     }
 
     is_left_ = data.is_left();
-  }
-
-  template <class Self, class LeftFunc, class RightFunc>
-  constexpr decltype(auto) foldImpl(this Self &&self, LeftFunc lf, RightFunc rf) noexcept(
-      detail::either_::NothrowInvocableV<LeftFunc, detail::either_::ForwardAlternativeT<Self, left_t>> &&
-      detail::either_::NothrowInvocableV<RightFunc, detail::either_::ForwardAlternativeT<Self, right_t>>)
-  {
-    using fwd_left_t = detail::either_::ForwardAlternativeT<Self, left_t>;
-    using fwd_right_t = detail::either_::ForwardAlternativeT<Self, right_t>;
-
-    static_assert(detail::either_::InvocableV<LeftFunc, fwd_left_t>,
-                  "The left function must be invocable for the left alternative. If the alternative has type void, "
-                  "then the left function must take no arguments.");
-    static_assert(detail::either_::InvocableV<RightFunc, fwd_right_t>,
-                  "The right function must be invocable for the right alternative. If the alternative has type void, "
-                  "then the right function must take no arguments.");
-    static_assert(detail::either_::SameReturnType<LeftFunc, fwd_left_t, RightFunc, fwd_right_t>,
-                  "Both left and right functions must have the same return type.");
-
-    if (self.is_left())
-      FRT_UNLIKELY
-      {
-        if constexpr (detail::either_::IsVoid<left_t>) {
-          return std::invoke(lf);
-        } else {
-          return std::invoke(lf, std::forward<Self>(self).left());
-        }
-      }
-    else {
-      if constexpr (detail::either_::IsVoid<right_t>) {
-        return std::invoke(rf);
-      } else {
-        return std::invoke(rf, std::forward<Self>(self).right());
-      }
-    }
   }
 
   union

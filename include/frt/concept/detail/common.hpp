@@ -10,7 +10,10 @@
  */
 #pragma once
 
+#include <concepts>
+#include <functional>
 #include <type_traits>
+#include <utility>
 
 #include <frt/util/unwrapped.hpp>
 #include <frt/util/void.hpp>
@@ -26,6 +29,44 @@ concept IsVoid = std::is_void_v<bare_t<T>>;
 
 template <class T>
 concept IsNotVoid = !IsVoid<T>;
+
+template <class F, class Arg>
+concept InvocableV = (IsVoid<Arg> && std::invocable<F>) || std::invocable<F, Arg>;
+
+template <class F, class Arg>
+concept NothrowInvocableV = (IsVoid<Arg> && std::is_nothrow_invocable_v<F>) || std::is_nothrow_invocable_v<F, Arg>;
+
+template <class F, class Arg>
+struct InvocableResult : std::invoke_result<F, Arg>
+{
+};
+
+template <class F>
+struct InvocableResult<F, void> : std::invoke_result<F>
+{
+};
+
+template <class F, class Arg>
+using InvocableResultT = InvocableResult<F, Arg>::type;
+
+template <class FL, class ArgL, class FR, class ArgR>
+concept SameReturnType = InvocableV<FL, ArgL> && InvocableV<FR, ArgR> &&
+                         std::same_as<InvocableResultT<FL, ArgL>, InvocableResultT<FR, ArgR>>;
+
+template <class Self, class T>
+struct ForwardAlternative
+{
+  using type = decltype(std::forward_like<Self>(std::declval<T>()));
+};
+
+template <class Self>
+struct ForwardAlternative<Self, void>
+{
+  using type = void;
+};
+
+template <class Self, class T>
+using ForwardAlternativeT = ForwardAlternative<Self, T>::type;
 
 template <class... Args>
 constexpr inline std::size_t unwrapped_count = (std::size_t{} + ... + static_cast<std::size_t>(IsUnwrapped<Args>));
