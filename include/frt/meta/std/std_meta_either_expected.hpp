@@ -34,6 +34,9 @@ struct meta_either<std::expected<T, E>>
   template <class U>
   using rebind_right = Self::template rebind<U>;
 
+  template <class U>
+  using rebind_left = std::expected<T, U>;
+
   static constexpr auto left = []<class S>(S &&self) -> decltype(auto)
     requires(std::same_as<detail::common_::bare_t<S>, Self>)
   { return std::forward<S>(self).error(); };
