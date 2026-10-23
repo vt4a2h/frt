@@ -17,7 +17,7 @@
 
 #include <frt/algorithm/and_then_left.hpp>
 #include <frt/algorithm/and_then_right.hpp>
-#include <frt/algorithm/fold.hpp>
+#include <frt/algorithm/match.hpp>
 #include <frt/algorithm/transform_left.hpp>
 #include <frt/algorithm/transform_right.hpp>
 #include <frt/concept/detail/common.hpp>
@@ -819,11 +819,11 @@ struct [[nodiscard]] either
   template <class Self, class LeftFunc, class RightFunc>
     requires(!detail::common_::IsVoid<
              detail::common_::InvocableResultT<LeftFunc, detail::common_::ForwardAlternativeT<Self, left_t>>>)
-  [[nodiscard]] constexpr decltype(auto) fold(this Self &&self, LeftFunc &&lf, RightFunc &&rf) noexcept(
+  [[nodiscard]] constexpr decltype(auto) match(this Self &&self, LeftFunc &&lf, RightFunc &&rf) noexcept(
       detail::common_::NothrowInvocableV<LeftFunc, detail::common_::ForwardAlternativeT<Self, left_t>> &&
       detail::common_::NothrowInvocableV<RightFunc, detail::common_::ForwardAlternativeT<Self, right_t>>)
   {
-    return frt::fold(std::forward<Self>(self), std::forward<LeftFunc>(lf), std::forward<RightFunc>(rf));
+    return frt::match(std::forward<Self>(self), std::forward<LeftFunc>(lf), std::forward<RightFunc>(rf));
   }
 
   /*!
@@ -846,57 +846,57 @@ struct [[nodiscard]] either
   template <class Self, class LeftFunc, class RightFunc>
     requires(detail::common_::IsVoid<
              detail::common_::InvocableResultT<LeftFunc, detail::common_::ForwardAlternativeT<Self, left_t>>>)
-  constexpr void fold(this Self &&self, LeftFunc &&lf, RightFunc &&rf) noexcept(
+  constexpr void match(this Self &&self, LeftFunc &&lf, RightFunc &&rf) noexcept(
       detail::common_::NothrowInvocableV<LeftFunc, detail::common_::ForwardAlternativeT<Self, left_t>> &&
       detail::common_::NothrowInvocableV<RightFunc, detail::common_::ForwardAlternativeT<Self, right_t>>)
   {
-    frt::fold(std::forward<Self>(self), std::forward<LeftFunc>(lf), std::forward<RightFunc>(rf));
+    frt::match(std::forward<Self>(self), std::forward<LeftFunc>(lf), std::forward<RightFunc>(rf));
   }
 
   /*!
    * \brief Invoke \p f for the left alternative or for the right alternative and return the result.
    *
-   * The function \p f must be invocable for both alternatives. This function is implemented in terms of a fold that
-   * accepts two functions, but in this case, the function is the same, i.e. fold(f, f).
+   * The function \p f must be invocable for both alternatives. This function is implemented in terms of a match that
+   * accepts two functions, but in this case, the function is the same, i.e. match(f, f).
    *
-   * This function has the same contract as fold that accepts two functions. See its description for more details.
+   * This function has the same contract as match that accepts two functions. See its description for more details.
    *
    * This function is useful when it's required to access the same interface of two distinct objects. E.g.
    * \code{.cpp}
-   * auto str = either.fold([](const std::formattable<char> auto& obj) { return std::format("{}", obj); }
+   * auto str = either.match([](const std::formattable<char> auto& obj) { return std::format("{}", obj); }
    * \endcode
    */
   template <class Self, class Func>
     requires(!detail::common_::IsVoid<
              detail::common_::InvocableResultT<Func, detail::common_::ForwardAlternativeT<Self, left_t>>>)
-  [[nodiscard]] constexpr decltype(auto) fold(this Self &&self, Func &&f) noexcept(
+  [[nodiscard]] constexpr decltype(auto) match(this Self &&self, Func &&f) noexcept(
       detail::common_::NothrowInvocableV<Func, detail::common_::ForwardAlternativeT<Self, left_t>> &&
       detail::common_::NothrowInvocableV<Func, detail::common_::ForwardAlternativeT<Self, right_t>>)
   {
-    return frt::fold(std::forward<Self>(self), std::forward<Func>(f));
+    return frt::match(std::forward<Self>(self), std::forward<Func>(f));
   }
 
   /*!
    * \brief Invoke \p f for the left alternative or for the right alternative.
    *
    * The function \p f must be invocable for both alternatives and must not return. This function is implemented in
-   * terms of a fold that accepts two functions, but in this case, the function is the same, i.e. fold(f, f).
+   * terms of a match that accepts two functions, but in this case, the function is the same, i.e. match(f, f).
    *
-   * This function has the same contract as fold that accepts two functions. See its description for more details.
+   * This function has the same contract as match that accepts two functions. See its description for more details.
    *
    * This function is useful when it's required to access the same interface of two distinct objects. E.g.
    * \code{.cpp}
-   * either.fold([](const std::formattable<char> auto& obj) { std::println("{}", obj); }
+   * either.match([](const std::formattable<char> auto& obj) { std::println("{}", obj); }
    * \endcode
    */
   template <class Self, class Func>
     requires(detail::common_::IsVoid<
              detail::common_::InvocableResultT<Func, detail::common_::ForwardAlternativeT<Self, left_t>>>)
-  constexpr void fold(this Self &&self, Func &&f) noexcept(
+  constexpr void match(this Self &&self, Func &&f) noexcept(
       detail::common_::NothrowInvocableV<Func, detail::common_::ForwardAlternativeT<Self, left_t>> &&
       detail::common_::NothrowInvocableV<Func, detail::common_::ForwardAlternativeT<Self, right_t>>)
   {
-    frt::fold(std::forward<Self>(self), std::forward<Func>(f));
+    frt::match(std::forward<Self>(self), std::forward<Func>(f));
   }
 
 private:

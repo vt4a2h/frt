@@ -22,56 +22,56 @@ constexpr auto makeExpectedRightValue()
   return std::string{"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor "
                      "incididunt ut labore et dolore magna aliqua"};
 }
-constexpr auto makeExpectedFoldLeftResult()
+constexpr auto makeExpectedMatchLeftResult()
 {
   return std::string{"Lorem ipsum dolor sit amet, consectetur adipiscing elit"};
 }
-constexpr auto makeExpectedFoldRightResult()
+constexpr auto makeExpectedMatchRightResult()
 {
   return std::string{"sed do eiusmod tempor incididunt ut labore et dolore magna aliqua"};
 }
 
 struct NothrowLeftFn
 {
-  constexpr std::string operator()(const std::vector<int> &) const noexcept { return makeExpectedFoldLeftResult(); }
+  constexpr std::string operator()(const std::vector<int> &) const noexcept { return makeExpectedMatchLeftResult(); }
 };
 
 struct ThrowingLeftFn
 {
   constexpr std::string operator()(const std::vector<int> &) const noexcept(false)
   {
-    return makeExpectedFoldLeftResult();
+    return makeExpectedMatchLeftResult();
   }
 };
 
 struct NothrowRightFn
 {
-  constexpr std::string operator()(const std::string &) const noexcept { return makeExpectedFoldRightResult(); }
+  constexpr std::string operator()(const std::string &) const noexcept { return makeExpectedMatchRightResult(); }
 };
 
 struct ThrowingRightFn
 {
-  constexpr std::string operator()(const std::string &) const noexcept(false) { return makeExpectedFoldRightResult(); }
+  constexpr std::string operator()(const std::string &) const noexcept(false) { return makeExpectedMatchRightResult(); }
 };
 
 struct NothrowVoidLeftFn
 {
-  constexpr std::string operator()() const noexcept { return makeExpectedFoldLeftResult(); }
+  constexpr std::string operator()() const noexcept { return makeExpectedMatchLeftResult(); }
 };
 
 struct ThrowingVoidLeftFn
 {
-  constexpr std::string operator()() const noexcept(false) { return makeExpectedFoldLeftResult(); }
+  constexpr std::string operator()() const noexcept(false) { return makeExpectedMatchLeftResult(); }
 };
 
 struct NothrowVoidRightFn
 {
-  constexpr std::string operator()() const noexcept { return makeExpectedFoldRightResult(); }
+  constexpr std::string operator()() const noexcept { return makeExpectedMatchRightResult(); }
 };
 
 struct ThrowingVoidRightFn
 {
-  constexpr std::string operator()() const noexcept(false) { return makeExpectedFoldRightResult(); }
+  constexpr std::string operator()() const noexcept(false) { return makeExpectedMatchRightResult(); }
 };
 
 struct NothrowVoidReturnLeftFn
@@ -116,16 +116,16 @@ struct ThrowingVoidReturnVoidRightFn
 
 } // namespace
 
-TEST_CASE("fold constexpr", "[either][constexpr]")
+TEST_CASE("match constexpr", "[either][constexpr]")
 {
-  auto foldLeft = [](const std::vector<int> &) -> std::string { return makeExpectedFoldLeftResult(); };
-  auto foldRight = [](const std::string &) -> std::string { return makeExpectedFoldRightResult(); };
+  auto matchLeft = [](const std::vector<int> &) -> std::string { return makeExpectedMatchLeftResult(); };
+  auto matchRight = [](const std::string &) -> std::string { return makeExpectedMatchRightResult(); };
 
   SECTION("left alternative invokes left function and returns its result")
   {
-    constexpr auto valid = [foldLeft, foldRight] {
+    constexpr auto valid = [matchLeft, matchRight] {
       const Either left{frt::in_place_left, makeExpectedLeftValue()};
-      return left.fold(foldLeft, foldRight) == makeExpectedFoldLeftResult();
+      return left.match(matchLeft, matchRight) == makeExpectedMatchLeftResult();
     }();
 
     STATIC_REQUIRE(valid);
@@ -133,12 +133,12 @@ TEST_CASE("fold constexpr", "[either][constexpr]")
 
   SECTION("left alternative does not invoke right function")
   {
-    constexpr auto valid = [foldLeft] {
+    constexpr auto valid = [matchLeft] {
       const Either left{frt::in_place_left, makeExpectedLeftValue()};
       bool rightInvoked = false;
-      [[maybe_unused]] auto res = left.fold(foldLeft, [&](const std::string &) {
+      [[maybe_unused]] auto res = left.match(matchLeft, [&](const std::string &) {
         rightInvoked = true;
-        return makeExpectedFoldRightResult();
+        return makeExpectedMatchRightResult();
       });
       return !rightInvoked;
     }();
@@ -148,9 +148,9 @@ TEST_CASE("fold constexpr", "[either][constexpr]")
 
   SECTION("right alternative invokes right function and returns its result")
   {
-    constexpr auto valid = [foldLeft, foldRight] {
+    constexpr auto valid = [matchLeft, matchRight] {
       const Either right{frt::in_place_right, makeExpectedRightValue()};
-      return right.fold(foldLeft, foldRight) == makeExpectedFoldRightResult();
+      return right.match(matchLeft, matchRight) == makeExpectedMatchRightResult();
     }();
 
     STATIC_REQUIRE(valid);
@@ -158,15 +158,15 @@ TEST_CASE("fold constexpr", "[either][constexpr]")
 
   SECTION("right alternative does not invoke left function")
   {
-    constexpr auto valid = [foldRight] {
+    constexpr auto valid = [matchRight] {
       const Either right{frt::in_place_right, makeExpectedRightValue()};
       bool leftInvoked = false;
-      [[maybe_unused]] auto res = right.fold(
+      [[maybe_unused]] auto res = right.match(
           [&](const std::vector<int> &) {
             leftInvoked = true;
-            return makeExpectedFoldLeftResult();
+            return makeExpectedMatchLeftResult();
           },
-          foldRight);
+          matchRight);
       return !leftInvoked;
     }();
 
@@ -178,7 +178,7 @@ TEST_CASE("fold constexpr", "[either][constexpr]")
     constexpr auto valid = [] {
       const Either left{frt::in_place_left, makeExpectedLeftValue()};
       bool leftInvoked = false;
-      left.fold([&](const std::vector<int> &) { leftInvoked = true; }, [](const std::string &) {});
+      left.match([&](const std::vector<int> &) { leftInvoked = true; }, [](const std::string &) {});
       return leftInvoked;
     }();
 
@@ -190,7 +190,7 @@ TEST_CASE("fold constexpr", "[either][constexpr]")
     constexpr auto valid = [] {
       const Either left{frt::in_place_left, makeExpectedLeftValue()};
       bool rightInvoked = false;
-      left.fold([](const std::vector<int> &) {}, [&](const std::string &) { rightInvoked = true; });
+      left.match([](const std::vector<int> &) {}, [&](const std::string &) { rightInvoked = true; });
       return !rightInvoked;
     }();
 
@@ -202,7 +202,7 @@ TEST_CASE("fold constexpr", "[either][constexpr]")
     constexpr auto valid = [] {
       const Either right{frt::in_place_right, makeExpectedRightValue()};
       bool rightInvoked = false;
-      right.fold([](const std::vector<int> &) {}, [&](const std::string &) { rightInvoked = true; });
+      right.match([](const std::vector<int> &) {}, [&](const std::string &) { rightInvoked = true; });
       return rightInvoked;
     }();
 
@@ -214,7 +214,7 @@ TEST_CASE("fold constexpr", "[either][constexpr]")
     constexpr auto valid = [] {
       const Either right{frt::in_place_right, makeExpectedRightValue()};
       bool leftInvoked = false;
-      right.fold([&](const std::vector<int> &) { leftInvoked = true; }, [](const std::string &) {});
+      right.match([&](const std::vector<int> &) { leftInvoked = true; }, [](const std::string &) {});
       return !leftInvoked;
     }();
 
@@ -225,7 +225,7 @@ TEST_CASE("fold constexpr", "[either][constexpr]")
   {
     constexpr auto valid = [] {
       Either either{frt::in_place_left, makeExpectedLeftValue()};
-      [[maybe_unused]] auto res = either.fold(
+      [[maybe_unused]] auto res = either.match(
           [](std::vector<int> &v) {
             v.clear();
             return 0;
@@ -241,11 +241,11 @@ TEST_CASE("fold constexpr", "[either][constexpr]")
   {
     constexpr auto valid = [] {
       Either either{frt::in_place_right, makeExpectedRightValue()};
-      [[maybe_unused]] auto res = either.fold([](std::vector<int> &) { return 0; },
-                                              [](std::string &s) {
-                                                s.clear();
-                                                return 0;
-                                              });
+      [[maybe_unused]] auto res = either.match([](std::vector<int> &) { return 0; },
+                                               [](std::string &s) {
+                                                 s.clear();
+                                                 return 0;
+                                               });
       return either.right().empty();
     }();
 
@@ -256,8 +256,8 @@ TEST_CASE("fold constexpr", "[either][constexpr]")
   {
     constexpr auto valid = [] {
       const Either either{frt::in_place_left, makeExpectedLeftValue()};
-      return either.fold([](const std::vector<int> &v) { return v == makeExpectedLeftValue(); },
-                         [](const std::string &) { return false; });
+      return either.match([](const std::vector<int> &v) { return v == makeExpectedLeftValue(); },
+                          [](const std::string &) { return false; });
     }();
 
     STATIC_REQUIRE(valid);
@@ -267,8 +267,8 @@ TEST_CASE("fold constexpr", "[either][constexpr]")
   {
     constexpr auto valid = [] {
       const Either either{frt::in_place_right, makeExpectedRightValue()};
-      return either.fold([](const std::vector<int> &) { return false; },
-                         [](const std::string &s) { return s == makeExpectedRightValue(); });
+      return either.match([](const std::vector<int> &) { return false; },
+                          [](const std::string &s) { return s == makeExpectedRightValue(); });
     }();
 
     STATIC_REQUIRE(valid);
@@ -278,8 +278,8 @@ TEST_CASE("fold constexpr", "[either][constexpr]")
   {
     constexpr auto valid = [] {
       Either either{frt::in_place_left, makeExpectedLeftValue()};
-      auto res = std::move(either).fold([](std::vector<int> &&v) { return std::move(v); },
-                                        [](std::string &&) { return std::vector<int>{}; });
+      auto res = std::move(either).match([](std::vector<int> &&v) { return std::move(v); },
+                                         [](std::string &&) { return std::vector<int>{}; });
       return res == makeExpectedLeftValue();
     }();
 
@@ -290,8 +290,8 @@ TEST_CASE("fold constexpr", "[either][constexpr]")
   {
     constexpr auto valid = [] {
       Either either{frt::in_place_right, makeExpectedRightValue()};
-      auto res = std::move(either).fold([](std::vector<int> &&) { return std::string{}; },
-                                        [](std::string &&s) { return std::move(s); });
+      auto res = std::move(either).match([](std::vector<int> &&) { return std::string{}; },
+                                         [](std::string &&s) { return std::move(s); });
       return res == makeExpectedRightValue();
     }();
 
@@ -302,7 +302,7 @@ TEST_CASE("fold constexpr", "[either][constexpr]")
   {
     constexpr auto valid = [] {
       const Either either{frt::in_place_left, makeExpectedLeftValue()};
-      return static_cast<const Either &&>(either).fold(
+      return static_cast<const Either &&>(either).match(
           [](const std::vector<int> &&v) { return v == makeExpectedLeftValue(); },
           [](const std::string &&) { return false; });
     }();
@@ -314,7 +314,7 @@ TEST_CASE("fold constexpr", "[either][constexpr]")
   {
     constexpr auto valid = [] {
       const Either either{frt::in_place_right, makeExpectedRightValue()};
-      return static_cast<const Either &&>(either).fold(
+      return static_cast<const Either &&>(either).match(
           [](const std::vector<int> &&) { return false; },
           [](const std::string &&s) { return s == makeExpectedRightValue(); });
     }();
@@ -324,59 +324,60 @@ TEST_CASE("fold constexpr", "[either][constexpr]")
 
   SECTION("noexcept when both functions are noexcept")
   {
-    constexpr auto valid = noexcept(std::declval<Either>().fold(NothrowLeftFn{}, NothrowRightFn{}));
+    constexpr auto valid = noexcept(std::declval<Either>().match(NothrowLeftFn{}, NothrowRightFn{}));
     STATIC_REQUIRE(valid);
   }
 
   SECTION("not noexcept when left function throws")
   {
-    constexpr auto valid = noexcept(std::declval<Either>().fold(ThrowingLeftFn{}, NothrowRightFn{}));
+    constexpr auto valid = noexcept(std::declval<Either>().match(ThrowingLeftFn{}, NothrowRightFn{}));
     STATIC_REQUIRE_FALSE(valid);
   }
 
   SECTION("not noexcept when right function throws")
   {
-    constexpr auto valid = noexcept(std::declval<Either>().fold(NothrowLeftFn{}, ThrowingRightFn{}));
+    constexpr auto valid = noexcept(std::declval<Either>().match(NothrowLeftFn{}, ThrowingRightFn{}));
     STATIC_REQUIRE_FALSE(valid);
   }
 
   SECTION("not noexcept when both functions throw")
   {
-    constexpr auto valid = noexcept(std::declval<Either>().fold(ThrowingLeftFn{}, ThrowingRightFn{}));
+    constexpr auto valid = noexcept(std::declval<Either>().match(ThrowingLeftFn{}, ThrowingRightFn{}));
     STATIC_REQUIRE_FALSE(valid);
   }
 
   SECTION("void return noexcept when both functions are noexcept")
   {
-    constexpr auto valid = noexcept(std::declval<Either>().fold(NothrowVoidReturnLeftFn{}, NothrowVoidReturnRightFn{}));
+    constexpr auto valid =
+        noexcept(std::declval<Either>().match(NothrowVoidReturnLeftFn{}, NothrowVoidReturnRightFn{}));
     STATIC_REQUIRE(valid);
   }
 
   SECTION("void return not noexcept when left function throws")
   {
     constexpr auto valid =
-        noexcept(std::declval<Either>().fold(ThrowingVoidReturnLeftFn{}, NothrowVoidReturnRightFn{}));
+        noexcept(std::declval<Either>().match(ThrowingVoidReturnLeftFn{}, NothrowVoidReturnRightFn{}));
     STATIC_REQUIRE_FALSE(valid);
   }
 
   SECTION("void return not noexcept when right function throws")
   {
     constexpr auto valid =
-        noexcept(std::declval<Either>().fold(NothrowVoidReturnLeftFn{}, ThrowingVoidReturnRightFn{}));
+        noexcept(std::declval<Either>().match(NothrowVoidReturnLeftFn{}, ThrowingVoidReturnRightFn{}));
     STATIC_REQUIRE_FALSE(valid);
   }
 }
 
-TEST_CASE("fold (void left) constexpr", "[either][constexpr]")
+TEST_CASE("match (void left) constexpr", "[either][constexpr]")
 {
-  auto foldVoidLeft = []() -> std::string { return makeExpectedFoldLeftResult(); };
-  auto foldRight = [](const std::string &) -> std::string { return makeExpectedFoldRightResult(); };
+  auto matchVoidLeft = []() -> std::string { return makeExpectedMatchLeftResult(); };
+  auto matchRight = [](const std::string &) -> std::string { return makeExpectedMatchRightResult(); };
 
   SECTION("left alternative invokes left function with zero arguments and returns its result")
   {
-    constexpr auto valid = [foldVoidLeft, foldRight] {
+    constexpr auto valid = [matchVoidLeft, matchRight] {
       const EitherVoidLeft left{frt::in_place_left};
-      return left.fold(foldVoidLeft, foldRight) == makeExpectedFoldLeftResult();
+      return left.match(matchVoidLeft, matchRight) == makeExpectedMatchLeftResult();
     }();
 
     STATIC_REQUIRE(valid);
@@ -384,12 +385,12 @@ TEST_CASE("fold (void left) constexpr", "[either][constexpr]")
 
   SECTION("left alternative does not invoke right function")
   {
-    constexpr auto valid = [foldVoidLeft] {
+    constexpr auto valid = [matchVoidLeft] {
       const EitherVoidLeft left{frt::in_place_left};
       bool rightInvoked = false;
-      [[maybe_unused]] auto res = left.fold(foldVoidLeft, [&](const std::string &) {
+      [[maybe_unused]] auto res = left.match(matchVoidLeft, [&](const std::string &) {
         rightInvoked = true;
-        return makeExpectedFoldRightResult();
+        return makeExpectedMatchRightResult();
       });
       return !rightInvoked;
     }();
@@ -399,9 +400,9 @@ TEST_CASE("fold (void left) constexpr", "[either][constexpr]")
 
   SECTION("right alternative invokes right function and returns its result")
   {
-    constexpr auto valid = [foldVoidLeft, foldRight] {
+    constexpr auto valid = [matchVoidLeft, matchRight] {
       const EitherVoidLeft right{frt::in_place_right, makeExpectedRightValue()};
-      return right.fold(foldVoidLeft, foldRight) == makeExpectedFoldRightResult();
+      return right.match(matchVoidLeft, matchRight) == makeExpectedMatchRightResult();
     }();
 
     STATIC_REQUIRE(valid);
@@ -409,15 +410,15 @@ TEST_CASE("fold (void left) constexpr", "[either][constexpr]")
 
   SECTION("right alternative does not invoke left function")
   {
-    constexpr auto valid = [foldRight] {
+    constexpr auto valid = [matchRight] {
       const EitherVoidLeft right{frt::in_place_right, makeExpectedRightValue()};
       bool leftInvoked = false;
-      [[maybe_unused]] auto res = right.fold(
+      [[maybe_unused]] auto res = right.match(
           [&] {
             leftInvoked = true;
-            return makeExpectedFoldLeftResult();
+            return makeExpectedMatchLeftResult();
           },
-          foldRight);
+          matchRight);
       return !leftInvoked;
     }();
 
@@ -429,7 +430,7 @@ TEST_CASE("fold (void left) constexpr", "[either][constexpr]")
     constexpr auto valid = [] {
       const EitherVoidLeft left{frt::in_place_left};
       bool leftInvoked = false;
-      left.fold([&] { leftInvoked = true; }, [](const std::string &) {});
+      left.match([&] { leftInvoked = true; }, [](const std::string &) {});
       return leftInvoked;
     }();
 
@@ -441,7 +442,7 @@ TEST_CASE("fold (void left) constexpr", "[either][constexpr]")
     constexpr auto valid = [] {
       const EitherVoidLeft left{frt::in_place_left};
       bool rightInvoked = false;
-      left.fold([] {}, [&](const std::string &) { rightInvoked = true; });
+      left.match([] {}, [&](const std::string &) { rightInvoked = true; });
       return !rightInvoked;
     }();
 
@@ -453,7 +454,7 @@ TEST_CASE("fold (void left) constexpr", "[either][constexpr]")
     constexpr auto valid = [] {
       const EitherVoidLeft right{frt::in_place_right, makeExpectedRightValue()};
       bool rightInvoked = false;
-      right.fold([] {}, [&](const std::string &) { rightInvoked = true; });
+      right.match([] {}, [&](const std::string &) { rightInvoked = true; });
       return rightInvoked;
     }();
 
@@ -465,7 +466,7 @@ TEST_CASE("fold (void left) constexpr", "[either][constexpr]")
     constexpr auto valid = [] {
       const EitherVoidLeft right{frt::in_place_right, makeExpectedRightValue()};
       bool leftInvoked = false;
-      right.fold([&] { leftInvoked = true; }, [](const std::string &) {});
+      right.match([&] { leftInvoked = true; }, [](const std::string &) {});
       return !leftInvoked;
     }();
 
@@ -476,11 +477,11 @@ TEST_CASE("fold (void left) constexpr", "[either][constexpr]")
   {
     constexpr auto valid = [] {
       EitherVoidLeft either{frt::in_place_right, makeExpectedRightValue()};
-      [[maybe_unused]] auto res = either.fold([] { return 0; },
-                                              [](std::string &s) {
-                                                s.clear();
-                                                return 0;
-                                              });
+      [[maybe_unused]] auto res = either.match([] { return 0; },
+                                               [](std::string &s) {
+                                                 s.clear();
+                                                 return 0;
+                                               });
       return either.right().empty();
     }();
 
@@ -491,7 +492,7 @@ TEST_CASE("fold (void left) constexpr", "[either][constexpr]")
   {
     constexpr auto valid = [] {
       const EitherVoidLeft either{frt::in_place_right, makeExpectedRightValue()};
-      return either.fold([] { return false; }, [](const std::string &s) { return s == makeExpectedRightValue(); });
+      return either.match([] { return false; }, [](const std::string &s) { return s == makeExpectedRightValue(); });
     }();
 
     STATIC_REQUIRE(valid);
@@ -501,7 +502,7 @@ TEST_CASE("fold (void left) constexpr", "[either][constexpr]")
   {
     constexpr auto valid = [] {
       EitherVoidLeft either{frt::in_place_right, makeExpectedRightValue()};
-      auto res = std::move(either).fold([] { return std::string{}; }, [](std::string &&s) { return std::move(s); });
+      auto res = std::move(either).match([] { return std::string{}; }, [](std::string &&s) { return std::move(s); });
       return res == makeExpectedRightValue();
     }();
 
@@ -512,7 +513,7 @@ TEST_CASE("fold (void left) constexpr", "[either][constexpr]")
   {
     constexpr auto valid = [] {
       const EitherVoidLeft either{frt::in_place_right, makeExpectedRightValue()};
-      return static_cast<const EitherVoidLeft &&>(either).fold(
+      return static_cast<const EitherVoidLeft &&>(either).match(
           [] { return false; }, [](const std::string &&s) { return s == makeExpectedRightValue(); });
     }();
 
@@ -521,54 +522,54 @@ TEST_CASE("fold (void left) constexpr", "[either][constexpr]")
 
   SECTION("noexcept when both functions are noexcept")
   {
-    constexpr auto valid = noexcept(std::declval<EitherVoidLeft>().fold(NothrowVoidLeftFn{}, NothrowRightFn{}));
+    constexpr auto valid = noexcept(std::declval<EitherVoidLeft>().match(NothrowVoidLeftFn{}, NothrowRightFn{}));
     STATIC_REQUIRE(valid);
   }
 
   SECTION("not noexcept when left function throws")
   {
-    constexpr auto valid = noexcept(std::declval<EitherVoidLeft>().fold(ThrowingVoidLeftFn{}, NothrowRightFn{}));
+    constexpr auto valid = noexcept(std::declval<EitherVoidLeft>().match(ThrowingVoidLeftFn{}, NothrowRightFn{}));
     STATIC_REQUIRE_FALSE(valid);
   }
 
   SECTION("not noexcept when right function throws")
   {
-    constexpr auto valid = noexcept(std::declval<EitherVoidLeft>().fold(NothrowVoidLeftFn{}, ThrowingRightFn{}));
+    constexpr auto valid = noexcept(std::declval<EitherVoidLeft>().match(NothrowVoidLeftFn{}, ThrowingRightFn{}));
     STATIC_REQUIRE_FALSE(valid);
   }
 
   SECTION("void return noexcept when both functions are noexcept")
   {
     constexpr auto valid =
-        noexcept(std::declval<EitherVoidLeft>().fold(NothrowVoidReturnVoidLeftFn{}, NothrowVoidReturnRightFn{}));
+        noexcept(std::declval<EitherVoidLeft>().match(NothrowVoidReturnVoidLeftFn{}, NothrowVoidReturnRightFn{}));
     STATIC_REQUIRE(valid);
   }
 
   SECTION("void return not noexcept when left function throws")
   {
     constexpr auto valid =
-        noexcept(std::declval<EitherVoidLeft>().fold(ThrowingVoidReturnVoidLeftFn{}, NothrowVoidReturnRightFn{}));
+        noexcept(std::declval<EitherVoidLeft>().match(ThrowingVoidReturnVoidLeftFn{}, NothrowVoidReturnRightFn{}));
     STATIC_REQUIRE_FALSE(valid);
   }
 
   SECTION("void return not noexcept when right function throws")
   {
     constexpr auto valid =
-        noexcept(std::declval<EitherVoidLeft>().fold(NothrowVoidReturnVoidLeftFn{}, ThrowingVoidReturnRightFn{}));
+        noexcept(std::declval<EitherVoidLeft>().match(NothrowVoidReturnVoidLeftFn{}, ThrowingVoidReturnRightFn{}));
     STATIC_REQUIRE_FALSE(valid);
   }
 }
 
-TEST_CASE("fold (void right) constexpr", "[either][constexpr]")
+TEST_CASE("match (void right) constexpr", "[either][constexpr]")
 {
-  auto foldLeft = [](const std::vector<int> &) -> std::string { return makeExpectedFoldLeftResult(); };
-  auto foldVoidRight = []() -> std::string { return makeExpectedFoldRightResult(); };
+  auto matchLeft = [](const std::vector<int> &) -> std::string { return makeExpectedMatchLeftResult(); };
+  auto matchVoidRight = []() -> std::string { return makeExpectedMatchRightResult(); };
 
   SECTION("left alternative invokes left function and returns its result")
   {
-    constexpr auto valid = [foldLeft, foldVoidRight] {
+    constexpr auto valid = [matchLeft, matchVoidRight] {
       const EitherVoidRight left{frt::in_place_left, makeExpectedLeftValue()};
-      return left.fold(foldLeft, foldVoidRight) == makeExpectedFoldLeftResult();
+      return left.match(matchLeft, matchVoidRight) == makeExpectedMatchLeftResult();
     }();
 
     STATIC_REQUIRE(valid);
@@ -576,12 +577,12 @@ TEST_CASE("fold (void right) constexpr", "[either][constexpr]")
 
   SECTION("left alternative does not invoke right function")
   {
-    constexpr auto valid = [foldLeft] {
+    constexpr auto valid = [matchLeft] {
       const EitherVoidRight left{frt::in_place_left, makeExpectedLeftValue()};
       bool rightInvoked = false;
-      [[maybe_unused]] auto res = left.fold(foldLeft, [&] {
+      [[maybe_unused]] auto res = left.match(matchLeft, [&] {
         rightInvoked = true;
-        return makeExpectedFoldRightResult();
+        return makeExpectedMatchRightResult();
       });
       return !rightInvoked;
     }();
@@ -591,9 +592,9 @@ TEST_CASE("fold (void right) constexpr", "[either][constexpr]")
 
   SECTION("right alternative invokes right function with zero arguments and returns its result")
   {
-    constexpr auto valid = [foldLeft, foldVoidRight] {
+    constexpr auto valid = [matchLeft, matchVoidRight] {
       const EitherVoidRight right{frt::in_place_right};
-      return right.fold(foldLeft, foldVoidRight) == makeExpectedFoldRightResult();
+      return right.match(matchLeft, matchVoidRight) == makeExpectedMatchRightResult();
     }();
 
     STATIC_REQUIRE(valid);
@@ -601,15 +602,15 @@ TEST_CASE("fold (void right) constexpr", "[either][constexpr]")
 
   SECTION("right alternative does not invoke left function")
   {
-    constexpr auto valid = [foldVoidRight] {
+    constexpr auto valid = [matchVoidRight] {
       const EitherVoidRight right{frt::in_place_right};
       bool leftInvoked = false;
-      [[maybe_unused]] auto res = right.fold(
+      [[maybe_unused]] auto res = right.match(
           [&](const std::vector<int> &) {
             leftInvoked = true;
-            return makeExpectedFoldLeftResult();
+            return makeExpectedMatchLeftResult();
           },
-          foldVoidRight);
+          matchVoidRight);
       return !leftInvoked;
     }();
 
@@ -621,7 +622,7 @@ TEST_CASE("fold (void right) constexpr", "[either][constexpr]")
     constexpr auto valid = [] {
       const EitherVoidRight left{frt::in_place_left, makeExpectedLeftValue()};
       bool leftInvoked = false;
-      left.fold([&](const std::vector<int> &) { leftInvoked = true; }, [] {});
+      left.match([&](const std::vector<int> &) { leftInvoked = true; }, [] {});
       return leftInvoked;
     }();
 
@@ -633,7 +634,7 @@ TEST_CASE("fold (void right) constexpr", "[either][constexpr]")
     constexpr auto valid = [] {
       const EitherVoidRight left{frt::in_place_left, makeExpectedLeftValue()};
       bool rightInvoked = false;
-      left.fold([](const std::vector<int> &) {}, [&] { rightInvoked = true; });
+      left.match([](const std::vector<int> &) {}, [&] { rightInvoked = true; });
       return !rightInvoked;
     }();
 
@@ -645,7 +646,7 @@ TEST_CASE("fold (void right) constexpr", "[either][constexpr]")
     constexpr auto valid = [] {
       const EitherVoidRight right{frt::in_place_right};
       bool rightInvoked = false;
-      right.fold([](const std::vector<int> &) {}, [&] { rightInvoked = true; });
+      right.match([](const std::vector<int> &) {}, [&] { rightInvoked = true; });
       return rightInvoked;
     }();
 
@@ -657,7 +658,7 @@ TEST_CASE("fold (void right) constexpr", "[either][constexpr]")
     constexpr auto valid = [] {
       const EitherVoidRight right{frt::in_place_right};
       bool leftInvoked = false;
-      right.fold([&](const std::vector<int> &) { leftInvoked = true; }, [] {});
+      right.match([&](const std::vector<int> &) { leftInvoked = true; }, [] {});
       return !leftInvoked;
     }();
 
@@ -668,7 +669,7 @@ TEST_CASE("fold (void right) constexpr", "[either][constexpr]")
   {
     constexpr auto valid = [] {
       EitherVoidRight either{frt::in_place_left, makeExpectedLeftValue()};
-      [[maybe_unused]] auto res = either.fold(
+      [[maybe_unused]] auto res = either.match(
           [](std::vector<int> &v) {
             v.clear();
             return 0;
@@ -684,7 +685,7 @@ TEST_CASE("fold (void right) constexpr", "[either][constexpr]")
   {
     constexpr auto valid = [] {
       const EitherVoidRight either{frt::in_place_left, makeExpectedLeftValue()};
-      return either.fold([](const std::vector<int> &v) { return v == makeExpectedLeftValue(); }, [] { return false; });
+      return either.match([](const std::vector<int> &v) { return v == makeExpectedLeftValue(); }, [] { return false; });
     }();
 
     STATIC_REQUIRE(valid);
@@ -695,7 +696,7 @@ TEST_CASE("fold (void right) constexpr", "[either][constexpr]")
     constexpr auto valid = [] {
       EitherVoidRight either{frt::in_place_left, makeExpectedLeftValue()};
       auto res =
-          std::move(either).fold([](std::vector<int> &&v) { return std::move(v); }, [] { return std::vector<int>{}; });
+          std::move(either).match([](std::vector<int> &&v) { return std::move(v); }, [] { return std::vector<int>{}; });
       return res == makeExpectedLeftValue();
     }();
 
@@ -706,7 +707,7 @@ TEST_CASE("fold (void right) constexpr", "[either][constexpr]")
   {
     constexpr auto valid = [] {
       const EitherVoidRight either{frt::in_place_left, makeExpectedLeftValue()};
-      return static_cast<const EitherVoidRight &&>(either).fold(
+      return static_cast<const EitherVoidRight &&>(either).match(
           [](const std::vector<int> &&v) { return v == makeExpectedLeftValue(); }, [] { return false; });
     }();
 
@@ -715,54 +716,54 @@ TEST_CASE("fold (void right) constexpr", "[either][constexpr]")
 
   SECTION("noexcept when both functions are noexcept")
   {
-    constexpr auto valid = noexcept(std::declval<EitherVoidRight>().fold(NothrowLeftFn{}, NothrowVoidRightFn{}));
+    constexpr auto valid = noexcept(std::declval<EitherVoidRight>().match(NothrowLeftFn{}, NothrowVoidRightFn{}));
     STATIC_REQUIRE(valid);
   }
 
   SECTION("not noexcept when left function throws")
   {
-    constexpr auto valid = noexcept(std::declval<EitherVoidRight>().fold(ThrowingLeftFn{}, NothrowVoidRightFn{}));
+    constexpr auto valid = noexcept(std::declval<EitherVoidRight>().match(ThrowingLeftFn{}, NothrowVoidRightFn{}));
     STATIC_REQUIRE_FALSE(valid);
   }
 
   SECTION("not noexcept when right function throws")
   {
-    constexpr auto valid = noexcept(std::declval<EitherVoidRight>().fold(NothrowLeftFn{}, ThrowingVoidRightFn{}));
+    constexpr auto valid = noexcept(std::declval<EitherVoidRight>().match(NothrowLeftFn{}, ThrowingVoidRightFn{}));
     STATIC_REQUIRE_FALSE(valid);
   }
 
   SECTION("void return noexcept when both functions are noexcept")
   {
     constexpr auto valid =
-        noexcept(std::declval<EitherVoidRight>().fold(NothrowVoidReturnLeftFn{}, NothrowVoidReturnVoidRightFn{}));
+        noexcept(std::declval<EitherVoidRight>().match(NothrowVoidReturnLeftFn{}, NothrowVoidReturnVoidRightFn{}));
     STATIC_REQUIRE(valid);
   }
 
   SECTION("void return not noexcept when left function throws")
   {
     constexpr auto valid =
-        noexcept(std::declval<EitherVoidRight>().fold(ThrowingVoidReturnLeftFn{}, NothrowVoidReturnVoidRightFn{}));
+        noexcept(std::declval<EitherVoidRight>().match(ThrowingVoidReturnLeftFn{}, NothrowVoidReturnVoidRightFn{}));
     STATIC_REQUIRE_FALSE(valid);
   }
 
   SECTION("void return not noexcept when right function throws")
   {
     constexpr auto valid =
-        noexcept(std::declval<EitherVoidRight>().fold(NothrowVoidReturnLeftFn{}, ThrowingVoidReturnVoidRightFn{}));
+        noexcept(std::declval<EitherVoidRight>().match(NothrowVoidReturnLeftFn{}, ThrowingVoidReturnVoidRightFn{}));
     STATIC_REQUIRE_FALSE(valid);
   }
 }
 
-TEST_CASE("fold (void void) constexpr", "[either][constexpr]")
+TEST_CASE("match (void void) constexpr", "[either][constexpr]")
 {
-  auto foldVoidLeft = []() -> std::string { return makeExpectedFoldLeftResult(); };
-  auto foldVoidRight = []() -> std::string { return makeExpectedFoldRightResult(); };
+  auto matchVoidLeft = []() -> std::string { return makeExpectedMatchLeftResult(); };
+  auto matchVoidRight = []() -> std::string { return makeExpectedMatchRightResult(); };
 
   SECTION("left alternative invokes left function with zero arguments and returns its result")
   {
-    constexpr auto valid = [foldVoidLeft, foldVoidRight] {
+    constexpr auto valid = [matchVoidLeft, matchVoidRight] {
       const EitherVoidVoid left{frt::in_place_left};
-      return left.fold(foldVoidLeft, foldVoidRight) == makeExpectedFoldLeftResult();
+      return left.match(matchVoidLeft, matchVoidRight) == makeExpectedMatchLeftResult();
     }();
 
     STATIC_REQUIRE(valid);
@@ -770,12 +771,12 @@ TEST_CASE("fold (void void) constexpr", "[either][constexpr]")
 
   SECTION("left alternative does not invoke right function")
   {
-    constexpr auto valid = [foldVoidLeft] {
+    constexpr auto valid = [matchVoidLeft] {
       const EitherVoidVoid left{frt::in_place_left};
       bool rightInvoked = false;
-      [[maybe_unused]] auto res = left.fold(foldVoidLeft, [&] {
+      [[maybe_unused]] auto res = left.match(matchVoidLeft, [&] {
         rightInvoked = true;
-        return makeExpectedFoldRightResult();
+        return makeExpectedMatchRightResult();
       });
       return !rightInvoked;
     }();
@@ -785,9 +786,9 @@ TEST_CASE("fold (void void) constexpr", "[either][constexpr]")
 
   SECTION("right alternative invokes right function with zero arguments and returns its result")
   {
-    constexpr auto valid = [foldVoidLeft, foldVoidRight] {
+    constexpr auto valid = [matchVoidLeft, matchVoidRight] {
       const EitherVoidVoid right{frt::in_place_right};
-      return right.fold(foldVoidLeft, foldVoidRight) == makeExpectedFoldRightResult();
+      return right.match(matchVoidLeft, matchVoidRight) == makeExpectedMatchRightResult();
     }();
 
     STATIC_REQUIRE(valid);
@@ -795,15 +796,15 @@ TEST_CASE("fold (void void) constexpr", "[either][constexpr]")
 
   SECTION("right alternative does not invoke left function")
   {
-    constexpr auto valid = [foldVoidRight] {
+    constexpr auto valid = [matchVoidRight] {
       const EitherVoidVoid right{frt::in_place_right};
       bool leftInvoked = false;
-      [[maybe_unused]] auto res = right.fold(
+      [[maybe_unused]] auto res = right.match(
           [&] {
             leftInvoked = true;
-            return makeExpectedFoldLeftResult();
+            return makeExpectedMatchLeftResult();
           },
-          foldVoidRight);
+          matchVoidRight);
       return !leftInvoked;
     }();
 
@@ -815,7 +816,7 @@ TEST_CASE("fold (void void) constexpr", "[either][constexpr]")
     constexpr auto valid = [] {
       const EitherVoidVoid left{frt::in_place_left};
       bool leftInvoked = false;
-      left.fold([&] { leftInvoked = true; }, [] {});
+      left.match([&] { leftInvoked = true; }, [] {});
       return leftInvoked;
     }();
 
@@ -827,7 +828,7 @@ TEST_CASE("fold (void void) constexpr", "[either][constexpr]")
     constexpr auto valid = [] {
       const EitherVoidVoid left{frt::in_place_left};
       bool rightInvoked = false;
-      left.fold([] {}, [&] { rightInvoked = true; });
+      left.match([] {}, [&] { rightInvoked = true; });
       return !rightInvoked;
     }();
 
@@ -839,7 +840,7 @@ TEST_CASE("fold (void void) constexpr", "[either][constexpr]")
     constexpr auto valid = [] {
       const EitherVoidVoid right{frt::in_place_right};
       bool rightInvoked = false;
-      right.fold([] {}, [&] { rightInvoked = true; });
+      right.match([] {}, [&] { rightInvoked = true; });
       return rightInvoked;
     }();
 
@@ -851,7 +852,7 @@ TEST_CASE("fold (void void) constexpr", "[either][constexpr]")
     constexpr auto valid = [] {
       const EitherVoidVoid right{frt::in_place_right};
       bool leftInvoked = false;
-      right.fold([&] { leftInvoked = true; }, [] {});
+      right.match([&] { leftInvoked = true; }, [] {});
       return !leftInvoked;
     }();
 
@@ -860,40 +861,40 @@ TEST_CASE("fold (void void) constexpr", "[either][constexpr]")
 
   SECTION("noexcept when both functions are noexcept")
   {
-    constexpr auto valid = noexcept(std::declval<EitherVoidVoid>().fold(NothrowVoidLeftFn{}, NothrowVoidRightFn{}));
+    constexpr auto valid = noexcept(std::declval<EitherVoidVoid>().match(NothrowVoidLeftFn{}, NothrowVoidRightFn{}));
     STATIC_REQUIRE(valid);
   }
 
   SECTION("not noexcept when left function throws")
   {
-    constexpr auto valid = noexcept(std::declval<EitherVoidVoid>().fold(ThrowingVoidLeftFn{}, NothrowVoidRightFn{}));
+    constexpr auto valid = noexcept(std::declval<EitherVoidVoid>().match(ThrowingVoidLeftFn{}, NothrowVoidRightFn{}));
     STATIC_REQUIRE_FALSE(valid);
   }
 
   SECTION("not noexcept when right function throws")
   {
-    constexpr auto valid = noexcept(std::declval<EitherVoidVoid>().fold(NothrowVoidLeftFn{}, ThrowingVoidRightFn{}));
+    constexpr auto valid = noexcept(std::declval<EitherVoidVoid>().match(NothrowVoidLeftFn{}, ThrowingVoidRightFn{}));
     STATIC_REQUIRE_FALSE(valid);
   }
 
   SECTION("void return noexcept when both functions are noexcept")
   {
     constexpr auto valid =
-        noexcept(std::declval<EitherVoidVoid>().fold(NothrowVoidReturnVoidLeftFn{}, NothrowVoidReturnVoidRightFn{}));
+        noexcept(std::declval<EitherVoidVoid>().match(NothrowVoidReturnVoidLeftFn{}, NothrowVoidReturnVoidRightFn{}));
     STATIC_REQUIRE(valid);
   }
 
   SECTION("void return not noexcept when left function throws")
   {
     constexpr auto valid =
-        noexcept(std::declval<EitherVoidVoid>().fold(ThrowingVoidReturnVoidLeftFn{}, NothrowVoidReturnVoidRightFn{}));
+        noexcept(std::declval<EitherVoidVoid>().match(ThrowingVoidReturnVoidLeftFn{}, NothrowVoidReturnVoidRightFn{}));
     STATIC_REQUIRE_FALSE(valid);
   }
 
   SECTION("void return not noexcept when right function throws")
   {
     constexpr auto valid =
-        noexcept(std::declval<EitherVoidVoid>().fold(NothrowVoidReturnVoidLeftFn{}, ThrowingVoidReturnVoidRightFn{}));
+        noexcept(std::declval<EitherVoidVoid>().match(NothrowVoidReturnVoidLeftFn{}, ThrowingVoidReturnVoidRightFn{}));
     STATIC_REQUIRE_FALSE(valid);
   }
 }
@@ -913,7 +914,7 @@ TEST_CASE("Fold with generic function for both alternatives constexpr", "[either
 
       auto square = [](const HasWidthAndHeight auto &obj) { return obj.width * obj.height; };
 
-      return eitherWindow.fold(square) == eitherWidget.fold(square);
+      return eitherWindow.match(square) == eitherWidget.match(square);
     }();
 
     STATIC_REQUIRE(valid);
@@ -929,8 +930,8 @@ TEST_CASE("Fold with generic function for both alternatives constexpr", "[either
 
       auto scaleHeight = [](HasWidthAndHeight auto &obj) { obj.height *= scaleFactor; };
 
-      eitherWindow.fold(scaleHeight);
-      eitherWidget.fold(scaleHeight);
+      eitherWindow.match(scaleHeight);
+      eitherWidget.match(scaleHeight);
 
       return eitherWindow.right().height == eitherWidget.left().height;
     }();
