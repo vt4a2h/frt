@@ -962,28 +962,6 @@ private:
     is_left_ = data.is_left();
   }
 
-  // Forward the left alternative of \p self as \p Ret
-  template <class Ret, class Self>
-  constexpr auto forwardLeft(this Self &&self) noexcept
-  {
-    if constexpr (detail::either_::IsVoid<left_t>) {
-      return Ret{in_place_left};
-    } else {
-      return Ret{in_place_left, std::forward<Self>(self).left()};
-    }
-  }
-
-  // Forward the right alternative of \p self as \p Ret
-  template <class Ret, class Self>
-  constexpr auto forwardRight(this Self &&self) noexcept
-  {
-    if constexpr (detail::either_::IsVoid<right_t>) {
-      return Ret{in_place_right};
-    } else {
-      return Ret{in_place_right, std::forward<Self>(self).right()};
-    }
-  }
-
   template <class Self, class LeftFunc, class RightFunc>
   constexpr decltype(auto) foldImpl(this Self &&self, LeftFunc lf, RightFunc rf) noexcept(
       detail::either_::NothrowInvocableV<LeftFunc, detail::either_::ForwardAlternativeT<Self, left_t>> &&
