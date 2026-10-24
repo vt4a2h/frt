@@ -2,7 +2,8 @@
 
 This project provides a collection of result types for modern C++. Result types are normally used as function return
 types. The library also provides useful algorithms and monadic operations implemented as free functions, and supports
-partial application syntax.
+partial application syntax. Both algorithms and monadic operations can be used with custom result-like types by
+specialising `frt::meta_either` for these types.
 
 ## Result types
 
