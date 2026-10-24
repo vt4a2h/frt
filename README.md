@@ -43,7 +43,7 @@ If `extractContext()` returns an error, `createComponent()` will not be called; 
 follows:
 
 ```c++
-std::invoke(&createComponent, std::forward_like<Self>(data).value(), path, metaData);
+std::invoke(&createComponent, std::forward_like<Self>(data).value(), std::forward<P>(path), std::forward<MD>(metaData));
 ```
 
 You can find more information in the [Monadic Operations](doc/MonadicOperations.md) documentation.
