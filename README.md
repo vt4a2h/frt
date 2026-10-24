@@ -52,6 +52,10 @@ All monadic operations can also be used as free functions and support partial ap
 
 ```c++
 auto componentResult = frt::and_then(extractContext(), &createComponent, path, metaData);
+
+// or
+
+auto anotherComponentResult = extractContext() | frt::and_then(&createComponent, path, metaData);
 ```
 
 You can find more information in the [Monadic Operations as Free Functions](doc/MonadicOperationsAsFreeFunctions.md)
