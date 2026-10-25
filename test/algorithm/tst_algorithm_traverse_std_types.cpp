@@ -1,7 +1,7 @@
 #include <catch2/catch_all.hpp>
 
-#include <frt/meta/std/std_meta_either_expected.hpp>
-#include <frt/meta/std/std_meta_either_optional.hpp>
+#include <frt/meta/std/meta_either_std_expected.hpp>
+#include <frt/meta/std/meta_either_std_optional.hpp>
 
 #include <frt/algorithm/traverse.hpp>
 
