@@ -77,6 +77,9 @@ auto asWidget = [] (const frt::expected<Component, Error> &component) -> frt::ex
     return /* create a widget from the component */;
 };
 frt::expected<std::vector<Widget>, Error> result = frt::traverse(components, asWidget);
+
+// This form is also supported
+auto anotherResult = components | frt::traverse(asWidget);
 ```
 
 If the `asWidget` function returns an unexpected result, then the `result` object will contain it.
@@ -91,6 +94,9 @@ without applying any extra transformations. In fact, this is `frt::traverse` wit
 ```c++
 std::vector<frt::expected<Component, Error>> components = /* create components */;
 frt::expected<std::vector<Component>, Error> result = frt::sequence(components);
+
+// This form is also supported
+auto anotherResult = components | frt::sequence();
 ```
 
 If any of the `components` contains an error, the result will contain the first error as well.
