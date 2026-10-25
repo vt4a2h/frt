@@ -96,3 +96,37 @@ frt::expected<std::vector<Component>, Error> result = frt::sequence(components);
 If any of the `components` contains an error, the result will contain the first error as well.
 
 You can find more information about the sequence algorithm in the [Sequence](doc/Sequence.md) documentation.
+
+### Match
+
+The `frt::match` implements pattern matching for the result types.
+
+```c++
+const auto componentResult = extractContext()
+    .and_then(&createComponent, path, metaData);
+
+frt::match(componentResult, 
+    [] (const Component &component) {
+        // Do something with the component
+        // You can mutate the component in-place if the type is `Component &`
+        // You can return something from this function
+    },
+    [] (const Error &error) {
+        // Do something with the error
+        // You can mutate the error in-place if the type is `Error &`
+        // You can return something from this function
+    });
+
+frt::match(componentResult, [](const auto &value) {
+    // Do something with the contained value regardless of its type, for example:
+    std::println("Value: {}", value);
+    
+    // You can mutate the value in-place if the type is `auto &`
+    // You can return something from this function
+});
+
+// This form is also supported
+componentResult | frt::match( /* ... */ );
+```
+
+You can find more information in the [Match](doc/Match.md) documentation.
