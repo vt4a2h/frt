@@ -627,9 +627,9 @@ struct [[nodiscard]] optional
    * \param nf is a function to apply when optional is empty.
    */
   template <class Self, class ValueFunc, class NullOptFunc>
-  [[nodiscard]] constexpr decltype(auto) fold(this Self &&self, ValueFunc vf,
-                                              NullOptFunc nf) noexcept(std::is_nothrow_invocable_v<ValueFunc, T> &&
-                                                                       std::is_nothrow_invocable_v<NullOptFunc>)
+  [[nodiscard]] constexpr decltype(auto) match(this Self &&self, ValueFunc vf,
+                                               NullOptFunc nf) noexcept(std::is_nothrow_invocable_v<ValueFunc, T> &&
+                                                                        std::is_nothrow_invocable_v<NullOptFunc>)
   {
     using fwd_val_t = decltype(std::forward_like<Self>(std::declval<T>()));
 
@@ -649,17 +649,17 @@ struct [[nodiscard]] optional
    * \brief Invoke \p f for the value or for nullopt (without arguments) and return the result.
    *
    * The function \p f must be invocable for both the value and without arguments. This function is implemented in
-   * terms of a fold that accepts two functions, but in this case, the function is the same, i.e. fold(f, f).
+   * terms of a match that accepts two functions, but in this case, the function is the same, i.e. match(f, f).
    *
-   * This function has the same contract as fold that accepts two functions. See its description for more details.
+   * This function has the same contract as match that accepts two functions. See its description for more details.
    *
    * \param f is a function to apply to the value or when optional is empty.
    */
   template <class Self, class Func>
-  [[nodiscard]] constexpr decltype(auto) fold(this Self &&self, Func f) noexcept(std::is_nothrow_invocable_v<Func, T> &&
-                                                                                 std::is_nothrow_invocable_v<Func>)
+  [[nodiscard]] constexpr decltype(auto)
+  match(this Self &&self, Func f) noexcept(std::is_nothrow_invocable_v<Func, T> && std::is_nothrow_invocable_v<Func>)
   {
-    return std::forward<Self>(self).fold(f, f);
+    return std::forward<Self>(self).match(f, f);
   }
 
   //! Compare with another optional.

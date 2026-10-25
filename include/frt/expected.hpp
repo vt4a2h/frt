@@ -1031,7 +1031,7 @@ struct [[nodiscard]] expected
   template <class Self, class ValueFunc, class ErrorFunc>
     requires(!detail::common_::IsVoid<
              detail::common_::InvocableResultT<ValueFunc, detail::common_::ForwardAlternativeT<Self, value_type>>>)
-  [[nodiscard]] constexpr decltype(auto) fold(this Self &&self, ValueFunc vf, ErrorFunc ef) noexcept(
+  [[nodiscard]] constexpr decltype(auto) match(this Self &&self, ValueFunc vf, ErrorFunc ef) noexcept(
       detail::common_::NothrowInvocableV<ValueFunc, detail::common_::ForwardAlternativeT<Self, value_type>> &&
       detail::common_::NothrowInvocableV<ErrorFunc, detail::common_::ForwardAlternativeT<Self, error_type>>)
   {
@@ -1079,7 +1079,7 @@ struct [[nodiscard]] expected
   template <class Self, class ValueFunc, class ErrorFunc>
     requires(detail::common_::IsVoid<
              detail::common_::InvocableResultT<ValueFunc, detail::common_::ForwardAlternativeT<Self, value_type>>>)
-  constexpr void fold(this Self &&self, ValueFunc vf, ErrorFunc ef) noexcept(
+  constexpr void match(this Self &&self, ValueFunc vf, ErrorFunc ef) noexcept(
       detail::common_::NothrowInvocableV<ValueFunc, detail::common_::ForwardAlternativeT<Self, value_type>> &&
       detail::common_::NothrowInvocableV<ErrorFunc, detail::common_::ForwardAlternativeT<Self, error_type>>)
   {
@@ -1111,47 +1111,47 @@ struct [[nodiscard]] expected
   /*!
    * \brief Invoke \p f for the value or for the error and return the result.
    *
-   * The function \p f must be invocable for both value and error. This function is implemented in terms of a fold that
-   * accepts two functions, but in this case, the function is the same, i.e. fold(f, f).
+   * The function \p f must be invocable for both value and error. This function is implemented in terms of a match that
+   * accepts two functions, but in this case, the function is the same, i.e. match(f, f).
    *
-   * This function has the same contract as fold that accepts two functions. See its description for more details.
+   * This function has the same contract as match that accepts two functions. See its description for more details.
    *
    * This function is useful when it's required to access the same interface of two distinct objects. E.g.
    * \code{.cpp}
-   * auto str = expectedObj.fold([](const std::formattable<char> auto& obj) { return std::format("{}", obj); }
+   * auto str = expectedObj.match([](const std::formattable<char> auto& obj) { return std::format("{}", obj); }
    * \endcode
    */
   template <class Self, class Func>
     requires(!detail::common_::IsVoid<
              detail::common_::InvocableResultT<Func, detail::common_::ForwardAlternativeT<Self, value_type>>>)
-  [[nodiscard]] constexpr decltype(auto) fold(this Self &&self, Func f) noexcept(
+  [[nodiscard]] constexpr decltype(auto) match(this Self &&self, Func f) noexcept(
       detail::common_::NothrowInvocableV<Func, detail::common_::ForwardAlternativeT<Self, value_type>> &&
       detail::common_::NothrowInvocableV<Func, detail::common_::ForwardAlternativeT<Self, error_type>>)
   {
-    return std::forward<Self>(self).fold(f, f);
+    return std::forward<Self>(self).match(f, f);
   }
 
   /*!
    * \brief Invoke \p f for the value or for the error.
    *
    * The function \p f must be invocable for both value and error and must not return. This function is implemented in
-   * terms of a fold that accepts two functions, but in this case, the function is the same, i.e. fold(f, f).
+   * terms of a match that accepts two functions, but in this case, the function is the same, i.e. match(f, f).
    *
-   * This function has the same contract as fold that accepts two functions. See its description for more details.
+   * This function has the same contract as match that accepts two functions. See its description for more details.
    *
    * This function is useful when it's required to access the same interface of two distinct objects. E.g.
    * \code{.cpp}
-   * expectedObj.fold([](const std::formattable<char> auto& obj) { std::println("{}", obj); }
+   * expectedObj.match([](const std::formattable<char> auto& obj) { std::println("{}", obj); }
    * \endcode
    */
   template <class Self, class Func>
     requires(detail::common_::IsVoid<
              detail::common_::InvocableResultT<Func, detail::common_::ForwardAlternativeT<Self, value_type>>>)
-  constexpr void fold(this Self &&self, Func f) noexcept(
+  constexpr void match(this Self &&self, Func f) noexcept(
       detail::common_::NothrowInvocableV<Func, detail::common_::ForwardAlternativeT<Self, value_type>> &&
       detail::common_::NothrowInvocableV<Func, detail::common_::ForwardAlternativeT<Self, error_type>>)
   {
-    std::forward<Self>(self).fold(f, f);
+    std::forward<Self>(self).match(f, f);
   }
 
   /*!

@@ -20,46 +20,46 @@ constexpr auto makeExpectedError()
   return std::string{"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor "
                      "incididunt ut labore et dolore magna aliqua"};
 }
-constexpr auto makeExpectedFoldValueResult()
+constexpr auto makeExpectedMatchValueResult()
 {
   return std::string{"Lorem ipsum dolor sit amet, consectetur adipiscing elit"};
 }
-constexpr auto makeExpectedFoldErrorResult()
+constexpr auto makeExpectedMatchErrorResult()
 {
   return std::string{"sed do eiusmod tempor incididunt ut labore et dolore magna aliqua"};
 }
 
 struct NothrowValueFn
 {
-  constexpr std::string operator()(const std::vector<int> &) const noexcept { return makeExpectedFoldValueResult(); }
+  constexpr std::string operator()(const std::vector<int> &) const noexcept { return makeExpectedMatchValueResult(); }
 };
 
 struct ThrowingValueFn
 {
   constexpr std::string operator()(const std::vector<int> &) const noexcept(false)
   {
-    return makeExpectedFoldValueResult();
+    return makeExpectedMatchValueResult();
   }
 };
 
 struct NothrowErrorFn
 {
-  constexpr std::string operator()(const std::string &) const noexcept { return makeExpectedFoldErrorResult(); }
+  constexpr std::string operator()(const std::string &) const noexcept { return makeExpectedMatchErrorResult(); }
 };
 
 struct ThrowingErrorFn
 {
-  constexpr std::string operator()(const std::string &) const noexcept(false) { return makeExpectedFoldErrorResult(); }
+  constexpr std::string operator()(const std::string &) const noexcept(false) { return makeExpectedMatchErrorResult(); }
 };
 
 struct NothrowVoidValueFn
 {
-  constexpr std::string operator()() const noexcept { return makeExpectedFoldValueResult(); }
+  constexpr std::string operator()() const noexcept { return makeExpectedMatchValueResult(); }
 };
 
 struct ThrowingVoidValueFn
 {
-  constexpr std::string operator()() const noexcept(false) { return makeExpectedFoldValueResult(); }
+  constexpr std::string operator()() const noexcept(false) { return makeExpectedMatchValueResult(); }
 };
 
 struct NothrowVoidReturnValueFn
@@ -94,16 +94,16 @@ struct ThrowingVoidReturnVoidValueFn
 
 } // namespace
 
-TEST_CASE("fold constexpr", "[expected][constexpr]")
+TEST_CASE("match constexpr", "[expected][constexpr]")
 {
-  auto foldVal = [](const std::vector<int> &) -> std::string { return makeExpectedFoldValueResult(); };
-  auto foldErr = [](const std::string &) -> std::string { return makeExpectedFoldErrorResult(); };
+  auto matchVal = [](const std::vector<int> &) -> std::string { return makeExpectedMatchValueResult(); };
+  auto matchErr = [](const std::string &) -> std::string { return makeExpectedMatchErrorResult(); };
 
   SECTION("value alternative invokes value function and returns its result")
   {
-    constexpr auto valid = [foldVal, foldErr] {
+    constexpr auto valid = [matchVal, matchErr] {
       const Expected val{makeExpectedValue()};
-      return val.fold(foldVal, foldErr) == makeExpectedFoldValueResult();
+      return val.match(matchVal, matchErr) == makeExpectedMatchValueResult();
     }();
 
     STATIC_REQUIRE(valid);
@@ -111,12 +111,12 @@ TEST_CASE("fold constexpr", "[expected][constexpr]")
 
   SECTION("value alternative does not invoke error function")
   {
-    constexpr auto valid = [foldVal] {
+    constexpr auto valid = [matchVal] {
       const Expected val{makeExpectedValue()};
       bool errorInvoked = false;
-      [[maybe_unused]] const auto res = val.fold(foldVal, [&](const std::string &) {
+      [[maybe_unused]] const auto res = val.match(matchVal, [&](const std::string &) {
         errorInvoked = true;
-        return makeExpectedFoldErrorResult();
+        return makeExpectedMatchErrorResult();
       });
       return !errorInvoked;
     }();
@@ -126,9 +126,9 @@ TEST_CASE("fold constexpr", "[expected][constexpr]")
 
   SECTION("error alternative invokes error function and returns its result")
   {
-    constexpr auto valid = [foldVal, foldErr] {
+    constexpr auto valid = [matchVal, matchErr] {
       const Expected err{frt::unexpected{makeExpectedError()}};
-      return err.fold(foldVal, foldErr) == makeExpectedFoldErrorResult();
+      return err.match(matchVal, matchErr) == makeExpectedMatchErrorResult();
     }();
 
     STATIC_REQUIRE(valid);
@@ -136,15 +136,15 @@ TEST_CASE("fold constexpr", "[expected][constexpr]")
 
   SECTION("error alternative does not invoke value function")
   {
-    constexpr auto valid = [foldErr] {
+    constexpr auto valid = [matchErr] {
       const Expected err{frt::unexpected{makeExpectedError()}};
       bool valueInvoked = false;
-      [[maybe_unused]] const auto res = err.fold(
+      [[maybe_unused]] const auto res = err.match(
           [&](const std::vector<int> &) {
             valueInvoked = true;
-            return makeExpectedFoldValueResult();
+            return makeExpectedMatchValueResult();
           },
-          foldErr);
+          matchErr);
       return !valueInvoked;
     }();
 
@@ -156,7 +156,7 @@ TEST_CASE("fold constexpr", "[expected][constexpr]")
     constexpr auto valid = [] {
       const Expected val{makeExpectedValue()};
       bool valueInvoked = false;
-      val.fold([&](const std::vector<int> &) { valueInvoked = true; }, [](const std::string &) {});
+      val.match([&](const std::vector<int> &) { valueInvoked = true; }, [](const std::string &) {});
       return valueInvoked;
     }();
 
@@ -168,7 +168,7 @@ TEST_CASE("fold constexpr", "[expected][constexpr]")
     constexpr auto valid = [] {
       const Expected val{makeExpectedValue()};
       bool errorInvoked = false;
-      val.fold([](const std::vector<int> &) {}, [&](const std::string &) { errorInvoked = true; });
+      val.match([](const std::vector<int> &) {}, [&](const std::string &) { errorInvoked = true; });
       return !errorInvoked;
     }();
 
@@ -180,7 +180,7 @@ TEST_CASE("fold constexpr", "[expected][constexpr]")
     constexpr auto valid = [] {
       const Expected err{frt::unexpected{makeExpectedError()}};
       bool errorInvoked = false;
-      err.fold([](const std::vector<int> &) {}, [&](const std::string &) { errorInvoked = true; });
+      err.match([](const std::vector<int> &) {}, [&](const std::string &) { errorInvoked = true; });
       return errorInvoked;
     }();
 
@@ -192,7 +192,7 @@ TEST_CASE("fold constexpr", "[expected][constexpr]")
     constexpr auto valid = [] {
       const Expected err{frt::unexpected{makeExpectedError()}};
       bool valueInvoked = false;
-      err.fold([&](const std::vector<int> &) { valueInvoked = true; }, [](const std::string &) {});
+      err.match([&](const std::vector<int> &) { valueInvoked = true; }, [](const std::string &) {});
       return !valueInvoked;
     }();
 
@@ -203,7 +203,7 @@ TEST_CASE("fold constexpr", "[expected][constexpr]")
   {
     constexpr auto valid = [] {
       Expected expected{makeExpectedValue()};
-      [[maybe_unused]] const auto res = expected.fold(
+      [[maybe_unused]] const auto res = expected.match(
           [](std::vector<int> &v) {
             v.clear();
             return 0;
@@ -219,11 +219,11 @@ TEST_CASE("fold constexpr", "[expected][constexpr]")
   {
     constexpr auto valid = [] {
       Expected expected{frt::unexpected{makeExpectedError()}};
-      [[maybe_unused]] const auto res = expected.fold([](std::vector<int> &) { return 0; },
-                                                      [](std::string &s) {
-                                                        s.clear();
-                                                        return 0;
-                                                      });
+      [[maybe_unused]] const auto res = expected.match([](std::vector<int> &) { return 0; },
+                                                       [](std::string &s) {
+                                                         s.clear();
+                                                         return 0;
+                                                       });
       return expected.error().empty();
     }();
 
@@ -234,8 +234,8 @@ TEST_CASE("fold constexpr", "[expected][constexpr]")
   {
     constexpr auto valid = [] {
       const Expected expected{makeExpectedValue()};
-      return expected.fold([](const std::vector<int> &v) { return v == makeExpectedValue(); },
-                           [](const std::string &) { return false; });
+      return expected.match([](const std::vector<int> &v) { return v == makeExpectedValue(); },
+                            [](const std::string &) { return false; });
     }();
 
     STATIC_REQUIRE(valid);
@@ -245,8 +245,8 @@ TEST_CASE("fold constexpr", "[expected][constexpr]")
   {
     constexpr auto valid = [] {
       const Expected expected{frt::unexpected{makeExpectedError()}};
-      return expected.fold([](const std::vector<int> &) { return false; },
-                           [](const std::string &s) { return s == makeExpectedError(); });
+      return expected.match([](const std::vector<int> &) { return false; },
+                            [](const std::string &s) { return s == makeExpectedError(); });
     }();
 
     STATIC_REQUIRE(valid);
@@ -256,8 +256,8 @@ TEST_CASE("fold constexpr", "[expected][constexpr]")
   {
     constexpr auto valid = [] {
       Expected expected{makeExpectedValue()};
-      const auto res = std::move(expected).fold([](std::vector<int> &&v) { return std::move(v); },
-                                                [](std::string &&) { return std::vector<int>{}; });
+      const auto res = std::move(expected).match([](std::vector<int> &&v) { return std::move(v); },
+                                                 [](std::string &&) { return std::vector<int>{}; });
       return res == makeExpectedValue();
     }();
 
@@ -268,8 +268,8 @@ TEST_CASE("fold constexpr", "[expected][constexpr]")
   {
     constexpr auto valid = [] {
       Expected expected{frt::unexpected{makeExpectedError()}};
-      const auto res = std::move(expected).fold([](std::vector<int> &&) { return std::string{}; },
-                                                [](std::string &&s) { return std::move(s); });
+      const auto res = std::move(expected).match([](std::vector<int> &&) { return std::string{}; },
+                                                 [](std::string &&s) { return std::move(s); });
       return res == makeExpectedError();
     }();
 
@@ -280,7 +280,7 @@ TEST_CASE("fold constexpr", "[expected][constexpr]")
   {
     constexpr auto valid = [] {
       const Expected expected{makeExpectedValue()};
-      return static_cast<const Expected &&>(expected).fold(
+      return static_cast<const Expected &&>(expected).match(
           [](const std::vector<int> &&v) { return v == makeExpectedValue(); },
           [](const std::string &&) { return false; });
     }();
@@ -292,7 +292,7 @@ TEST_CASE("fold constexpr", "[expected][constexpr]")
   {
     constexpr auto valid = [] {
       const Expected expected{frt::unexpected{makeExpectedError()}};
-      return static_cast<const Expected &&>(expected).fold(
+      return static_cast<const Expected &&>(expected).match(
           [](const std::vector<int> &&) { return false; },
           [](const std::string &&s) { return s == makeExpectedError(); });
     }();
@@ -302,60 +302,60 @@ TEST_CASE("fold constexpr", "[expected][constexpr]")
 
   SECTION("noexcept when both functions are noexcept")
   {
-    constexpr auto valid = noexcept(std::declval<Expected>().fold(NothrowValueFn{}, NothrowErrorFn{}));
+    constexpr auto valid = noexcept(std::declval<Expected>().match(NothrowValueFn{}, NothrowErrorFn{}));
     STATIC_REQUIRE(valid);
   }
 
   SECTION("not noexcept when value function throws")
   {
-    constexpr auto valid = noexcept(std::declval<Expected>().fold(ThrowingValueFn{}, NothrowErrorFn{}));
+    constexpr auto valid = noexcept(std::declval<Expected>().match(ThrowingValueFn{}, NothrowErrorFn{}));
     STATIC_REQUIRE_FALSE(valid);
   }
 
   SECTION("not noexcept when error function throws")
   {
-    constexpr auto valid = noexcept(std::declval<Expected>().fold(NothrowValueFn{}, ThrowingErrorFn{}));
+    constexpr auto valid = noexcept(std::declval<Expected>().match(NothrowValueFn{}, ThrowingErrorFn{}));
     STATIC_REQUIRE_FALSE(valid);
   }
 
   SECTION("not noexcept when both functions throw")
   {
-    constexpr auto valid = noexcept(std::declval<Expected>().fold(ThrowingValueFn{}, ThrowingErrorFn{}));
+    constexpr auto valid = noexcept(std::declval<Expected>().match(ThrowingValueFn{}, ThrowingErrorFn{}));
     STATIC_REQUIRE_FALSE(valid);
   }
 
   SECTION("void return noexcept when both functions are noexcept")
   {
     constexpr auto valid =
-        noexcept(std::declval<Expected>().fold(NothrowVoidReturnValueFn{}, NothrowVoidReturnErrorFn{}));
+        noexcept(std::declval<Expected>().match(NothrowVoidReturnValueFn{}, NothrowVoidReturnErrorFn{}));
     STATIC_REQUIRE(valid);
   }
 
   SECTION("void return not noexcept when value function throws")
   {
     constexpr auto valid =
-        noexcept(std::declval<Expected>().fold(ThrowingVoidReturnValueFn{}, NothrowVoidReturnErrorFn{}));
+        noexcept(std::declval<Expected>().match(ThrowingVoidReturnValueFn{}, NothrowVoidReturnErrorFn{}));
     STATIC_REQUIRE_FALSE(valid);
   }
 
   SECTION("void return not noexcept when error function throws")
   {
     constexpr auto valid =
-        noexcept(std::declval<Expected>().fold(NothrowVoidReturnValueFn{}, ThrowingVoidReturnErrorFn{}));
+        noexcept(std::declval<Expected>().match(NothrowVoidReturnValueFn{}, ThrowingVoidReturnErrorFn{}));
     STATIC_REQUIRE_FALSE(valid);
   }
 }
 
-TEST_CASE("fold (void value) constexpr", "[expected][constexpr]")
+TEST_CASE("match (void value) constexpr", "[expected][constexpr]")
 {
-  auto foldVoidVal = []() -> std::string { return makeExpectedFoldValueResult(); };
-  auto foldErr = [](const std::string &) -> std::string { return makeExpectedFoldErrorResult(); };
+  auto matchVoidVal = []() -> std::string { return makeExpectedMatchValueResult(); };
+  auto matchErr = [](const std::string &) -> std::string { return makeExpectedMatchErrorResult(); };
 
   SECTION("value alternative invokes value function with zero arguments and returns its result")
   {
-    constexpr auto valid = [foldVoidVal, foldErr] {
+    constexpr auto valid = [matchVoidVal, matchErr] {
       const ExpectedVoid val;
-      return val.fold(foldVoidVal, foldErr) == makeExpectedFoldValueResult();
+      return val.match(matchVoidVal, matchErr) == makeExpectedMatchValueResult();
     }();
 
     STATIC_REQUIRE(valid);
@@ -363,12 +363,12 @@ TEST_CASE("fold (void value) constexpr", "[expected][constexpr]")
 
   SECTION("value alternative does not invoke error function")
   {
-    constexpr auto valid = [foldVoidVal] {
+    constexpr auto valid = [matchVoidVal] {
       const ExpectedVoid val;
       bool errorInvoked = false;
-      [[maybe_unused]] const auto res = val.fold(foldVoidVal, [&](const std::string &) {
+      [[maybe_unused]] const auto res = val.match(matchVoidVal, [&](const std::string &) {
         errorInvoked = true;
-        return makeExpectedFoldErrorResult();
+        return makeExpectedMatchErrorResult();
       });
       return !errorInvoked;
     }();
@@ -378,9 +378,9 @@ TEST_CASE("fold (void value) constexpr", "[expected][constexpr]")
 
   SECTION("error alternative invokes error function and returns its result")
   {
-    constexpr auto valid = [foldVoidVal, foldErr] {
+    constexpr auto valid = [matchVoidVal, matchErr] {
       const ExpectedVoid err{frt::unexpected{makeExpectedError()}};
-      return err.fold(foldVoidVal, foldErr) == makeExpectedFoldErrorResult();
+      return err.match(matchVoidVal, matchErr) == makeExpectedMatchErrorResult();
     }();
 
     STATIC_REQUIRE(valid);
@@ -388,15 +388,15 @@ TEST_CASE("fold (void value) constexpr", "[expected][constexpr]")
 
   SECTION("error alternative does not invoke value function")
   {
-    constexpr auto valid = [foldErr] {
+    constexpr auto valid = [matchErr] {
       const ExpectedVoid err{frt::unexpected{makeExpectedError()}};
       bool valueInvoked = false;
-      [[maybe_unused]] const auto res = err.fold(
+      [[maybe_unused]] const auto res = err.match(
           [&] {
             valueInvoked = true;
-            return makeExpectedFoldValueResult();
+            return makeExpectedMatchValueResult();
           },
-          foldErr);
+          matchErr);
       return !valueInvoked;
     }();
 
@@ -408,7 +408,7 @@ TEST_CASE("fold (void value) constexpr", "[expected][constexpr]")
     constexpr auto valid = [] {
       const ExpectedVoid val;
       bool valueInvoked = false;
-      val.fold([&] { valueInvoked = true; }, [](const std::string &) {});
+      val.match([&] { valueInvoked = true; }, [](const std::string &) {});
       return valueInvoked;
     }();
 
@@ -420,7 +420,7 @@ TEST_CASE("fold (void value) constexpr", "[expected][constexpr]")
     constexpr auto valid = [] {
       const ExpectedVoid val;
       bool errorInvoked = false;
-      val.fold([] {}, [&](const std::string &) { errorInvoked = true; });
+      val.match([] {}, [&](const std::string &) { errorInvoked = true; });
       return !errorInvoked;
     }();
 
@@ -432,7 +432,7 @@ TEST_CASE("fold (void value) constexpr", "[expected][constexpr]")
     constexpr auto valid = [] {
       const ExpectedVoid err{frt::unexpected{makeExpectedError()}};
       bool errorInvoked = false;
-      err.fold([] {}, [&](const std::string &) { errorInvoked = true; });
+      err.match([] {}, [&](const std::string &) { errorInvoked = true; });
       return errorInvoked;
     }();
 
@@ -444,7 +444,7 @@ TEST_CASE("fold (void value) constexpr", "[expected][constexpr]")
     constexpr auto valid = [] {
       const ExpectedVoid err{frt::unexpected{makeExpectedError()}};
       bool valueInvoked = false;
-      err.fold([&] { valueInvoked = true; }, [](const std::string &) {});
+      err.match([&] { valueInvoked = true; }, [](const std::string &) {});
       return !valueInvoked;
     }();
 
@@ -455,11 +455,11 @@ TEST_CASE("fold (void value) constexpr", "[expected][constexpr]")
   {
     constexpr auto valid = [] {
       ExpectedVoid expected{frt::unexpected{makeExpectedError()}};
-      [[maybe_unused]] const auto res = expected.fold([] { return 0; },
-                                                      [](std::string &s) {
-                                                        s.clear();
-                                                        return 0;
-                                                      });
+      [[maybe_unused]] const auto res = expected.match([] { return 0; },
+                                                       [](std::string &s) {
+                                                         s.clear();
+                                                         return 0;
+                                                       });
       return expected.error().empty();
     }();
 
@@ -470,7 +470,7 @@ TEST_CASE("fold (void value) constexpr", "[expected][constexpr]")
   {
     constexpr auto valid = [] {
       const ExpectedVoid expected{frt::unexpected{makeExpectedError()}};
-      return expected.fold([] { return false; }, [](const std::string &s) { return s == makeExpectedError(); });
+      return expected.match([] { return false; }, [](const std::string &s) { return s == makeExpectedError(); });
     }();
 
     STATIC_REQUIRE(valid);
@@ -481,7 +481,7 @@ TEST_CASE("fold (void value) constexpr", "[expected][constexpr]")
     constexpr auto valid = [] {
       ExpectedVoid expected{frt::unexpected{makeExpectedError()}};
       const auto res =
-          std::move(expected).fold([] { return std::string{}; }, [](std::string &&s) { return std::move(s); });
+          std::move(expected).match([] { return std::string{}; }, [](std::string &&s) { return std::move(s); });
       return res == makeExpectedError();
     }();
 
@@ -492,7 +492,7 @@ TEST_CASE("fold (void value) constexpr", "[expected][constexpr]")
   {
     constexpr auto valid = [] {
       const ExpectedVoid expected{frt::unexpected{makeExpectedError()}};
-      return static_cast<const ExpectedVoid &&>(expected).fold(
+      return static_cast<const ExpectedVoid &&>(expected).match(
           [] { return false; }, [](const std::string &&s) { return s == makeExpectedError(); });
     }();
 
@@ -501,45 +501,45 @@ TEST_CASE("fold (void value) constexpr", "[expected][constexpr]")
 
   SECTION("noexcept when both functions are noexcept")
   {
-    constexpr auto valid = noexcept(std::declval<ExpectedVoid>().fold(NothrowVoidValueFn{}, NothrowErrorFn{}));
+    constexpr auto valid = noexcept(std::declval<ExpectedVoid>().match(NothrowVoidValueFn{}, NothrowErrorFn{}));
     STATIC_REQUIRE(valid);
   }
 
   SECTION("not noexcept when value function throws")
   {
-    constexpr auto valid = noexcept(std::declval<ExpectedVoid>().fold(ThrowingVoidValueFn{}, NothrowErrorFn{}));
+    constexpr auto valid = noexcept(std::declval<ExpectedVoid>().match(ThrowingVoidValueFn{}, NothrowErrorFn{}));
     STATIC_REQUIRE_FALSE(valid);
   }
 
   SECTION("not noexcept when error function throws")
   {
-    constexpr auto valid = noexcept(std::declval<ExpectedVoid>().fold(NothrowVoidValueFn{}, ThrowingErrorFn{}));
+    constexpr auto valid = noexcept(std::declval<ExpectedVoid>().match(NothrowVoidValueFn{}, ThrowingErrorFn{}));
     STATIC_REQUIRE_FALSE(valid);
   }
 
   SECTION("void return noexcept when both functions are noexcept")
   {
     constexpr auto valid =
-        noexcept(std::declval<ExpectedVoid>().fold(NothrowVoidReturnVoidValueFn{}, NothrowVoidReturnErrorFn{}));
+        noexcept(std::declval<ExpectedVoid>().match(NothrowVoidReturnVoidValueFn{}, NothrowVoidReturnErrorFn{}));
     STATIC_REQUIRE(valid);
   }
 
   SECTION("void return not noexcept when value function throws")
   {
     constexpr auto valid =
-        noexcept(std::declval<ExpectedVoid>().fold(ThrowingVoidReturnVoidValueFn{}, NothrowVoidReturnErrorFn{}));
+        noexcept(std::declval<ExpectedVoid>().match(ThrowingVoidReturnVoidValueFn{}, NothrowVoidReturnErrorFn{}));
     STATIC_REQUIRE_FALSE(valid);
   }
 
   SECTION("void return not noexcept when error function throws")
   {
     constexpr auto valid =
-        noexcept(std::declval<ExpectedVoid>().fold(NothrowVoidReturnVoidValueFn{}, ThrowingVoidReturnErrorFn{}));
+        noexcept(std::declval<ExpectedVoid>().match(NothrowVoidReturnVoidValueFn{}, ThrowingVoidReturnErrorFn{}));
     STATIC_REQUIRE_FALSE(valid);
   }
 }
 
-TEST_CASE("Fold with generic function for both value and error constexpr", "[expected][constexpr]")
+TEST_CASE("Match with generic function for both value and error constexpr", "[expected][constexpr]")
 {
   using namespace test::helpers;
 
@@ -554,7 +554,7 @@ TEST_CASE("Fold with generic function for both value and error constexpr", "[exp
 
       auto square = [](const HasWidthAndHeight auto &obj) { return obj.width * obj.height; };
 
-      return expectedWindow.fold(square) == expectedWidget.fold(square);
+      return expectedWindow.match(square) == expectedWidget.match(square);
     }();
 
     STATIC_REQUIRE(valid);
@@ -570,8 +570,8 @@ TEST_CASE("Fold with generic function for both value and error constexpr", "[exp
 
       auto scaleHeight = [](HasWidthAndHeight auto &obj) { obj.height *= scaleFactor; };
 
-      expectedWindow.fold(scaleHeight);
-      expectedWidget.fold(scaleHeight);
+      expectedWindow.match(scaleHeight);
+      expectedWidget.match(scaleHeight);
 
       return expectedWindow.error().height == expectedWidget.value().height;
     }();

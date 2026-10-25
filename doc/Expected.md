@@ -72,13 +72,13 @@ the [Monadic Operations](MonadicOperations.md) documentation.
 In addition, all monadic operations can be used as free functions and support pipeline syntax (`|`). You can find more
 information in the [Monadic Operations as Free Functions](MonadicOperationsAsFreeFunctions.md) documentation.
 
-## Fold
+## Match
 
-There is another operation called `fold` that allows you to handle both value and error states in a single call. This
+There is another operation called `match` that allows you to handle both value and error states in a single call. This
 operation works similarly to pattern matching: it takes into account the value category and constness of the `expected`
 object, can mutate the contained value or error in place, and supports generic visitors.
 
-`fold` provides two overloads:
+`match` provides two overloads:
 
 1. Accepts two callables: the first for the value alternative and the second for the error alternative.
 2. Accepts a single callable that can be invoked for either alternative.
@@ -86,7 +86,7 @@ object, can mutate the contained value or error in place, and supports generic v
 ```c++
 auto result = loadComponent( /* ... */ );
 
-result.fold(
+result.match(
     [](const Component& component) {
         // Do something with the component
         // You can mutate the component in place if the parameter is `Component&`
@@ -99,7 +99,7 @@ result.fold(
     }
 );
 
-result.fold([](const auto& value) {
+result.match([](const auto& value) {
     // This function will be invoked for both component and error
     // For example, if both are formattable:
     std::println("Outcome: {}", value);
@@ -120,9 +120,9 @@ several key design improvements, extended monadic capabilities, and tighter inte
       forwarded directly to the callable. Furthermore, by using the placeholder marker `frt::unwrapped`, the unwrapped
       value or error can be positioned at any arbitrary argument index instead of strictly being the first argument.
 
-2. **Pattern matching with `fold`**:
-    - `std::expected` does not provide pattern matching or folding member functions.
-    - `frt::expected` provides `fold(vf, ef)` and `fold(f)` member functions. `fold` forwards the value category and
+2. **Pattern matching with `match`**:
+    - `std::expected` does not provide pattern matching member functions.
+    - `frt::expected` provides `match(vf, ef)` and `match(f)` member functions. `match` forwards the value category and
       constness of the `expected` instance, allowing in-place mutation or moving of the active alternative.
 
 3. **`error_or` fallback observer**:
@@ -481,14 +481,14 @@ template <class Self, class F, class... Args>
 
 ---
 
-### Pattern matching (Fold)
+### Pattern matching
 
 ```cpp
 template <class Self, class ValueFunc, class ErrorFunc>
-[[nodiscard]] constexpr decltype(auto) fold(this Self &&self, ValueFunc vf, ErrorFunc ef) noexcept(/* ... */);
+[[nodiscard]] constexpr decltype(auto) match(this Self &&self, ValueFunc vf, ErrorFunc ef) noexcept(/* ... */);
 
 template <class Self, class ValueFunc, class ErrorFunc>
-constexpr void fold(this Self &&self, ValueFunc vf, ErrorFunc ef) noexcept(/* ... */);
+constexpr void match(this Self &&self, ValueFunc vf, ErrorFunc ef) noexcept(/* ... */);
 ```
 
 - **Preconditions**: `vf` must be invocable with the value (or with no arguments if `value_type` is `void`). `ef` must
@@ -498,15 +498,15 @@ constexpr void fold(this Self &&self, ValueFunc vf, ErrorFunc ef) noexcept(/* ..
 
 ```cpp
 template <class Self, class Func>
-[[nodiscard]] constexpr decltype(auto) fold(this Self &&self, Func f) noexcept(/* ... */);
+[[nodiscard]] constexpr decltype(auto) match(this Self &&self, Func f) noexcept(/* ... */);
 
 template <class Self, class Func>
-constexpr void fold(this Self &&self, Func f) noexcept(/* ... */);
+constexpr void match(this Self &&self, Func f) noexcept(/* ... */);
 ```
 
 - **Preconditions**: Callable `f` must be invocable with both value and error alternatives (or with no arguments if
   `value_type` is `void`) and return the same type in both cases.
-- **Effects**: Equivalent to calling `self.fold(f, f)`.
+- **Effects**: Equivalent to calling `self.match(f, f)`.
 
 ---
 

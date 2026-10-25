@@ -86,13 +86,13 @@ auto names = opt
     | std::views::transform(&Component::name);
 ```
 
-## Fold
+## Match
 
-There is another operation called `fold` that allows you to handle both present and empty states in a single call. This
+There is another operation called `match` that allows you to handle both present and empty states in a single call. This
 operation works similarly to pattern matching: it takes into account the value category and constness of the `optional`
 object, can mutate the contained value in place, and preserves value categories.
 
-`fold` provides two overloads:
+`match` provides two overloads:
 
 1. Accepts two callables: the first invoked with the value if present, and the second invoked without arguments if
    empty.
@@ -101,7 +101,7 @@ object, can mutate the contained value in place, and preserves value categories.
 ```c++
 auto opt = findComponent( /* ... */ );
 
-opt.fold(
+opt.match(
     [](const Component& component) {
         // Do something with the component
         // You can mutate the component in place if the parameter is `Component&`
@@ -113,7 +113,7 @@ opt.fold(
     }
 );
 
-opt.fold([](const auto&... args) {
+opt.match([](const auto&... args) {
     // This callable is invoked with `component` when present, or with 0 arguments when empty
 });
 ```
@@ -138,9 +138,10 @@ extended monadic ergonomics, and full integration with the FRT library ecosystem
       non-const and const). This allows direct use with range-based `for` loops, `std::ranges` algorithms, and
       `std::views`.
 
-3. **Pattern matching with `fold`**:
-    - `std::optional` has no folding or pattern matching member function.
-    - `frt::optional` provides `fold(vf, nf)` and `fold(f)`, supporting value-category preservation, in-place mutation,
+3. **Pattern matching with `match`**:
+    - `std::optional` has no pattern matching member function.
+    - `frt::optional` provides `match(vf, nf)` and `match(f)`, supporting value-category preservation, in-place
+      mutation,
       and uniform return types across both branches.
 
 4. **Contract-based assertions and `noexcept` accessors**:
@@ -450,11 +451,11 @@ template <class Self, class F, class... Args>
 
 ---
 
-### Pattern matching (Fold)
+### Pattern matching
 
 ```cpp
 template <class Self, class ValueFunc, class NullOptFunc>
-[[nodiscard]] constexpr decltype(auto) fold(this Self &&self, ValueFunc vf, NullOptFunc nf) noexcept(/* ... */);
+[[nodiscard]] constexpr decltype(auto) match(this Self &&self, ValueFunc vf, NullOptFunc nf) noexcept(/* ... */);
 ```
 
 - **Preconditions**: `vf` must be invocable with the value. `nf` must be invocable without arguments. Both callables
@@ -464,12 +465,12 @@ template <class Self, class ValueFunc, class NullOptFunc>
 
 ```cpp
 template <class Self, class Func>
-[[nodiscard]] constexpr decltype(auto) fold(this Self &&self, Func f) noexcept(/* ... */);
+[[nodiscard]] constexpr decltype(auto) match(this Self &&self, Func f) noexcept(/* ... */);
 ```
 
 - **Preconditions**: Callable `f` must be invocable with the value and without arguments, returning the same type in
   both cases.
-- **Effects**: Equivalent to calling `self.fold(f, f)`.
+- **Effects**: Equivalent to calling `self.match(f, f)`.
 
 ---
 

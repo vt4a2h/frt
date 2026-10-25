@@ -14,30 +14,30 @@ namespace
 using Opt = frt::optional<std::vector<int>>;
 
 inline const std::vector expectedValue{0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-inline const std::string expectedFoldValueResult =
+inline const std::string expectedMatchValueResult =
     "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore "
     "magna aliqua";
-inline const std::string expectedFoldNullOptResult =
+inline const std::string expectedMatchNullOptResult =
     "Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium";
 
 struct NothrowValueFn
 {
-  std::string operator()(const std::vector<int> &) const noexcept { return expectedFoldValueResult; }
+  std::string operator()(const std::vector<int> &) const noexcept { return expectedMatchValueResult; }
 };
 
 struct ThrowingValueFn
 {
-  std::string operator()(const std::vector<int> &) const noexcept(false) { return expectedFoldValueResult; }
+  std::string operator()(const std::vector<int> &) const noexcept(false) { return expectedMatchValueResult; }
 };
 
 struct NothrowNullOptFn
 {
-  std::string operator()() const noexcept { return expectedFoldNullOptResult; }
+  std::string operator()() const noexcept { return expectedMatchNullOptResult; }
 };
 
 struct ThrowingNullOptFn
 {
-  std::string operator()() const noexcept(false) { return expectedFoldNullOptResult; }
+  std::string operator()() const noexcept(false) { return expectedMatchNullOptResult; }
 };
 
 struct NothrowVoidReturnValueFn
@@ -76,78 +76,78 @@ struct GenericHeightModifier
 
 } // namespace
 
-TEST_CASE("fold", "[optional]")
+TEST_CASE("match", "[optional]")
 {
-  auto foldVal = [](const std::vector<int> &) -> std::string { return expectedFoldValueResult; };
-  auto foldNullOpt = []() -> std::string { return expectedFoldNullOptResult; };
+  auto matchVal = [](const std::vector<int> &) -> std::string { return expectedMatchValueResult; };
+  auto matchNullOpt = []() -> std::string { return expectedMatchNullOptResult; };
 
   const Opt val{expectedValue};
   const Opt nullOpt;
 
   SECTION("value alternative invokes value function and returns its result")
   {
-    REQUIRE(val.fold(foldVal, foldNullOpt) == expectedFoldValueResult);
+    REQUIRE(val.match(matchVal, matchNullOpt) == expectedMatchValueResult);
   }
 
   SECTION("value alternative does not invoke nullopt function")
   {
     bool nullOptInvoked = false;
-    [[maybe_unused]] const auto res = val.fold(foldVal, [&] {
+    [[maybe_unused]] const auto res = val.match(matchVal, [&] {
       nullOptInvoked = true;
-      return expectedFoldNullOptResult;
+      return expectedMatchNullOptResult;
     });
     REQUIRE_FALSE(nullOptInvoked);
   }
 
   SECTION("nullopt alternative invokes nullopt function and returns its result")
   {
-    REQUIRE(nullOpt.fold(foldVal, foldNullOpt) == expectedFoldNullOptResult);
+    REQUIRE(nullOpt.match(matchVal, matchNullOpt) == expectedMatchNullOptResult);
   }
 
   SECTION("nullopt alternative does not invoke value function")
   {
     bool valueInvoked = false;
-    [[maybe_unused]] const auto res = nullOpt.fold(
+    [[maybe_unused]] const auto res = nullOpt.match(
         [&](const std::vector<int> &) {
           valueInvoked = true;
-          return expectedFoldValueResult;
+          return expectedMatchValueResult;
         },
-        foldNullOpt);
+        matchNullOpt);
     REQUIRE_FALSE(valueInvoked);
   }
 
   SECTION("value alternative with void-returning function invokes value function")
   {
     bool valueInvoked = false;
-    val.fold([&](const std::vector<int> &) { valueInvoked = true; }, [] {});
+    val.match([&](const std::vector<int> &) { valueInvoked = true; }, [] {});
     REQUIRE(valueInvoked);
   }
 
   SECTION("value alternative with void-returning function does not invoke nullopt function")
   {
     bool nullOptInvoked = false;
-    val.fold([](const std::vector<int> &) {}, [&] { nullOptInvoked = true; });
+    val.match([](const std::vector<int> &) {}, [&] { nullOptInvoked = true; });
     REQUIRE_FALSE(nullOptInvoked);
   }
 
   SECTION("nullopt alternative with void-returning function invokes nullopt function")
   {
     bool nullOptInvoked = false;
-    nullOpt.fold([](const std::vector<int> &) {}, [&] { nullOptInvoked = true; });
+    nullOpt.match([](const std::vector<int> &) {}, [&] { nullOptInvoked = true; });
     REQUIRE(nullOptInvoked);
   }
 
   SECTION("nullopt alternative with void-returning function does not invoke value function")
   {
     bool valueInvoked = false;
-    nullOpt.fold([&](const std::vector<int> &) { valueInvoked = true; }, [] {});
+    nullOpt.match([&](const std::vector<int> &) { valueInvoked = true; }, [] {});
     REQUIRE_FALSE(valueInvoked);
   }
 
   SECTION("value with non-const lvalue forwarding allows modification")
   {
     Opt opt{expectedValue};
-    [[maybe_unused]] const auto res = opt.fold(
+    [[maybe_unused]] const auto res = opt.match(
         [](std::vector<int> &v) {
           v.clear();
           return 0;
@@ -159,14 +159,14 @@ TEST_CASE("fold", "[optional]")
   SECTION("value with const lvalue forwarding")
   {
     const Opt opt{expectedValue};
-    const auto res = opt.fold([](const std::vector<int> &v) { return v == expectedValue; }, [] { return false; });
+    const auto res = opt.match([](const std::vector<int> &v) { return v == expectedValue; }, [] { return false; });
     REQUIRE(res);
   }
 
   SECTION("nullopt with const lvalue forwarding")
   {
     const Opt opt;
-    const auto res = opt.fold([](const std::vector<int> &) { return false; }, [] { return true; });
+    const auto res = opt.match([](const std::vector<int> &) { return false; }, [] { return true; });
     REQUIRE(res);
   }
 
@@ -174,22 +174,22 @@ TEST_CASE("fold", "[optional]")
   {
     Opt opt{expectedValue};
     const auto res =
-        std::move(opt).fold([](std::vector<int> &&v) { return std::move(v); }, [] { return std::vector<int>{}; });
+        std::move(opt).match([](std::vector<int> &&v) { return std::move(v); }, [] { return std::vector<int>{}; });
     REQUIRE(res == expectedValue);
   }
 
   SECTION("nullopt with rvalue forwarding")
   {
     Opt opt;
-    const auto res = std::move(opt).fold([](std::vector<int> &&) { return false; }, [] { return true; });
+    const auto res = std::move(opt).match([](std::vector<int> &&) { return false; }, [] { return true; });
     REQUIRE(res);
   }
 
   SECTION("value with const rvalue forwarding")
   {
     const Opt opt{expectedValue};
-    const auto res = static_cast<const Opt &&>(opt).fold([](const std::vector<int> &&v) { return v == expectedValue; },
-                                                         [] { return false; });
+    const auto res = static_cast<const Opt &&>(opt).match([](const std::vector<int> &&v) { return v == expectedValue; },
+                                                          [] { return false; });
     REQUIRE(res);
   }
 
@@ -197,47 +197,47 @@ TEST_CASE("fold", "[optional]")
   {
     const Opt opt;
     const auto res =
-        static_cast<const Opt &&>(opt).fold([](const std::vector<int> &&) { return false; }, [] { return true; });
+        static_cast<const Opt &&>(opt).match([](const std::vector<int> &&) { return false; }, [] { return true; });
     REQUIRE(res);
   }
 
   SECTION("noexcept when both functions are noexcept")
   {
-    REQUIRE(noexcept(std::declval<Opt>().fold(NothrowValueFn{}, NothrowNullOptFn{})));
+    REQUIRE(noexcept(std::declval<Opt>().match(NothrowValueFn{}, NothrowNullOptFn{})));
   }
 
   SECTION("not noexcept when value function throws")
   {
-    REQUIRE_FALSE(noexcept(std::declval<Opt>().fold(ThrowingValueFn{}, NothrowNullOptFn{})));
+    REQUIRE_FALSE(noexcept(std::declval<Opt>().match(ThrowingValueFn{}, NothrowNullOptFn{})));
   }
 
   SECTION("not noexcept when nullopt function throws")
   {
-    REQUIRE_FALSE(noexcept(std::declval<Opt>().fold(NothrowValueFn{}, ThrowingNullOptFn{})));
+    REQUIRE_FALSE(noexcept(std::declval<Opt>().match(NothrowValueFn{}, ThrowingNullOptFn{})));
   }
 
   SECTION("not noexcept when both functions throw")
   {
-    REQUIRE_FALSE(noexcept(std::declval<Opt>().fold(ThrowingValueFn{}, ThrowingNullOptFn{})));
+    REQUIRE_FALSE(noexcept(std::declval<Opt>().match(ThrowingValueFn{}, ThrowingNullOptFn{})));
   }
 
   SECTION("void return noexcept when both functions are noexcept")
   {
-    REQUIRE(noexcept(std::declval<Opt>().fold(NothrowVoidReturnValueFn{}, NothrowVoidReturnNullOptFn{})));
+    REQUIRE(noexcept(std::declval<Opt>().match(NothrowVoidReturnValueFn{}, NothrowVoidReturnNullOptFn{})));
   }
 
   SECTION("void return not noexcept when value function throws")
   {
-    REQUIRE_FALSE(noexcept(std::declval<Opt>().fold(ThrowingVoidReturnValueFn{}, NothrowVoidReturnNullOptFn{})));
+    REQUIRE_FALSE(noexcept(std::declval<Opt>().match(ThrowingVoidReturnValueFn{}, NothrowVoidReturnNullOptFn{})));
   }
 
   SECTION("void return not noexcept when nullopt function throws")
   {
-    REQUIRE_FALSE(noexcept(std::declval<Opt>().fold(NothrowVoidReturnValueFn{}, ThrowingVoidReturnNullOptFn{})));
+    REQUIRE_FALSE(noexcept(std::declval<Opt>().match(NothrowVoidReturnValueFn{}, ThrowingVoidReturnNullOptFn{})));
   }
 }
 
-TEST_CASE("Fold with single generic function", "[optional]")
+TEST_CASE("Match with single generic function", "[optional]")
 {
   using namespace test::helpers;
 
@@ -251,13 +251,13 @@ TEST_CASE("Fold with single generic function", "[optional]")
   SECTION("generic area function for value")
   {
     const GenericAreaOrZero areaOrZero{defaultArea};
-    REQUIRE(optVal.fold(areaOrZero) == initialWidth * initialHeight);
+    REQUIRE(optVal.match(areaOrZero) == initialWidth * initialHeight);
   }
 
   SECTION("generic area function for nullopt")
   {
     const GenericAreaOrZero areaOrZero{defaultArea};
-    REQUIRE(optNullOpt.fold(areaOrZero) == defaultArea);
+    REQUIRE(optNullOpt.match(areaOrZero) == defaultArea);
   }
 
   SECTION("generic height modifier for value")
@@ -266,7 +266,7 @@ TEST_CASE("Fold with single generic function", "[optional]")
     frt::optional opt{Widget{.width = initialWidth, .height = initialHeight}};
     const GenericHeightModifier modifyHeight{scaleFactor};
 
-    opt.fold(modifyHeight);
+    opt.match(modifyHeight);
 
     REQUIRE(opt.value().height == initialHeight * scaleFactor);
   }

@@ -14,13 +14,13 @@ namespace
 using Opt = frt::optional<std::vector<int>>;
 
 constexpr auto makeExpectedValue() { return std::vector<int>{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}; }
-constexpr auto makeExpectedFoldValueResult()
+constexpr auto makeExpectedMatchValueResult()
 {
   return std::string{
       "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore "
       "magna aliqua"};
 }
-constexpr auto makeExpectedFoldNullOptResult()
+constexpr auto makeExpectedMatchNullOptResult()
 {
   return std::string{
       "Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque laudantium"};
@@ -28,25 +28,25 @@ constexpr auto makeExpectedFoldNullOptResult()
 
 struct NothrowValueFn
 {
-  constexpr std::string operator()(const std::vector<int> &) const noexcept { return makeExpectedFoldValueResult(); }
+  constexpr std::string operator()(const std::vector<int> &) const noexcept { return makeExpectedMatchValueResult(); }
 };
 
 struct ThrowingValueFn
 {
   constexpr std::string operator()(const std::vector<int> &) const noexcept(false)
   {
-    return makeExpectedFoldValueResult();
+    return makeExpectedMatchValueResult();
   }
 };
 
 struct NothrowNullOptFn
 {
-  constexpr std::string operator()() const noexcept { return makeExpectedFoldNullOptResult(); }
+  constexpr std::string operator()() const noexcept { return makeExpectedMatchNullOptResult(); }
 };
 
 struct ThrowingNullOptFn
 {
-  constexpr std::string operator()() const noexcept(false) { return makeExpectedFoldNullOptResult(); }
+  constexpr std::string operator()() const noexcept(false) { return makeExpectedMatchNullOptResult(); }
 };
 
 struct NothrowVoidReturnValueFn
@@ -85,16 +85,16 @@ struct GenericHeightModifier
 
 } // namespace
 
-TEST_CASE("fold constexpr", "[optional][constexpr]")
+TEST_CASE("match constexpr", "[optional][constexpr]")
 {
-  auto foldVal = [](const std::vector<int> &) -> std::string { return makeExpectedFoldValueResult(); };
-  auto foldNullOpt = []() -> std::string { return makeExpectedFoldNullOptResult(); };
+  auto matchVal = [](const std::vector<int> &) -> std::string { return makeExpectedMatchValueResult(); };
+  auto matchNullOpt = []() -> std::string { return makeExpectedMatchNullOptResult(); };
 
   SECTION("value alternative invokes value function and returns its result")
   {
-    constexpr auto valid = [foldVal, foldNullOpt] {
+    constexpr auto valid = [matchVal, matchNullOpt] {
       const Opt val{makeExpectedValue()};
-      return val.fold(foldVal, foldNullOpt) == makeExpectedFoldValueResult();
+      return val.match(matchVal, matchNullOpt) == makeExpectedMatchValueResult();
     }();
 
     STATIC_REQUIRE(valid);
@@ -102,12 +102,12 @@ TEST_CASE("fold constexpr", "[optional][constexpr]")
 
   SECTION("value alternative does not invoke nullopt function")
   {
-    constexpr auto valid = [foldVal] {
+    constexpr auto valid = [matchVal] {
       const Opt val{makeExpectedValue()};
       bool nullOptInvoked = false;
-      [[maybe_unused]] const auto res = val.fold(foldVal, [&] {
+      [[maybe_unused]] const auto res = val.match(matchVal, [&] {
         nullOptInvoked = true;
-        return makeExpectedFoldNullOptResult();
+        return makeExpectedMatchNullOptResult();
       });
       return !nullOptInvoked;
     }();
@@ -117,9 +117,9 @@ TEST_CASE("fold constexpr", "[optional][constexpr]")
 
   SECTION("nullopt alternative invokes nullopt function and returns its result")
   {
-    constexpr auto valid = [foldVal, foldNullOpt] {
+    constexpr auto valid = [matchVal, matchNullOpt] {
       const Opt nullOpt;
-      return nullOpt.fold(foldVal, foldNullOpt) == makeExpectedFoldNullOptResult();
+      return nullOpt.match(matchVal, matchNullOpt) == makeExpectedMatchNullOptResult();
     }();
 
     STATIC_REQUIRE(valid);
@@ -127,15 +127,15 @@ TEST_CASE("fold constexpr", "[optional][constexpr]")
 
   SECTION("nullopt alternative does not invoke value function")
   {
-    constexpr auto valid = [foldNullOpt] {
+    constexpr auto valid = [matchNullOpt] {
       const Opt nullOpt;
       bool valueInvoked = false;
-      [[maybe_unused]] const auto res = nullOpt.fold(
+      [[maybe_unused]] const auto res = nullOpt.match(
           [&](const std::vector<int> &) {
             valueInvoked = true;
-            return makeExpectedFoldValueResult();
+            return makeExpectedMatchValueResult();
           },
-          foldNullOpt);
+          matchNullOpt);
       return !valueInvoked;
     }();
 
@@ -147,7 +147,7 @@ TEST_CASE("fold constexpr", "[optional][constexpr]")
     constexpr auto valid = [] {
       const Opt val{makeExpectedValue()};
       bool valueInvoked = false;
-      val.fold([&](const std::vector<int> &) { valueInvoked = true; }, [] {});
+      val.match([&](const std::vector<int> &) { valueInvoked = true; }, [] {});
       return valueInvoked;
     }();
 
@@ -159,7 +159,7 @@ TEST_CASE("fold constexpr", "[optional][constexpr]")
     constexpr auto valid = [] {
       const Opt val{makeExpectedValue()};
       bool nullOptInvoked = false;
-      val.fold([](const std::vector<int> &) {}, [&] { nullOptInvoked = true; });
+      val.match([](const std::vector<int> &) {}, [&] { nullOptInvoked = true; });
       return !nullOptInvoked;
     }();
 
@@ -171,7 +171,7 @@ TEST_CASE("fold constexpr", "[optional][constexpr]")
     constexpr auto valid = [] {
       const Opt nullOpt;
       bool nullOptInvoked = false;
-      nullOpt.fold([](const std::vector<int> &) {}, [&] { nullOptInvoked = true; });
+      nullOpt.match([](const std::vector<int> &) {}, [&] { nullOptInvoked = true; });
       return nullOptInvoked;
     }();
 
@@ -183,7 +183,7 @@ TEST_CASE("fold constexpr", "[optional][constexpr]")
     constexpr auto valid = [] {
       const Opt nullOpt;
       bool valueInvoked = false;
-      nullOpt.fold([&](const std::vector<int> &) { valueInvoked = true; }, [] {});
+      nullOpt.match([&](const std::vector<int> &) { valueInvoked = true; }, [] {});
       return !valueInvoked;
     }();
 
@@ -194,7 +194,7 @@ TEST_CASE("fold constexpr", "[optional][constexpr]")
   {
     constexpr auto valid = [] {
       Opt opt{makeExpectedValue()};
-      [[maybe_unused]] const auto res = opt.fold(
+      [[maybe_unused]] const auto res = opt.match(
           [](std::vector<int> &v) {
             v.clear();
             return 0;
@@ -210,7 +210,7 @@ TEST_CASE("fold constexpr", "[optional][constexpr]")
   {
     constexpr auto valid = [] {
       const Opt opt{makeExpectedValue()};
-      return opt.fold([](const std::vector<int> &v) { return v == makeExpectedValue(); }, [] { return false; });
+      return opt.match([](const std::vector<int> &v) { return v == makeExpectedValue(); }, [] { return false; });
     }();
 
     STATIC_REQUIRE(valid);
@@ -220,7 +220,7 @@ TEST_CASE("fold constexpr", "[optional][constexpr]")
   {
     constexpr auto valid = [] {
       const Opt opt;
-      return opt.fold([](const std::vector<int> &) { return false; }, [] { return true; });
+      return opt.match([](const std::vector<int> &) { return false; }, [] { return true; });
     }();
 
     STATIC_REQUIRE(valid);
@@ -231,7 +231,7 @@ TEST_CASE("fold constexpr", "[optional][constexpr]")
     constexpr auto valid = [] {
       Opt opt{makeExpectedValue()};
       const auto res =
-          std::move(opt).fold([](std::vector<int> &&v) { return std::move(v); }, [] { return std::vector<int>{}; });
+          std::move(opt).match([](std::vector<int> &&v) { return std::move(v); }, [] { return std::vector<int>{}; });
       return res == makeExpectedValue();
     }();
 
@@ -242,7 +242,7 @@ TEST_CASE("fold constexpr", "[optional][constexpr]")
   {
     constexpr auto valid = [] {
       Opt opt;
-      return std::move(opt).fold([](std::vector<int> &&) { return false; }, [] { return true; });
+      return std::move(opt).match([](std::vector<int> &&) { return false; }, [] { return true; });
     }();
 
     STATIC_REQUIRE(valid);
@@ -252,8 +252,8 @@ TEST_CASE("fold constexpr", "[optional][constexpr]")
   {
     constexpr auto valid = [] {
       const Opt opt{makeExpectedValue()};
-      return static_cast<const Opt &&>(opt).fold([](const std::vector<int> &&v) { return v == makeExpectedValue(); },
-                                                 [] { return false; });
+      return static_cast<const Opt &&>(opt).match([](const std::vector<int> &&v) { return v == makeExpectedValue(); },
+                                                  [] { return false; });
     }();
 
     STATIC_REQUIRE(valid);
@@ -263,7 +263,7 @@ TEST_CASE("fold constexpr", "[optional][constexpr]")
   {
     constexpr auto valid = [] {
       const Opt opt;
-      return static_cast<const Opt &&>(opt).fold([](const std::vector<int> &&) { return false; }, [] { return true; });
+      return static_cast<const Opt &&>(opt).match([](const std::vector<int> &&) { return false; }, [] { return true; });
     }();
 
     STATIC_REQUIRE(valid);
@@ -271,50 +271,51 @@ TEST_CASE("fold constexpr", "[optional][constexpr]")
 
   SECTION("noexcept when both functions are noexcept")
   {
-    constexpr auto valid = noexcept(std::declval<Opt>().fold(NothrowValueFn{}, NothrowNullOptFn{}));
+    constexpr auto valid = noexcept(std::declval<Opt>().match(NothrowValueFn{}, NothrowNullOptFn{}));
     STATIC_REQUIRE(valid);
   }
 
   SECTION("not noexcept when value function throws")
   {
-    constexpr auto valid = noexcept(std::declval<Opt>().fold(ThrowingValueFn{}, NothrowNullOptFn{}));
+    constexpr auto valid = noexcept(std::declval<Opt>().match(ThrowingValueFn{}, NothrowNullOptFn{}));
     STATIC_REQUIRE_FALSE(valid);
   }
 
   SECTION("not noexcept when nullopt function throws")
   {
-    constexpr auto valid = noexcept(std::declval<Opt>().fold(NothrowValueFn{}, ThrowingNullOptFn{}));
+    constexpr auto valid = noexcept(std::declval<Opt>().match(NothrowValueFn{}, ThrowingNullOptFn{}));
     STATIC_REQUIRE_FALSE(valid);
   }
 
   SECTION("not noexcept when both functions throw")
   {
-    constexpr auto valid = noexcept(std::declval<Opt>().fold(ThrowingValueFn{}, ThrowingNullOptFn{}));
+    constexpr auto valid = noexcept(std::declval<Opt>().match(ThrowingValueFn{}, ThrowingNullOptFn{}));
     STATIC_REQUIRE_FALSE(valid);
   }
 
   SECTION("void return noexcept when both functions are noexcept")
   {
-    constexpr auto valid = noexcept(std::declval<Opt>().fold(NothrowVoidReturnValueFn{}, NothrowVoidReturnNullOptFn{}));
+    constexpr auto valid =
+        noexcept(std::declval<Opt>().match(NothrowVoidReturnValueFn{}, NothrowVoidReturnNullOptFn{}));
     STATIC_REQUIRE(valid);
   }
 
   SECTION("void return not noexcept when value function throws")
   {
     constexpr auto valid =
-        noexcept(std::declval<Opt>().fold(ThrowingVoidReturnValueFn{}, NothrowVoidReturnNullOptFn{}));
+        noexcept(std::declval<Opt>().match(ThrowingVoidReturnValueFn{}, NothrowVoidReturnNullOptFn{}));
     STATIC_REQUIRE_FALSE(valid);
   }
 
   SECTION("void return not noexcept when nullopt function throws")
   {
     constexpr auto valid =
-        noexcept(std::declval<Opt>().fold(NothrowVoidReturnValueFn{}, ThrowingVoidReturnNullOptFn{}));
+        noexcept(std::declval<Opt>().match(NothrowVoidReturnValueFn{}, ThrowingVoidReturnNullOptFn{}));
     STATIC_REQUIRE_FALSE(valid);
   }
 }
 
-TEST_CASE("Fold with single generic function constexpr", "[optional][constexpr]")
+TEST_CASE("Match with single generic function constexpr", "[optional][constexpr]")
 {
   using namespace test::helpers;
 
@@ -327,7 +328,7 @@ TEST_CASE("Fold with single generic function constexpr", "[optional][constexpr]"
     constexpr auto valid = [] {
       const frt::optional<Widget> optVal{Widget{.width = initialWidth, .height = initialHeight}};
       const GenericAreaOrZero areaOrZero{defaultArea};
-      return optVal.fold(areaOrZero) == initialWidth * initialHeight;
+      return optVal.match(areaOrZero) == initialWidth * initialHeight;
     }();
 
     STATIC_REQUIRE(valid);
@@ -338,7 +339,7 @@ TEST_CASE("Fold with single generic function constexpr", "[optional][constexpr]"
     constexpr auto valid = [] {
       const frt::optional<Widget> optNullOpt;
       const GenericAreaOrZero areaOrZero{defaultArea};
-      return optNullOpt.fold(areaOrZero) == defaultArea;
+      return optNullOpt.match(areaOrZero) == defaultArea;
     }();
 
     STATIC_REQUIRE(valid);
@@ -351,7 +352,7 @@ TEST_CASE("Fold with single generic function constexpr", "[optional][constexpr]"
       frt::optional<Widget> opt{Widget{.width = initialWidth, .height = initialHeight}};
       const GenericHeightModifier modifyHeight{scaleFactor};
 
-      opt.fold(modifyHeight);
+      opt.match(modifyHeight);
 
       return opt.value().height == initialHeight * scaleFactor;
     }();
