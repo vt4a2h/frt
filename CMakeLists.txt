@@ -77,3 +77,36 @@ OPTION(FRT_OPTIMIZE_EXECUTION_PATH "Use [[likely]] and [[unlikely]] attributes t
 if (FRT_OPTIMIZE_EXECUTION_PATH)
     target_compile_definitions(frt INTERFACE FRT_OPTIMIZE_EXECUTION_PATH=1)
 endif()
+
+include(CMakePackageConfigHelpers)
+include(GNUInstallDirs)
+
+write_basic_package_version_file(
+    ${CMAKE_CURRENT_BINARY_DIR}/frt-config-version.cmake
+    VERSION ${CMAKE_PROJECT_VERSION}
+    COMPATIBILITY ExactVersion
+)
+
+install(
+    TARGETS frt
+    EXPORT frt-targets
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}
+)
+install(
+    EXPORT frt-targets
+    FILE frt-targets.cmake
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake
+)
+install(
+    FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/frt-config-version.cmake
+    ${frt_SOURCE_DIR}/cmake/frt-config.cmake
+    DESTINATION
+    ${CMAKE_INSTALL_LIBDIR}/cmake
+)
+install(
+    DIRECTORY include/frt
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+    FILES_MATCHING PATTERN "*"
+)
+export(EXPORT frt-targets FILE frt-config.cmake)
