@@ -18,6 +18,15 @@ implemented as a member function** on [`frt::either`](Either.md), [`frt::expecte
 (inheriting from `std::ranges::range_adaptor_closure`) that supports both regular function call syntax and pipe (`|`)
 syntax.
 
+## Table of contents
+
+- [Signatures and Invocation Syntaxes](#signatures-and-invocation-syntaxes)
+- [Examples](#examples)
+  - [1. Basic usage (`frt::sequence`)](#1-basic-usage-frtsequence)
+  - [2. Composing with `std::views`](#2-composing-with-stdviews)
+  - [3. Customizing the output container (`frt::sequence_into`)](#3-customizing-the-output-container-frtsequence_into)
+- [Customization](#customization)
+
 ---
 
 ## Signatures and Invocation Syntaxes

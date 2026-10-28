@@ -14,6 +14,20 @@ pipe (`|`) syntax.
 > If you only need to convert a range of results into a result of a container without applying an extra transformation
 > (`f` is `std::identity{}`), use [`frt::sequence` / `frt::sequence_into`](Sequence.md).
 
+## Table of contents
+
+- [Signatures and Invocation Syntaxes](#signatures-and-invocation-syntaxes)
+- [Examples](#examples)
+    - [1. Basic traversal (`frt::traverse`)](#1-basic-traversal-frttraverse)
+    - [2. Traversing `void` result elements](#2-traversing-void-result-elements)
+    - [3. Customizing the output container (`frt::traverse_into`)](#3-customizing-the-output-container-frttraverse_into)
+        - [Sequential containers (`std::list`, `std::set`, etc.)](#sequential-containers-stdlist-stdset-etc)
+        - [Associative key-value containers (`std::map`,
+          `std::unordered_map`)](#associative-key-value-containers-stdmap-stdunordered_map)
+- [Customization](#customization)
+    - [1. Customizing result types (`frt::meta_either`)](#1-customizing-result-types-frtmeta_either)
+    - [2. Customizing output containers (`frt::meta_container`)](#2-customizing-output-containers-frtmeta_container)
+
 ---
 
 ## Signatures and Invocation Syntaxes

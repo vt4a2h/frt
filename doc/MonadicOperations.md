@@ -82,6 +82,24 @@ types) by specializing `frt::meta_either` and `frt::is_result_type`. See
 [Monadic Operations as Free Functions](MonadicOperationsAsFreeFunctions.md) for details on free-function invocation,
 pipeline syntax (`|`), and custom type integration.
 
+## Table of contents
+
+- [Summary of Operations](#summary-of-operations)
+    - [Semantics](#semantics)
+- [Inline Partial Application](#inline-partial-application)
+    - [1. Single-argument invocations](#1-single-argument-invocations)
+        - [Passing only the contained value (no extra arguments)](#passing-only-the-contained-value-no-extra-arguments)
+        - [Passing a single extra argument when the alternative is
+          `void`](#passing-a-single-extra-argument-when-the-alternative-is-void)
+        - [Passing a single extra argument alongside the contained value](#passing-a-single-extra-argument-alongside-the-contained-value)
+    - [2. Multiple extra arguments (contained value first)](#2-multiple-extra-arguments-contained-value-first)
+    - [3. Controlling the contained value position with
+      `frt::unwrapped`](#3-controlling-the-contained-value-position-with-frtunwrapped)
+        - [Passing the contained value in the middle of the argument list](#passing-the-contained-value-in-the-middle-of-the-argument-list)
+        - [Passing the contained value as the last argument](#passing-the-contained-value-as-the-last-argument)
+    - [4. Invoking member functions](#4-invoking-member-functions)
+- [Argument Forwarding Rules](#argument-forwarding-rules)
+
 ---
 
 ## Summary of Operations

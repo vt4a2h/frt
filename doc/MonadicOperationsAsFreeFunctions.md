@@ -27,6 +27,25 @@ These operations work uniformly with any result type that models a two-alternati
 All free functions support the same [Inline Partial Application](MonadicOperations.md#inline-partial-application)
 capabilities as member functions, including trailing argument packs and the `frt::unwrapped` positional placeholder.
 
+## Table of contents
+
+- [Invocation Syntaxes](#invocation-syntaxes)
+    - [1. Direct free-function syntax](#1-direct-free-function-syntax)
+    - [2. Pipe (`|`) syntax](#2-pipe--syntax)
+- [Hidden Caveats of the `|` Syntax](#hidden-caveats-of-the--syntax)
+    - [1. Eager capture and unconditional copies/moves](#1-eager-capture-and-unconditional-copiesmoves)
+    - [2. Move-constructibility requirements on `F` and `Args...`](#2-move-constructibility-requirements-on-f-and-args)
+    - [3. Value category of stored closures](#3-value-category-of-stored-closures)
+- [Customizing Monadic Operations with `frt::meta_either`](#customizing-monadic-operations-with-frtmeta_either)
+    - [`frt::meta_either` interface](#frtmeta_either-interface)
+- [Standard Library Examples: `std::expected` and
+  `std::optional`](#standard-library-examples-stdexpected-and-stdoptional)
+    - [Example 1: `frt::meta_either` for `std::expected`](#example-1-frtmeta_either-for-stdexpected)
+    - [Example 2: `frt::meta_either` for `std::optional`](#example-2-frtmeta_either-for-stdoptional)
+- [Which Types Should Specialize `frt::meta_either`?](#which-types-should-specialize-frtmeta_either)
+    - [Well-suited: Sum types of two alternatives](#well-suited-sum-types-of-two-alternatives)
+    - [Not recommended: Pointer-like types (including smart pointers)](#not-recommended-pointer-like-types-including-smart-pointers)
+
 ---
 
 ## Invocation Syntaxes

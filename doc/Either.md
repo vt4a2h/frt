@@ -26,6 +26,23 @@ if (widgetOrWindow.is_left()) {
 }
 ```
 
+## Table of contents
+
+- [Monadic operations](#monadic-operations)
+- [Match](#match)
+- [API reference](#api-reference)
+  - [Template parameters](#template-parameters)
+  - [Member types](#member-types)
+  - [Constructors and assignment](#constructors-and-assignment)
+  - [Observers](#observers)
+  - [Modifiers](#modifiers)
+  - [Monadic operations](#monadic-operations-1)
+  - [Pattern matching](#pattern-matching)
+  - [Comparisons](#comparisons)
+  - [Non-member utilities and tags](#non-member-utilities-and-tags)
+
+---
+
 ## Monadic operations
 
 The type comes with monadic operations named to conform to both standard terminology and the nature of the type. Assume

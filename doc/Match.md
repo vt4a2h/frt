@@ -19,6 +19,18 @@ Key properties of `match`:
 - **`void` alternative support**: If an alternative has type `void` (or `frt::void_t`, such as the empty state of an
   optional), the corresponding handler is invoked with zero arguments (`()`).
 
+## Table of contents
+
+- [Overloads](#overloads)
+- [Usage with `frt::either`](#usage-with-frteither)
+    - [1. Built-in member function (`.match(...)`)](#1-built-in-member-function-match)
+    - [2. Free function (`frt::match(result, ...)`)](#2-free-function-frtmatchresult-)
+    - [3. Pipe (`|`) syntax (`result | frt::match(...)`)](#3-pipe--syntax-result--frtmatch)
+- [Handling `void` Alternatives](#handling-void-alternatives)
+- [Customizing `frt::match` for Other Types](#customizing-frtmatch-for-other-types)
+    - [Required `frt::meta_either` interface for `frt::match`](#required-frtmeta_either-interface-for-frtmatch)
+    - [Custom type example](#custom-type-example)
+
 ---
 
 ## Overloads

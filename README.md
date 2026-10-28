@@ -5,6 +5,16 @@ types. The library also provides useful algorithms and monadic operations implem
 partial application syntax. Both algorithms and monadic operations can be used with custom result-like types by
 specialising `frt::meta_either` for these types.
 
+## Table of contents
+
+- [Result types](#result-types)
+- [Monadic operations](#monadic-operations)
+- [Algorithms](#algorithms)
+  - [Traverse](#traverse)
+  - [Sequence](#sequence)
+  - [Match](#match)
+- [Configuration options](#configuration-options)
+
 ## Result types
 
 This library provides the following result types:

@@ -27,6 +27,29 @@ if (opt.has_value()) {
 }
 ```
 
+## Table of contents
+
+- [Monadic operations](#monadic-operations)
+- [Range support](#range-support)
+- [Match](#match)
+- [Key differences from `std::optional`](#key-differences-from-stdoptional)
+- [API reference](#api-reference)
+    - [Template parameters](#template-parameters)
+    - [Member types](#member-types)
+    - [Constructors and assignment](#constructors-and-assignment)
+    - [Observers](#observers)
+    - [Range and iterator access](#range-and-iterator-access)
+    - [Modifiers](#modifiers)
+    - [Monadic operations](#monadic-operations-1)
+    - [Pattern matching](#pattern-matching)
+    - [Comparisons](#comparisons)
+    - [Non-member utilities, tags, and helpers](#non-member-utilities-tags-and-helpers)
+        - [Tags](#tags)
+        - [Concepts](#concepts)
+        - [Standard library integration](#standard-library-integration)
+
+---
+
 ## Monadic operations
 
 The type comes with monadic operations conforming to modern C++ standards and functional programming idioms. Assume you
