@@ -136,3 +136,39 @@ componentResult | frt::match( /* ... */ );
 ```
 
 You can find more information in the [Match](doc/Match.md) documentation.
+
+## Configuration options
+
+The `frt` library provides several configuration options that can be set during project configuration. These options
+allow you to customize the behavior and build of the library to suit your needs.
+
+Options can be configured via the CMake command line:
+
+```sh
+cmake -B build -DFRT_OPTIMIZE_EXECUTION_PATH=OFF
+```
+
+or set in your `CMakeLists.txt`:
+
+```cmake
+target_link_libraries(${my_target}
+    PUBLIC
+    frt::frt
+    # ...
+)
+
+target_compile_definitions(${my_target}
+    PUBLIC
+    FRT_OPTIMIZE_EXECUTION_PATH=OFF
+    # ...
+)
+```
+
+| Option                      | Default value | Description                                                                                                                          |
+|-----------------------------|---------------|--------------------------------------------------------------------------------------------------------------------------------------|
+| FRT_DEV_MODE                | OFF           | Enable strict compiler checks for the library source code (e.g., `-Wpedantic`).                                                      |
+| FRT_DEPENDENCIES_FROM_CPM   | OFF           | Use CPM to fetch third-party dependencies (e.g., Catch2 for testing).                                                                |
+| FRT_ENABLE_TESTING          | OFF           | Configure and build the test suite.                                                                                                  |
+| FRT_ENABLE_BENCHMARKING     | OFF           | Configure and build the benchmark suite.                                                                                             |
+| FRT_HARDENED                | ON            | Contract violations terminate the program. Disabling this option may cause undefined behavior (UB), as invariant checks are ignored. |
+| FRT_OPTIMIZE_EXECUTION_PATH | ON            | Use `[[likely]]` and `[[unlikely]]` attributes to allow the compiler to optimize execution paths.                                    |
