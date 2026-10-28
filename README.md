@@ -5,14 +5,21 @@ types. The library also provides useful algorithms and monadic operations implem
 partial application syntax. Both algorithms and monadic operations can be used with custom result-like types by
 specialising `frt::meta_either` for these types.
 
+Currently, the library is available as a subfolder or via [CPM](https://github.com/cpm-cmake/cpm.cmake):
+
+```cmake
+CPMAddPackage("gh:vt4a2h/frt@0.0.1")
+target_link_libraries(my_target PRIVATE frt::frt)
+```
+
 ## Table of contents
 
 - [Result types](#result-types)
 - [Monadic operations](#monadic-operations)
 - [Algorithms](#algorithms)
-  - [Traverse](#traverse)
-  - [Sequence](#sequence)
-  - [Match](#match)
+    - [Traverse](#traverse)
+    - [Sequence](#sequence)
+    - [Match](#match)
 - [Configuration options](#configuration-options)
 
 ## Result types
