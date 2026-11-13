@@ -22,8 +22,7 @@
 #include <frt/hash/std_hash_optional.hpp>
 #include <frt/optional.hpp>
 
-#include <frt/algorithm/sequence.hpp>
-#include <frt/algorithm/traverse.hpp>
+#include <frt/algorithm/all.hpp>
 
 #include <frt/concept/concept.hpp>
 
