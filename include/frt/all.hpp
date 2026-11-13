@@ -11,16 +11,15 @@
 #pragma once
 
 #include <frt/either.hpp>
-#include <frt/format/std_fmt_either.hpp>
 #include <frt/hash/std_hash_either.hpp>
 
 #include <frt/expected.hpp>
-#include <frt/format/std_fmt_expected.hpp>
 #include <frt/hash/std_hash_expected.hpp>
 
-#include <frt/format/std_fmt_optional.hpp>
 #include <frt/hash/std_hash_optional.hpp>
 #include <frt/optional.hpp>
+
+#include <frt/format/all.hpp>
 
 #include <frt/algorithm/all.hpp>
 
