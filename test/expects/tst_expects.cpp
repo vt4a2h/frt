@@ -1,6 +1,6 @@
 #include <catch2/catch_all.hpp>
 
-#include <frt/expects.hpp>
+#include <frt/detail/expects.hpp>
 
 struct AlwaysTrue
 {

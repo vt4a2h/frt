@@ -22,7 +22,7 @@
 #include <frt/algorithm/transform_right.hpp>
 #include <frt/concept/detail/common.hpp>
 #include <frt/detail/attributes.hpp>
-#include <frt/expects.hpp>
+#include <frt/detail/expects.hpp>
 #include <frt/meta/meta_either_either.hpp>
 #include <frt/util/tag.hpp>
 #include <frt/util/unwrapped.hpp>

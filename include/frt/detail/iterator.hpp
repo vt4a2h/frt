@@ -12,7 +12,7 @@
 
 #include <iterator>
 
-#include <frt/expects.hpp>
+#include <frt/detail/expects.hpp>
 
 namespace frt::detail::optional_
 {
