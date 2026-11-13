@@ -22,4 +22,4 @@
 
 #include <frt/concept/concept.hpp>
 
-#include <frt/meta/meta_all.hpp>
+#include <frt/meta/all.hpp>

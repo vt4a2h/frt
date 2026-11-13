@@ -15,3 +15,5 @@
 #include <frt/meta/meta_either_either.hpp>
 #include <frt/meta/meta_either_expected.hpp>
 #include <frt/meta/meta_either_optional.hpp>
+
+#include <frt/meta/std/all.hpp>
