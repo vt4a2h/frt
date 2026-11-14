@@ -11,7 +11,7 @@ int main()
   vec.push_back(std::move(e1));
   vec.push_back(std::move(e2));
 
-  auto eitherOfVec = frt::sequence(vec);
+  auto eitherOfVec = frt::algorithm::sequence(vec);
 
   return eitherOfVec.is_right() ? EXIT_SUCCESS : EXIT_FAILURE;
 }
