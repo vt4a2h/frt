@@ -191,7 +191,7 @@ extended monadic ergonomics, and full integration with the FRT library ecosystem
 
 8. **Free function monadic algorithms and pipe syntax**:
     - All monadic operations can be invoked as free functions supporting partial application and the pipe operator
-      (`opt | frt::algorithm::and_then_right(...) | frt::transform(...)`).
+      (`opt | frt::algorithm::and_then_right(...) | frt::algorithm::transform_right(...)`).
 
 ---
 

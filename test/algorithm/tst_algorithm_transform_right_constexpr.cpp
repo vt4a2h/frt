@@ -49,7 +49,7 @@ TEST_CASE("transform_right partial application constexpr", "[algorithm][transfor
   {
     constexpr auto valid = [transform] {
       const Either right{frt::in_place_right, test::helpers::makeExpectedVector()};
-      const auto res = right | frt::transform_right(transform);
+      const auto res = right | frt::algorithm::transform_right(transform);
       return res.is_right();
     }();
 
@@ -60,7 +60,7 @@ TEST_CASE("transform_right partial application constexpr", "[algorithm][transfor
   {
     constexpr auto valid = [transform] {
       const Either right{frt::in_place_right, test::helpers::makeExpectedVector()};
-      const auto res = right | frt::transform_right(transform);
+      const auto res = right | frt::algorithm::transform_right(transform);
       return res.right() == makeExpectedTransformedValue();
     }();
 
@@ -71,7 +71,7 @@ TEST_CASE("transform_right partial application constexpr", "[algorithm][transfor
   {
     constexpr auto valid = [transformToVoid] {
       const Either right{frt::in_place_right, test::helpers::makeExpectedVector()};
-      const auto res = right | frt::transform_right(transformToVoid);
+      const auto res = right | frt::algorithm::transform_right(transformToVoid);
       return res.is_right();
     }();
 
@@ -82,7 +82,7 @@ TEST_CASE("transform_right partial application constexpr", "[algorithm][transfor
   {
     constexpr auto valid = [transformExtra] {
       const Either right{frt::in_place_right, test::helpers::makeExpectedVector()};
-      const auto res = right | frt::transform_right(transformExtra, test::helpers::expectedIntValue);
+      const auto res = right | frt::algorithm::transform_right(transformExtra, test::helpers::expectedIntValue);
       return res.is_right();
     }();
 
@@ -93,7 +93,7 @@ TEST_CASE("transform_right partial application constexpr", "[algorithm][transfor
   {
     constexpr auto valid = [transformExtra] {
       const Either right{frt::in_place_right, test::helpers::makeExpectedVector()};
-      const auto res = right | frt::transform_right(transformExtra, test::helpers::expectedIntValue);
+      const auto res = right | frt::algorithm::transform_right(transformExtra, test::helpers::expectedIntValue);
       return res.right() == makeExpectedTransformedValue();
     }();
 
@@ -105,7 +105,7 @@ TEST_CASE("transform_right partial application constexpr", "[algorithm][transfor
     constexpr auto valid = [transformUnwrapped] {
       const Either right{frt::in_place_right, test::helpers::makeExpectedVector()};
       const auto res =
-          right | frt::transform_right(transformUnwrapped, test::helpers::expectedIntValue, frt::unwrapped);
+          right | frt::algorithm::transform_right(transformUnwrapped, test::helpers::expectedIntValue, frt::unwrapped);
       return res.is_right();
     }();
 
@@ -117,7 +117,7 @@ TEST_CASE("transform_right partial application constexpr", "[algorithm][transfor
     constexpr auto valid = [transformUnwrapped] {
       const Either right{frt::in_place_right, test::helpers::makeExpectedVector()};
       const auto res =
-          right | frt::transform_right(transformUnwrapped, test::helpers::expectedIntValue, frt::unwrapped);
+          right | frt::algorithm::transform_right(transformUnwrapped, test::helpers::expectedIntValue, frt::unwrapped);
       return res.right() == makeExpectedTransformedValue();
     }();
 
@@ -132,7 +132,7 @@ TEST_CASE("transform_right partial application constexpr", "[algorithm][transfor
         v.clear();
         return true;
       };
-      [[maybe_unused]] const auto res = either | frt::transform_right(fn);
+      [[maybe_unused]] const auto res = either | frt::algorithm::transform_right(fn);
       return either.right().empty();
     }();
 
@@ -144,7 +144,7 @@ TEST_CASE("transform_right partial application constexpr", "[algorithm][transfor
     constexpr auto valid = [] {
       const Either either{frt::in_place_right, test::helpers::makeExpectedVector()};
       const auto fn = [](const std::vector<int> &v) -> bool { return v == test::helpers::makeExpectedVector(); };
-      const auto res = either | frt::transform_right(fn);
+      const auto res = either | frt::algorithm::transform_right(fn);
       return res.right();
     }();
 
@@ -156,7 +156,7 @@ TEST_CASE("transform_right partial application constexpr", "[algorithm][transfor
     constexpr auto valid = [] {
       Either either{frt::in_place_right, test::helpers::makeExpectedVector()};
       const auto fn = [](std::vector<int> &&v) -> std::vector<int> { return std::move(v); };
-      const auto res = std::move(either) | frt::transform_right(fn);
+      const auto res = std::move(either) | frt::algorithm::transform_right(fn);
       return res.right() == test::helpers::makeExpectedVector();
     }();
 
@@ -167,7 +167,7 @@ TEST_CASE("transform_right partial application constexpr", "[algorithm][transfor
   {
     constexpr auto valid = [transform] {
       const Either left{frt::in_place_left, test::helpers::makeExpectedString()};
-      const auto res = left | frt::transform_right(transform);
+      const auto res = left | frt::algorithm::transform_right(transform);
       return res.is_left();
     }();
 
@@ -178,7 +178,7 @@ TEST_CASE("transform_right partial application constexpr", "[algorithm][transfor
   {
     constexpr auto valid = [transform] {
       const Either left{frt::in_place_left, test::helpers::makeExpectedString()};
-      const auto res = left | frt::transform_right(transform);
+      const auto res = left | frt::algorithm::transform_right(transform);
       return res.left() == test::helpers::makeExpectedString();
     }();
 
@@ -189,7 +189,7 @@ TEST_CASE("transform_right partial application constexpr", "[algorithm][transfor
   {
     constexpr auto valid = [transformToVoid] {
       const Either left{frt::in_place_left, test::helpers::makeExpectedString()};
-      const auto res = left | frt::transform_right(transformToVoid);
+      const auto res = left | frt::algorithm::transform_right(transformToVoid);
       return res.is_left();
     }();
 
@@ -200,7 +200,7 @@ TEST_CASE("transform_right partial application constexpr", "[algorithm][transfor
   {
     constexpr auto valid = [transformExtra] {
       const Either left{frt::in_place_left, test::helpers::makeExpectedString()};
-      const auto res = left | frt::transform_right(transformExtra, test::helpers::expectedIntValue);
+      const auto res = left | frt::algorithm::transform_right(transformExtra, test::helpers::expectedIntValue);
       return res.is_left();
     }();
 
@@ -211,7 +211,7 @@ TEST_CASE("transform_right partial application constexpr", "[algorithm][transfor
   {
     constexpr auto valid = [transformExtra] {
       const Either left{frt::in_place_left, test::helpers::makeExpectedString()};
-      const auto res = left | frt::transform_right(transformExtra, test::helpers::expectedIntValue);
+      const auto res = left | frt::algorithm::transform_right(transformExtra, test::helpers::expectedIntValue);
       return res.left() == test::helpers::makeExpectedString();
     }();
 
@@ -222,7 +222,8 @@ TEST_CASE("transform_right partial application constexpr", "[algorithm][transfor
   {
     constexpr auto valid = [transformUnwrapped] {
       const Either left{frt::in_place_left, test::helpers::makeExpectedString()};
-      const auto res = left | frt::transform_right(transformUnwrapped, test::helpers::expectedIntValue, frt::unwrapped);
+      const auto res =
+          left | frt::algorithm::transform_right(transformUnwrapped, test::helpers::expectedIntValue, frt::unwrapped);
       return res.is_left();
     }();
 
@@ -233,7 +234,8 @@ TEST_CASE("transform_right partial application constexpr", "[algorithm][transfor
   {
     constexpr auto valid = [transformUnwrapped] {
       const Either left{frt::in_place_left, test::helpers::makeExpectedString()};
-      const auto res = left | frt::transform_right(transformUnwrapped, test::helpers::expectedIntValue, frt::unwrapped);
+      const auto res =
+          left | frt::algorithm::transform_right(transformUnwrapped, test::helpers::expectedIntValue, frt::unwrapped);
       return res.left() == test::helpers::makeExpectedString();
     }();
 
@@ -252,7 +254,7 @@ TEST_CASE("transform_right partial application (void right) constexpr", "[algori
   {
     constexpr auto valid = [transformVoidRight] {
       const EitherVoidRight right{frt::in_place_right};
-      const auto res = right | frt::transform_right(transformVoidRight);
+      const auto res = right | frt::algorithm::transform_right(transformVoidRight);
       return res.is_right();
     }();
 
@@ -263,7 +265,7 @@ TEST_CASE("transform_right partial application (void right) constexpr", "[algori
   {
     constexpr auto valid = [transformVoidRight] {
       const EitherVoidRight right{frt::in_place_right};
-      const auto res = right | frt::transform_right(transformVoidRight);
+      const auto res = right | frt::algorithm::transform_right(transformVoidRight);
       return res.right() == makeExpectedTransformedValue();
     }();
 
@@ -274,7 +276,7 @@ TEST_CASE("transform_right partial application (void right) constexpr", "[algori
   {
     constexpr auto valid = [transformVoidToVoid] {
       const EitherVoidRight right{frt::in_place_right};
-      const auto res = right | frt::transform_right(transformVoidToVoid);
+      const auto res = right | frt::algorithm::transform_right(transformVoidToVoid);
       return res.is_right();
     }();
 
@@ -285,7 +287,7 @@ TEST_CASE("transform_right partial application (void right) constexpr", "[algori
   {
     constexpr auto valid = [transformVoidExtra] {
       const EitherVoidRight right{frt::in_place_right};
-      const auto res = right | frt::transform_right(transformVoidExtra, test::helpers::expectedIntValue);
+      const auto res = right | frt::algorithm::transform_right(transformVoidExtra, test::helpers::expectedIntValue);
       return res.is_right();
     }();
 
@@ -296,7 +298,7 @@ TEST_CASE("transform_right partial application (void right) constexpr", "[algori
   {
     constexpr auto valid = [transformVoidExtra] {
       const EitherVoidRight right{frt::in_place_right};
-      const auto res = right | frt::transform_right(transformVoidExtra, test::helpers::expectedIntValue);
+      const auto res = right | frt::algorithm::transform_right(transformVoidExtra, test::helpers::expectedIntValue);
       return res.right() == makeExpectedTransformedValue();
     }();
 
@@ -307,7 +309,8 @@ TEST_CASE("transform_right partial application (void right) constexpr", "[algori
   {
     constexpr auto valid = [transformVoidToVoidExtra] {
       const EitherVoidRight right{frt::in_place_right};
-      const auto res = right | frt::transform_right(transformVoidToVoidExtra, test::helpers::expectedIntValue);
+      const auto res =
+          right | frt::algorithm::transform_right(transformVoidToVoidExtra, test::helpers::expectedIntValue);
       return res.is_right();
     }();
 
@@ -318,7 +321,7 @@ TEST_CASE("transform_right partial application (void right) constexpr", "[algori
   {
     constexpr auto valid = [transformVoidRight] {
       const EitherVoidRight left{frt::in_place_left, test::helpers::makeExpectedString()};
-      const auto res = left | frt::transform_right(transformVoidRight);
+      const auto res = left | frt::algorithm::transform_right(transformVoidRight);
       return res.is_left();
     }();
 
@@ -329,7 +332,7 @@ TEST_CASE("transform_right partial application (void right) constexpr", "[algori
   {
     constexpr auto valid = [transformVoidRight] {
       const EitherVoidRight left{frt::in_place_left, test::helpers::makeExpectedString()};
-      const auto res = left | frt::transform_right(transformVoidRight);
+      const auto res = left | frt::algorithm::transform_right(transformVoidRight);
       return res.left() == test::helpers::makeExpectedString();
     }();
 
@@ -340,7 +343,7 @@ TEST_CASE("transform_right partial application (void right) constexpr", "[algori
   {
     constexpr auto valid = [transformVoidToVoid] {
       const EitherVoidRight left{frt::in_place_left, test::helpers::makeExpectedString()};
-      const auto res = left | frt::transform_right(transformVoidToVoid);
+      const auto res = left | frt::algorithm::transform_right(transformVoidToVoid);
       return res.is_left();
     }();
 
@@ -351,7 +354,7 @@ TEST_CASE("transform_right partial application (void right) constexpr", "[algori
   {
     constexpr auto valid = [transformVoidExtra] {
       const EitherVoidRight left{frt::in_place_left, test::helpers::makeExpectedString()};
-      const auto res = left | frt::transform_right(transformVoidExtra, test::helpers::expectedIntValue);
+      const auto res = left | frt::algorithm::transform_right(transformVoidExtra, test::helpers::expectedIntValue);
       return res.is_left();
     }();
 
@@ -362,7 +365,7 @@ TEST_CASE("transform_right partial application (void right) constexpr", "[algori
   {
     constexpr auto valid = [transformVoidExtra] {
       const EitherVoidRight left{frt::in_place_left, test::helpers::makeExpectedString()};
-      const auto res = left | frt::transform_right(transformVoidExtra, test::helpers::expectedIntValue);
+      const auto res = left | frt::algorithm::transform_right(transformVoidExtra, test::helpers::expectedIntValue);
       return res.left() == test::helpers::makeExpectedString();
     }();
 
@@ -380,7 +383,7 @@ TEST_CASE("transform_right partial application (void left) constexpr", "[algorit
   {
     constexpr auto valid = [transformVoidLeft] {
       const EitherVoidLeft right{frt::in_place_right, test::helpers::makeExpectedVector()};
-      const auto res = right | frt::transform_right(transformVoidLeft);
+      const auto res = right | frt::algorithm::transform_right(transformVoidLeft);
       return res.is_right();
     }();
 
@@ -391,7 +394,7 @@ TEST_CASE("transform_right partial application (void left) constexpr", "[algorit
   {
     constexpr auto valid = [transformVoidLeft] {
       const EitherVoidLeft right{frt::in_place_right, test::helpers::makeExpectedVector()};
-      const auto res = right | frt::transform_right(transformVoidLeft);
+      const auto res = right | frt::algorithm::transform_right(transformVoidLeft);
       return res.right() == makeExpectedTransformedValue();
     }();
 
@@ -402,7 +405,7 @@ TEST_CASE("transform_right partial application (void left) constexpr", "[algorit
   {
     constexpr auto valid = [transformVoidLeft] {
       const EitherVoidLeft left{frt::in_place_left};
-      const auto res = left | frt::transform_right(transformVoidLeft);
+      const auto res = left | frt::algorithm::transform_right(transformVoidLeft);
       return res.is_left();
     }();
 
@@ -413,7 +416,7 @@ TEST_CASE("transform_right partial application (void left) constexpr", "[algorit
   {
     constexpr auto valid = [transformVoidVoidToNonVoid] {
       const EitherVoidVoid voidVoidRight{frt::in_place_right};
-      const auto res = voidVoidRight | frt::transform_right(transformVoidVoidToNonVoid);
+      const auto res = voidVoidRight | frt::algorithm::transform_right(transformVoidVoidToNonVoid);
       return res.is_right();
     }();
 
@@ -424,7 +427,7 @@ TEST_CASE("transform_right partial application (void left) constexpr", "[algorit
   {
     constexpr auto valid = [transformVoidVoidToNonVoid] {
       const EitherVoidVoid voidVoidRight{frt::in_place_right};
-      const auto res = voidVoidRight | frt::transform_right(transformVoidVoidToNonVoid);
+      const auto res = voidVoidRight | frt::algorithm::transform_right(transformVoidVoidToNonVoid);
       return res.right() == makeExpectedTransformedValue();
     }();
 
@@ -435,7 +438,7 @@ TEST_CASE("transform_right partial application (void left) constexpr", "[algorit
   {
     constexpr auto valid = [transformVoidVoidToVoid] {
       const EitherVoidVoid voidVoidRight{frt::in_place_right};
-      const auto res = voidVoidRight | frt::transform_right(transformVoidVoidToVoid);
+      const auto res = voidVoidRight | frt::algorithm::transform_right(transformVoidVoidToVoid);
       return res.is_right();
     }();
 
@@ -446,7 +449,7 @@ TEST_CASE("transform_right partial application (void left) constexpr", "[algorit
   {
     constexpr auto valid = [transformVoidVoidToNonVoid] {
       const EitherVoidVoid voidVoidLeft{frt::in_place_left};
-      const auto res = voidVoidLeft | frt::transform_right(transformVoidVoidToNonVoid);
+      const auto res = voidVoidLeft | frt::algorithm::transform_right(transformVoidVoidToNonVoid);
       return res.is_left();
     }();
 
@@ -470,8 +473,9 @@ TEST_CASE("transform_right partial application closure semantics and efficiency 
   {
     constexpr auto valid = [] {
       const Result start{frt::in_place_right, initialValue};
-      const auto res = start | frt::transform_right([](int v, int d) -> int { return v + d; }, step1Delta) |
-                       frt::transform_right([](int m, int v) -> int { return v * m; }, step2Multiplier, frt::unwrapped);
+      const auto res =
+          start | frt::algorithm::transform_right([](int v, int d) -> int { return v + d; }, step1Delta) |
+          frt::algorithm::transform_right([](int m, int v) -> int { return v * m; }, step2Multiplier, frt::unwrapped);
 
       constexpr int expected = (initialValue + step1Delta) * step2Multiplier;
       return res.right() == expected;
@@ -485,8 +489,8 @@ TEST_CASE("transform_right partial application closure semantics and efficiency 
     constexpr auto valid = [] {
       int secondCallCount = 0;
       const Result start{frt::in_place_left, test::helpers::makeExpectedString()};
-      [[maybe_unused]] const auto res = start | frt::transform_right([](int v) -> int { return v + 1; }) |
-                                        frt::transform_right([&secondCallCount](int v) -> int {
+      [[maybe_unused]] const auto res = start | frt::algorithm::transform_right([](int v) -> int { return v + 1; }) |
+                                        frt::algorithm::transform_right([&secondCallCount](int v) -> int {
                                           ++secondCallCount;
                                           return v;
                                         });
@@ -503,7 +507,7 @@ TEST_CASE("transform_right partial application closure semantics and efficiency 
       int accumulator = initialValue;
       const Result rObj{frt::in_place_right, step1Delta};
 
-      [[maybe_unused]] const auto res = rObj | frt::transform_right(
+      [[maybe_unused]] const auto res = rObj | frt::algorithm::transform_right(
                                                    [](int v, int &acc) -> int {
                                                      acc += v;
                                                      return acc;
@@ -525,8 +529,9 @@ TEST_CASE("transform_right partial application closure semantics and efficiency 
       const CopyMoveTracker tracker{initialValue, &copies, &moves};
       const Result rObj{frt::in_place_right, step1Delta};
 
-      const auto res = rObj | frt::transform_right([](int v, const CopyMoveTracker &t) -> int { return v + t.value; },
-                                                   std::cref(tracker));
+      const auto res =
+          rObj | frt::algorithm::transform_right([](int v, const CopyMoveTracker &t) -> int { return v + t.value; },
+                                                 std::cref(tracker));
 
       return copies == 0 && moves == 0 && res.right() == initialValue + step1Delta;
     }();
@@ -537,7 +542,7 @@ TEST_CASE("transform_right partial application closure semantics and efficiency 
   SECTION("lvalue closure can be reused multiple times without moving captured args")
   {
     constexpr auto valid = [] {
-      const auto closure = frt::transform_right(
+      const auto closure = frt::algorithm::transform_right(
           [](int v, const std::string &suffix) -> std::string {
             return std::string(static_cast<std::size_t>(v), 'a') + suffix;
           },
@@ -564,8 +569,9 @@ TEST_CASE("transform_right partial application closure semantics and efficiency 
     constexpr auto valid = [] {
       int copies = 0;
       int moves = 0;
-      const auto closure = frt::transform_right([](int v, const CopyMoveTracker &t) -> int { return v + t.value; },
-                                                CopyMoveTracker{initialValue, &copies, &moves});
+      const auto closure =
+          frt::algorithm::transform_right([](int v, const CopyMoveTracker &t) -> int { return v + t.value; },
+                                          CopyMoveTracker{initialValue, &copies, &moves});
 
       const int copiesAfterCapture = copies;
       const Result rObj{frt::in_place_right, step1Delta};
@@ -585,8 +591,8 @@ TEST_CASE("transform_right partial application closure semantics and efficiency 
       const Result rObj{frt::in_place_right, step1Delta};
 
       [[maybe_unused]] const auto res =
-          rObj | frt::transform_right([](int v, CopyMoveTracker &&t) -> int { return v + t.value; },
-                                      CopyMoveTracker{initialValue, &copies, &moves});
+          rObj | frt::algorithm::transform_right([](int v, CopyMoveTracker &&t) -> int { return v + t.value; },
+                                                 CopyMoveTracker{initialValue, &copies, &moves});
 
       return copies == 0;
     }();
@@ -598,8 +604,8 @@ TEST_CASE("transform_right partial application closure semantics and efficiency 
   {
     constexpr auto valid = [] {
       const Result rObj{frt::in_place_right, initialValue};
-      auto closure = frt::transform_right([](int v, std::unique_ptr<int> ptr) -> int { return v + *ptr; },
-                                          std::make_unique<int>(step1Delta));
+      auto closure = frt::algorithm::transform_right([](int v, std::unique_ptr<int> ptr) -> int { return v + *ptr; },
+                                                     std::make_unique<int>(step1Delta));
 
       const auto res = rObj | std::move(closure);
       constexpr int expected = initialValue + step1Delta;
@@ -613,7 +619,7 @@ TEST_CASE("transform_right partial application closure semantics and efficiency 
   {
     constexpr auto valid = [] {
       const Result rObj{frt::in_place_right, initialValue};
-      const auto res = rObj | frt::transform_right(MoveOnlyCallable{step2Multiplier});
+      const auto res = rObj | frt::algorithm::transform_right(MoveOnlyCallable{step2Multiplier});
 
       constexpr int expected = initialValue * step2Multiplier;
       return res.right() == expected;
@@ -626,8 +632,8 @@ TEST_CASE("transform_right partial application closure semantics and efficiency 
   {
     constexpr auto valid = [] {
       const Result rObj{frt::in_place_right, initialValue};
-      auto closure = frt::transform_right(QualAwareCallable{});
-      const auto constClosure = frt::transform_right(QualAwareCallable{});
+      auto closure = frt::algorithm::transform_right(QualAwareCallable{});
+      const auto constClosure = frt::algorithm::transform_right(QualAwareCallable{});
 
       const auto resLval = rObj | closure;
       const auto resConstLval = rObj | constClosure;
@@ -646,8 +652,8 @@ TEST_CASE("transform_right partial application closure semantics and efficiency 
     constexpr auto valid = [] {
       const Result rObj{frt::in_place_right, initialValue};
       const auto res =
-          rObj | frt::transform_right(freeFunctionAdd, step1Delta) |
-          frt::transform_right(
+          rObj | frt::algorithm::transform_right(freeFunctionAdd, step1Delta) |
+          frt::algorithm::transform_right(
               [](int v, const char *str) -> int { return v + static_cast<int>(std::char_traits<char>::length(str)); },
               "abc");
 

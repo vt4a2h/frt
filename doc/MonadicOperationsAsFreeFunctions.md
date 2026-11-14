@@ -7,7 +7,7 @@ In addition to member functions on [`frt::either`](Either.md), [`frt::expected`]
 - `frt::algorithm::and_then_left`
 - `frt::algorithm::and_then_right`
 - `frt::algorithm::transform_left`
-- `frt::transform_right`
+- `frt::algorithm::transform_right`
 
 These operations work uniformly with any result type that models a two-alternative sum type via `frt::meta_either` and
 `frt::is_result_type`. By convention:
@@ -17,12 +17,12 @@ These operations work uniformly with any result type that models a two-alternati
 - The **right** alternative represents the second alternative of `either`, the expected value `T` of `expected`, or the
   contained value `T` of `optional`.
 
-| Free function          | Callable signature  | Description                                                                                                        |
-|------------------------|---------------------|--------------------------------------------------------------------------------------------------------------------|
+| Free function                     | Callable signature  | Description                                                                                                        |
+|-----------------------------------|---------------------|--------------------------------------------------------------------------------------------------------------------|
 | `frt::algorithm::and_then_left`   | `L -> Result<U, R>` | Chains a computation returning a result type on the left alternative (like `or_else` on `expected`/`optional`).    |
 | `frt::algorithm::and_then_right`  | `R -> Result<L, U>` | Chains a computation returning a result type on the right alternative (like `and_then` on `expected`/`optional`).  |
 | `frt::algorithm::transform_left`  | `L -> U`            | Maps the left alternative to a new value wrapped in the left branch (like `transform_error` on `expected`).        |
-| `frt::transform_right` | `R -> U`            | Maps the right alternative to a new value wrapped in the right branch (like `transform` on `expected`/`optional`). |
+| `frt::algorithm::transform_right` | `R -> U`            | Maps the right alternative to a new value wrapped in the right branch (like `transform` on `expected`/`optional`). |
 
 All free functions support the same [Inline Partial Application](MonadicOperations.md#inline-partial-application)
 capabilities as member functions, including trailing argument packs and the `frt::unwrapped` positional placeholder.
@@ -85,7 +85,7 @@ auto componentOrError = frt::algorithm::and_then_right(
     &createComponent,
     path, frt::unwrapped, metaData);
 
-auto widgetOrError = frt::transform_right(
+auto widgetOrError = frt::algorithm::transform_right(
     std::move(componentOrError),
     &toWidget,
     metaData);
@@ -106,7 +106,7 @@ MetaData metaData{/* ... */};
 
 auto finalResult = extractContext()
     | frt::algorithm::and_then_right(&createComponent, path, frt::unwrapped, metaData)
-    | frt::transform_right(&toWidget, metaData)
+    | frt::algorithm::transform_right(&toWidget, metaData)
     | frt::algorithm::and_then_left(&fallbackWidget);
 ```
 
@@ -404,7 +404,7 @@ Component buildComponent(const Path&, Context);
 Path path{/* ... */};
 
 std::optional<Component> component = findActiveContext()
-    | frt::transform_right(&buildComponent, path, frt::unwrapped);
+    | frt::algorithm::transform_right(&buildComponent, path, frt::unwrapped);
 ```
 
 ---
