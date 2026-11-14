@@ -68,11 +68,11 @@ You can find more information in the [Monadic Operations](doc/MonadicOperations.
 All monadic operations can also be used as free functions and support partial application syntax. For example:
 
 ```c++
-auto componentResult = frt::and_then(extractContext(), &createComponent, path, metaData);
+auto componentResult = frt::algorithm::and_then_right(extractContext(), &createComponent, path, metaData);
 
 // or
 
-auto anotherComponentResult = extractContext() | frt::and_then(&createComponent, path, metaData);
+auto anotherComponentResult = extractContext() | frt::algorithm::and_then_right(&createComponent, path, metaData);
 ```
 
 You can find more information in the [Monadic Operations as Free Functions](doc/MonadicOperationsAsFreeFunctions.md)
@@ -82,8 +82,8 @@ documentation.
 
 ### Traverse
 
-The `frt::traverse` algorithm is handy when you need to convert a collection of results into a result of a collection
-and apply an extra transformation. For example:
+The `frt::algorithm::traverse` algorithm is handy when you need to convert a collection of results into a result of a
+collection and apply an extra transformation. For example:
 
 ```c++
 struct Widget {};
@@ -93,10 +93,10 @@ std::vector<frt::expected<Component, Error>> components = /* create components *
 auto asWidget = [] (const frt::expected<Component, Error> &component) -> frt::expected<Widget, Error> {
     return /* create a widget from the component */;
 };
-frt::expected<std::vector<Widget>, Error> result = frt::traverse(components, asWidget);
+frt::expected<std::vector<Widget>, Error> result = frt::algorithm::traverse(components, asWidget);
 
 // This form is also supported
-auto anotherResult = components | frt::traverse(asWidget);
+auto anotherResult = components | frt::algorithm::traverse(asWidget);
 ```
 
 If the `asWidget` function returns an unexpected result, then the `result` object will contain it.
@@ -105,15 +105,16 @@ You can find more information about the traverse algorithm in the [Traverse](doc
 
 ### Sequence
 
-The `frt::sequence` algorithm is handy when you need to convert a collection of results into a result of a collection
-without applying any extra transformations. In fact, this is `frt::traverse` with `std::identity`. For example:
+The `frt::algorithm::sequence` algorithm is handy when you need to convert a collection of results into a result of a
+collection without applying any extra transformations. In fact, this is `frt::algorithm::traverse` with `std::identity`.
+For example:
 
 ```c++
 std::vector<frt::expected<Component, Error>> components = /* create components */;
-frt::expected<std::vector<Component>, Error> result = frt::sequence(components);
+frt::expected<std::vector<Component>, Error> result = frt::algorithm::sequence(components);
 
 // This form is also supported
-auto anotherResult = components | frt::sequence();
+auto anotherResult = components | frt::algorithm::sequence();
 ```
 
 If any of the `components` contains an error, the result will contain the first error as well.
@@ -122,13 +123,13 @@ You can find more information about the sequence algorithm in the [Sequence](doc
 
 ### Match
 
-The `frt::match` implements pattern matching for the result types.
+The `frt::algorithm::match` implements pattern matching for the result types.
 
 ```c++
 const auto componentResult = extractContext()
     .and_then(&createComponent, path, metaData);
 
-frt::match(componentResult, 
+frt::algorithm::match(componentResult, 
     [] (const Component &component) {
         // Do something with the component
         // You can mutate the component in-place if the type is `Component &`
@@ -140,7 +141,7 @@ frt::match(componentResult,
         // You can return something from this function
     });
 
-frt::match(componentResult, [](const auto &value) {
+frt::algorithm::match(componentResult, [](const auto &value) {
     // Do something with the contained value regardless of its type, for example:
     std::println("Value: {}", value);
     
@@ -149,7 +150,7 @@ frt::match(componentResult, [](const auto &value) {
 });
 
 // This form is also supported
-componentResult | frt::match( /* ... */ );
+componentResult | frt::algorithm::match( /* ... */ );
 ```
 
 You can find more information in the [Match](doc/Match.md) documentation.
