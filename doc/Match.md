@@ -153,7 +153,7 @@ Widget toWidget(Component);
 
 // Chain monadic operations and unwrap the final outcome with `| frt::match(...)`
 std::string statusMessage = extractContext()
-    | frt::and_then_right(&createComponent)
+    | frt::algorithm::and_then_right(&createComponent)
     | frt::transform_right(&toWidget)
     | frt::match(
         [](const Error& error)  { return std::format("Failed to build widget: {}", error); },

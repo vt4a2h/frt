@@ -53,7 +53,7 @@ TEST_CASE("and_then_right partial application constexpr", "[algorithm][and_then_
   {
     constexpr auto valid = [transform] {
       const Either right{frt::in_place_right, test::helpers::makeExpectedVector()};
-      const auto res = right | frt::and_then_right(transform);
+      const auto res = right | frt::algorithm::and_then_right(transform);
       return res.is_right();
     }();
 
@@ -64,7 +64,7 @@ TEST_CASE("and_then_right partial application constexpr", "[algorithm][and_then_
   {
     constexpr auto valid = [transform] {
       const Either right{frt::in_place_right, test::helpers::makeExpectedVector()};
-      const auto res = right | frt::and_then_right(transform);
+      const auto res = right | frt::algorithm::and_then_right(transform);
       return res.right() == makeExpectedTransformedValue();
     }();
 
@@ -75,7 +75,7 @@ TEST_CASE("and_then_right partial application constexpr", "[algorithm][and_then_
   {
     constexpr auto valid = [transformToVoid] {
       const Either right{frt::in_place_right, test::helpers::makeExpectedVector()};
-      const auto res = right | frt::and_then_right(transformToVoid);
+      const auto res = right | frt::algorithm::and_then_right(transformToVoid);
       return res.is_right();
     }();
 
@@ -86,7 +86,7 @@ TEST_CASE("and_then_right partial application constexpr", "[algorithm][and_then_
   {
     constexpr auto valid = [transformExtra] {
       const Either right{frt::in_place_right, test::helpers::makeExpectedVector()};
-      const auto res = right | frt::and_then_right(transformExtra, test::helpers::expectedIntValue);
+      const auto res = right | frt::algorithm::and_then_right(transformExtra, test::helpers::expectedIntValue);
       return res.is_right();
     }();
 
@@ -97,7 +97,7 @@ TEST_CASE("and_then_right partial application constexpr", "[algorithm][and_then_
   {
     constexpr auto valid = [transformExtra] {
       const Either right{frt::in_place_right, test::helpers::makeExpectedVector()};
-      const auto res = right | frt::and_then_right(transformExtra, test::helpers::expectedIntValue);
+      const auto res = right | frt::algorithm::and_then_right(transformExtra, test::helpers::expectedIntValue);
       return res.right() == makeExpectedTransformedValue();
     }();
 
@@ -108,7 +108,8 @@ TEST_CASE("and_then_right partial application constexpr", "[algorithm][and_then_
   {
     constexpr auto valid = [transformUnwrapped] {
       const Either right{frt::in_place_right, test::helpers::makeExpectedVector()};
-      const auto res = right | frt::and_then_right(transformUnwrapped, test::helpers::expectedIntValue, frt::unwrapped);
+      const auto res =
+          right | frt::algorithm::and_then_right(transformUnwrapped, test::helpers::expectedIntValue, frt::unwrapped);
       return res.is_right();
     }();
 
@@ -119,7 +120,8 @@ TEST_CASE("and_then_right partial application constexpr", "[algorithm][and_then_
   {
     constexpr auto valid = [transformUnwrapped] {
       const Either right{frt::in_place_right, test::helpers::makeExpectedVector()};
-      const auto res = right | frt::and_then_right(transformUnwrapped, test::helpers::expectedIntValue, frt::unwrapped);
+      const auto res =
+          right | frt::algorithm::and_then_right(transformUnwrapped, test::helpers::expectedIntValue, frt::unwrapped);
       return res.right() == makeExpectedTransformedValue();
     }();
 
@@ -134,7 +136,7 @@ TEST_CASE("and_then_right partial application constexpr", "[algorithm][and_then_
         v.clear();
         return {frt::in_place_right, true};
       };
-      [[maybe_unused]] const auto res = either | frt::and_then_right(fn);
+      [[maybe_unused]] const auto res = either | frt::algorithm::and_then_right(fn);
       return either.right().empty();
     }();
 
@@ -148,7 +150,7 @@ TEST_CASE("and_then_right partial application constexpr", "[algorithm][and_then_
       const auto fn = [](const std::vector<int> &v) -> frt::either<std::string, bool> {
         return {frt::in_place_right, v == test::helpers::makeExpectedVector()};
       };
-      const auto res = either | frt::and_then_right(fn);
+      const auto res = either | frt::algorithm::and_then_right(fn);
       return res.right();
     }();
 
@@ -162,7 +164,7 @@ TEST_CASE("and_then_right partial application constexpr", "[algorithm][and_then_
       const auto fn = [](std::vector<int> &&v) -> frt::either<std::string, std::vector<int>> {
         return {frt::in_place_right, std::move(v)};
       };
-      const auto res = std::move(either) | frt::and_then_right(fn);
+      const auto res = std::move(either) | frt::algorithm::and_then_right(fn);
       return res.right() == test::helpers::makeExpectedVector();
     }();
 
@@ -173,7 +175,7 @@ TEST_CASE("and_then_right partial application constexpr", "[algorithm][and_then_
   {
     constexpr auto valid = [transform] {
       const Either left{frt::in_place_left, test::helpers::makeExpectedString()};
-      const auto res = left | frt::and_then_right(transform);
+      const auto res = left | frt::algorithm::and_then_right(transform);
       return res.is_left();
     }();
 
@@ -184,7 +186,7 @@ TEST_CASE("and_then_right partial application constexpr", "[algorithm][and_then_
   {
     constexpr auto valid = [transform] {
       const Either left{frt::in_place_left, test::helpers::makeExpectedString()};
-      const auto res = left | frt::and_then_right(transform);
+      const auto res = left | frt::algorithm::and_then_right(transform);
       return res.left() == test::helpers::makeExpectedString();
     }();
 
@@ -195,7 +197,7 @@ TEST_CASE("and_then_right partial application constexpr", "[algorithm][and_then_
   {
     constexpr auto valid = [transformToVoid] {
       const Either left{frt::in_place_left, test::helpers::makeExpectedString()};
-      const auto res = left | frt::and_then_right(transformToVoid);
+      const auto res = left | frt::algorithm::and_then_right(transformToVoid);
       return res.is_left();
     }();
 
@@ -206,7 +208,7 @@ TEST_CASE("and_then_right partial application constexpr", "[algorithm][and_then_
   {
     constexpr auto valid = [transformExtra] {
       const Either left{frt::in_place_left, test::helpers::makeExpectedString()};
-      const auto res = left | frt::and_then_right(transformExtra, test::helpers::expectedIntValue);
+      const auto res = left | frt::algorithm::and_then_right(transformExtra, test::helpers::expectedIntValue);
       return res.is_left();
     }();
 
@@ -217,7 +219,7 @@ TEST_CASE("and_then_right partial application constexpr", "[algorithm][and_then_
   {
     constexpr auto valid = [transformExtra] {
       const Either left{frt::in_place_left, test::helpers::makeExpectedString()};
-      const auto res = left | frt::and_then_right(transformExtra, test::helpers::expectedIntValue);
+      const auto res = left | frt::algorithm::and_then_right(transformExtra, test::helpers::expectedIntValue);
       return res.left() == test::helpers::makeExpectedString();
     }();
 
@@ -228,7 +230,8 @@ TEST_CASE("and_then_right partial application constexpr", "[algorithm][and_then_
   {
     constexpr auto valid = [transformUnwrapped] {
       const Either left{frt::in_place_left, test::helpers::makeExpectedString()};
-      const auto res = left | frt::and_then_right(transformUnwrapped, test::helpers::expectedIntValue, frt::unwrapped);
+      const auto res =
+          left | frt::algorithm::and_then_right(transformUnwrapped, test::helpers::expectedIntValue, frt::unwrapped);
       return res.is_left();
     }();
 
@@ -239,7 +242,8 @@ TEST_CASE("and_then_right partial application constexpr", "[algorithm][and_then_
   {
     constexpr auto valid = [transformUnwrapped] {
       const Either left{frt::in_place_left, test::helpers::makeExpectedString()};
-      const auto res = left | frt::and_then_right(transformUnwrapped, test::helpers::expectedIntValue, frt::unwrapped);
+      const auto res =
+          left | frt::algorithm::and_then_right(transformUnwrapped, test::helpers::expectedIntValue, frt::unwrapped);
       return res.left() == test::helpers::makeExpectedString();
     }();
 
@@ -262,7 +266,7 @@ TEST_CASE("and_then_right partial application (void right) constexpr", "[algorit
   {
     constexpr auto valid = [transformVoidRight] {
       const EitherVoidRight right{frt::in_place_right};
-      const auto res = right | frt::and_then_right(transformVoidRight);
+      const auto res = right | frt::algorithm::and_then_right(transformVoidRight);
       return res.is_right();
     }();
 
@@ -273,7 +277,7 @@ TEST_CASE("and_then_right partial application (void right) constexpr", "[algorit
   {
     constexpr auto valid = [transformVoidRight] {
       const EitherVoidRight right{frt::in_place_right};
-      const auto res = right | frt::and_then_right(transformVoidRight);
+      const auto res = right | frt::algorithm::and_then_right(transformVoidRight);
       return res.right() == makeExpectedTransformedValue();
     }();
 
@@ -284,7 +288,7 @@ TEST_CASE("and_then_right partial application (void right) constexpr", "[algorit
   {
     constexpr auto valid = [transformVoidToVoid] {
       const EitherVoidRight right{frt::in_place_right};
-      const auto res = right | frt::and_then_right(transformVoidToVoid);
+      const auto res = right | frt::algorithm::and_then_right(transformVoidToVoid);
       return res.is_right();
     }();
 
@@ -295,7 +299,7 @@ TEST_CASE("and_then_right partial application (void right) constexpr", "[algorit
   {
     constexpr auto valid = [transformVoidExtra] {
       const EitherVoidRight right{frt::in_place_right};
-      const auto res = right | frt::and_then_right(transformVoidExtra, test::helpers::expectedIntValue);
+      const auto res = right | frt::algorithm::and_then_right(transformVoidExtra, test::helpers::expectedIntValue);
       return res.is_right();
     }();
 
@@ -306,7 +310,7 @@ TEST_CASE("and_then_right partial application (void right) constexpr", "[algorit
   {
     constexpr auto valid = [transformVoidExtra] {
       const EitherVoidRight right{frt::in_place_right};
-      const auto res = right | frt::and_then_right(transformVoidExtra, test::helpers::expectedIntValue);
+      const auto res = right | frt::algorithm::and_then_right(transformVoidExtra, test::helpers::expectedIntValue);
       return res.right() == makeExpectedTransformedValue();
     }();
 
@@ -317,7 +321,8 @@ TEST_CASE("and_then_right partial application (void right) constexpr", "[algorit
   {
     constexpr auto valid = [transformVoidToVoidExtra] {
       const EitherVoidRight right{frt::in_place_right};
-      const auto res = right | frt::and_then_right(transformVoidToVoidExtra, test::helpers::expectedIntValue);
+      const auto res =
+          right | frt::algorithm::and_then_right(transformVoidToVoidExtra, test::helpers::expectedIntValue);
       return res.is_right();
     }();
 
@@ -328,7 +333,7 @@ TEST_CASE("and_then_right partial application (void right) constexpr", "[algorit
   {
     constexpr auto valid = [transformVoidRight] {
       const EitherVoidRight left{frt::in_place_left, test::helpers::makeExpectedString()};
-      const auto res = left | frt::and_then_right(transformVoidRight);
+      const auto res = left | frt::algorithm::and_then_right(transformVoidRight);
       return res.is_left();
     }();
 
@@ -339,7 +344,7 @@ TEST_CASE("and_then_right partial application (void right) constexpr", "[algorit
   {
     constexpr auto valid = [transformVoidRight] {
       const EitherVoidRight left{frt::in_place_left, test::helpers::makeExpectedString()};
-      const auto res = left | frt::and_then_right(transformVoidRight);
+      const auto res = left | frt::algorithm::and_then_right(transformVoidRight);
       return res.left() == test::helpers::makeExpectedString();
     }();
 
@@ -350,7 +355,7 @@ TEST_CASE("and_then_right partial application (void right) constexpr", "[algorit
   {
     constexpr auto valid = [transformVoidToVoid] {
       const EitherVoidRight left{frt::in_place_left, test::helpers::makeExpectedString()};
-      const auto res = left | frt::and_then_right(transformVoidToVoid);
+      const auto res = left | frt::algorithm::and_then_right(transformVoidToVoid);
       return res.is_left();
     }();
 
@@ -361,7 +366,7 @@ TEST_CASE("and_then_right partial application (void right) constexpr", "[algorit
   {
     constexpr auto valid = [transformVoidExtra] {
       const EitherVoidRight left{frt::in_place_left, test::helpers::makeExpectedString()};
-      const auto res = left | frt::and_then_right(transformVoidExtra, test::helpers::expectedIntValue);
+      const auto res = left | frt::algorithm::and_then_right(transformVoidExtra, test::helpers::expectedIntValue);
       return res.is_left();
     }();
 
@@ -372,7 +377,7 @@ TEST_CASE("and_then_right partial application (void right) constexpr", "[algorit
   {
     constexpr auto valid = [transformVoidExtra] {
       const EitherVoidRight left{frt::in_place_left, test::helpers::makeExpectedString()};
-      const auto res = left | frt::and_then_right(transformVoidExtra, test::helpers::expectedIntValue);
+      const auto res = left | frt::algorithm::and_then_right(transformVoidExtra, test::helpers::expectedIntValue);
       return res.left() == test::helpers::makeExpectedString();
     }();
 
@@ -394,7 +399,7 @@ TEST_CASE("and_then_right partial application (void left) constexpr", "[algorith
   {
     constexpr auto valid = [transformVoidLeft] {
       const EitherVoidLeft right{frt::in_place_right, test::helpers::makeExpectedVector()};
-      const auto res = right | frt::and_then_right(transformVoidLeft);
+      const auto res = right | frt::algorithm::and_then_right(transformVoidLeft);
       return res.is_right();
     }();
 
@@ -405,7 +410,7 @@ TEST_CASE("and_then_right partial application (void left) constexpr", "[algorith
   {
     constexpr auto valid = [transformVoidLeft] {
       const EitherVoidLeft right{frt::in_place_right, test::helpers::makeExpectedVector()};
-      const auto res = right | frt::and_then_right(transformVoidLeft);
+      const auto res = right | frt::algorithm::and_then_right(transformVoidLeft);
       return res.right() == makeExpectedTransformedValue();
     }();
 
@@ -416,7 +421,7 @@ TEST_CASE("and_then_right partial application (void left) constexpr", "[algorith
   {
     constexpr auto valid = [transformVoidLeft] {
       const EitherVoidLeft left{frt::in_place_left};
-      const auto res = left | frt::and_then_right(transformVoidLeft);
+      const auto res = left | frt::algorithm::and_then_right(transformVoidLeft);
       return res.is_left();
     }();
 
@@ -427,7 +432,7 @@ TEST_CASE("and_then_right partial application (void left) constexpr", "[algorith
   {
     constexpr auto valid = [transformVoidVoidToNonVoid] {
       const EitherVoidVoid right{frt::in_place_right};
-      const auto res = right | frt::and_then_right(transformVoidVoidToNonVoid);
+      const auto res = right | frt::algorithm::and_then_right(transformVoidVoidToNonVoid);
       return res.is_right();
     }();
 
@@ -438,7 +443,7 @@ TEST_CASE("and_then_right partial application (void left) constexpr", "[algorith
   {
     constexpr auto valid = [transformVoidVoidToNonVoid] {
       const EitherVoidVoid right{frt::in_place_right};
-      const auto res = right | frt::and_then_right(transformVoidVoidToNonVoid);
+      const auto res = right | frt::algorithm::and_then_right(transformVoidVoidToNonVoid);
       return res.right() == makeExpectedTransformedValue();
     }();
 
@@ -449,7 +454,7 @@ TEST_CASE("and_then_right partial application (void left) constexpr", "[algorith
   {
     constexpr auto valid = [transformVoidVoidToVoid] {
       const EitherVoidVoid right{frt::in_place_right};
-      const auto res = right | frt::and_then_right(transformVoidVoidToVoid);
+      const auto res = right | frt::algorithm::and_then_right(transformVoidVoidToVoid);
       return res.is_right();
     }();
 
@@ -460,7 +465,7 @@ TEST_CASE("and_then_right partial application (void left) constexpr", "[algorith
   {
     constexpr auto valid = [transformVoidVoidToNonVoid] {
       const EitherVoidVoid left{frt::in_place_left};
-      const auto res = left | frt::and_then_right(transformVoidVoidToNonVoid);
+      const auto res = left | frt::algorithm::and_then_right(transformVoidVoidToNonVoid);
       return res.is_left();
     }();
 
@@ -485,9 +490,11 @@ TEST_CASE("and_then_right partial application closure semantics and efficiency c
     constexpr auto valid = [] {
       const Result start{frt::in_place_right, initialValue};
       const auto res =
-          start | frt::and_then_right([](int v, int d) -> Result { return {frt::in_place_right, v + d}; }, step1Delta) |
-          frt::and_then_right([](int m, int v) -> Result { return {frt::in_place_right, v * m}; }, step2Multiplier,
-                              frt::unwrapped);
+          start |
+          frt::algorithm::and_then_right([](int v, int d) -> Result { return {frt::in_place_right, v + d}; },
+                                         step1Delta) |
+          frt::algorithm::and_then_right([](int m, int v) -> Result { return {frt::in_place_right, v * m}; },
+                                         step2Multiplier, frt::unwrapped);
 
       constexpr int expected = (initialValue + step1Delta) * step2Multiplier;
       return res.right() == expected;
@@ -501,13 +508,13 @@ TEST_CASE("and_then_right partial application closure semantics and efficiency c
     constexpr auto valid = [] {
       int secondCallCount = 0;
       const Result start{frt::in_place_right, initialValue};
-      [[maybe_unused]] const auto res =
-          start |
-          frt::and_then_right([](int) -> Result { return {frt::in_place_left, test::helpers::makeExpectedString()}; }) |
-          frt::and_then_right([&secondCallCount](int v) -> Result {
-            ++secondCallCount;
-            return {frt::in_place_right, v};
-          });
+      [[maybe_unused]] const auto res = start | frt::algorithm::and_then_right([](int) -> Result {
+                                          return {frt::in_place_left, test::helpers::makeExpectedString()};
+                                        }) |
+                                        frt::algorithm::and_then_right([&secondCallCount](int v) -> Result {
+                                          ++secondCallCount;
+                                          return {frt::in_place_right, v};
+                                        });
 
       return secondCallCount == 0;
     }();
@@ -521,7 +528,7 @@ TEST_CASE("and_then_right partial application closure semantics and efficiency c
       int accumulator = initialValue;
       const Result rObj{frt::in_place_right, step1Delta};
 
-      [[maybe_unused]] const auto res = rObj | frt::and_then_right(
+      [[maybe_unused]] const auto res = rObj | frt::algorithm::and_then_right(
                                                    [](int v, int &acc) -> Result {
                                                      acc += v;
                                                      return {frt::in_place_right, acc};
@@ -544,7 +551,7 @@ TEST_CASE("and_then_right partial application closure semantics and efficiency c
       const Result rObj{frt::in_place_right, step1Delta};
 
       const auto res =
-          rObj | frt::and_then_right(
+          rObj | frt::algorithm::and_then_right(
                      [](int v, const CopyMoveTracker &t) -> Result { return {frt::in_place_right, v + t.value}; },
                      std::cref(tracker));
 
@@ -557,7 +564,7 @@ TEST_CASE("and_then_right partial application closure semantics and efficiency c
   SECTION("lvalue closure can be reused multiple times without moving captured args")
   {
     constexpr auto valid = [] {
-      const auto closure = frt::and_then_right(
+      const auto closure = frt::algorithm::and_then_right(
           [](int v, const std::string &suffix) -> frt::either<int, std::string> {
             return {frt::in_place_right, std::string(static_cast<std::size_t>(v), 'a') + suffix};
           },
@@ -584,7 +591,7 @@ TEST_CASE("and_then_right partial application closure semantics and efficiency c
     constexpr auto valid = [] {
       int copies = 0;
       int moves = 0;
-      const auto closure = frt::and_then_right(
+      const auto closure = frt::algorithm::and_then_right(
           [](int v, const CopyMoveTracker &t) -> Result { return {frt::in_place_right, v + t.value}; },
           CopyMoveTracker{initialValue, &copies, &moves});
 
@@ -606,9 +613,9 @@ TEST_CASE("and_then_right partial application closure semantics and efficiency c
       const Result rObj{frt::in_place_right, step1Delta};
 
       [[maybe_unused]] const auto res =
-          rObj |
-          frt::and_then_right([](int v, CopyMoveTracker &&t) -> Result { return {frt::in_place_right, v + t.value}; },
-                              CopyMoveTracker{initialValue, &copies, &moves});
+          rObj | frt::algorithm::and_then_right(
+                     [](int v, CopyMoveTracker &&t) -> Result { return {frt::in_place_right, v + t.value}; },
+                     CopyMoveTracker{initialValue, &copies, &moves});
 
       return copies == 0;
     }();
@@ -620,9 +627,9 @@ TEST_CASE("and_then_right partial application closure semantics and efficiency c
   {
     constexpr auto valid = [] {
       const Result rObj{frt::in_place_right, initialValue};
-      auto closure =
-          frt::and_then_right([](int v, std::unique_ptr<int> ptr) -> Result { return {frt::in_place_right, v + *ptr}; },
-                              std::make_unique<int>(step1Delta));
+      auto closure = frt::algorithm::and_then_right(
+          [](int v, std::unique_ptr<int> ptr) -> Result { return {frt::in_place_right, v + *ptr}; },
+          std::make_unique<int>(step1Delta));
 
       const auto res = rObj | std::move(closure);
       constexpr int expected = initialValue + step1Delta;
@@ -636,7 +643,7 @@ TEST_CASE("and_then_right partial application closure semantics and efficiency c
   {
     constexpr auto valid = [] {
       const Result rObj{frt::in_place_right, initialValue};
-      const auto res = rObj | frt::and_then_right(MoveOnlyCallable{step2Multiplier});
+      const auto res = rObj | frt::algorithm::and_then_right(MoveOnlyCallable{step2Multiplier});
 
       constexpr int expected = initialValue * step2Multiplier;
       return res.right() == expected;
@@ -649,8 +656,8 @@ TEST_CASE("and_then_right partial application closure semantics and efficiency c
   {
     constexpr auto valid = [] {
       const Result rObj{frt::in_place_right, initialValue};
-      auto closure = frt::and_then_right(QualAwareCallable{});
-      const auto constClosure = frt::and_then_right(QualAwareCallable{});
+      auto closure = frt::algorithm::and_then_right(QualAwareCallable{});
+      const auto constClosure = frt::algorithm::and_then_right(QualAwareCallable{});
 
       const auto resLval = rObj | closure;
       const auto resConstLval = rObj | constClosure;
@@ -668,8 +675,8 @@ TEST_CASE("and_then_right partial application closure semantics and efficiency c
   {
     constexpr auto valid = [] {
       const Result rObj{frt::in_place_right, initialValue};
-      const auto res = rObj | frt::and_then_right(freeFunctionAdd, step1Delta) |
-                       frt::and_then_right(
+      const auto res = rObj | frt::algorithm::and_then_right(freeFunctionAdd, step1Delta) |
+                       frt::algorithm::and_then_right(
                            [](int v, const char *str) -> Result {
                              return {frt::in_place_right, v + static_cast<int>(std::char_traits<char>::length(str))};
                            },

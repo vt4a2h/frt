@@ -175,6 +175,9 @@ struct and_then_right_fn
 
 } // namespace detail::and_then_right_alg_
 
+namespace algorithm
+{
+
 /*!
  * \brief Applies a function to the right alternative of a result object and returns the result.
  *
@@ -189,10 +192,10 @@ struct and_then_right_fn
  * auto f(right, a, b, c) -> Result;
  *
  * // Equivalent to f(right, a, b, c)
- * frt::and_then_right(resultObj, f, a, b, c);
+ * frt::algorithm::and_then_right(resultObj, f, a, b, c);
  *
  * // Equivalent to f(a, right, b, c)
- * frt::and_then_right(resultObj, f, a, frt::unwrapped, b, c);
+ * frt::algorithm::and_then_right(resultObj, f, a, frt::unwrapped, b, c);
  * \endcode
  *
  * The \c frt::unwrapped placeholder is replaced with the right alternative. The extra argument pack must contain zero
@@ -204,7 +207,7 @@ struct and_then_right_fn
  * auto f(a, b, c) -> Result;
  *
  * // Equivalent to f(a, b, c)
- * frt::and_then_right(resultObj, f, a, b, c);
+ * frt::algorithm::and_then_right(resultObj, f, a, b, c);
  * \endcode
  *
  * The function \p f must be invocable with the final combination of arguments and must return a result object of the
@@ -215,10 +218,10 @@ struct and_then_right_fn
  * Pipe syntax for partial application is also supported:
  * \code{.cpp}
  * // Without extra arguments
- * auto res1 = resultObj | frt::and_then_right(f);
+ * auto res1 = resultObj | frt::algorithm::and_then_right(f);
  *
  * // With extra arguments and frt::unwrapped
- * auto res2 = resultObj | frt::and_then_right(f, a, frt::unwrapped, b, c);
+ * auto res2 = resultObj | frt::algorithm::and_then_right(f, a, frt::unwrapped, b, c);
  * \endcode
  *
  * For partial application, the callable \p f and each extra argument type \c T in \p Args must satisfy the same type
@@ -235,8 +238,8 @@ struct and_then_right_fn
  * \c std::expected, or \c std::optional). By convention, the left alternative represents an error or empty state, while
  * the right alternative represents a success value.
  *
- * To use \c frt::and_then_right with a custom result type, specialize \c frt::is_result_type (set to \c true) and
- * \c frt::meta_either:
+ * To use \c frt::algorithm::and_then_right with a custom result type, specialize \c frt::is_result_type (set to \c
+ * true) and \c frt::meta_either:
  * - For the input result type \c Result, the \c frt::meta_either specialization must provide:
  *   - \c left_t -- the type of the left alternative,
  *   - \c right_t -- the type of the right alternative,
@@ -250,5 +253,7 @@ struct and_then_right_fn
  *   - \c make_left(left) -- a callable constructing the return result object from the left alternative.
  */
 inline constexpr detail::and_then_right_alg_::and_then_right_fn and_then_right{};
+
+} // namespace algorithm
 
 } // namespace frt

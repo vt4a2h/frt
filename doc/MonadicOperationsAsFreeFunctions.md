@@ -5,7 +5,7 @@ In addition to member functions on [`frt::either`](Either.md), [`frt::expected`]
 `frt::algorithm` namespace:
 
 - `frt::algorithm::and_then_left`
-- `frt::and_then_right`
+- `frt::algorithm::and_then_right`
 - `frt::transform_left`
 - `frt::transform_right`
 
@@ -20,7 +20,7 @@ These operations work uniformly with any result type that models a two-alternati
 | Free function          | Callable signature  | Description                                                                                                        |
 |------------------------|---------------------|--------------------------------------------------------------------------------------------------------------------|
 | `frt::algorithm::and_then_left`   | `L -> Result<U, R>` | Chains a computation returning a result type on the left alternative (like `or_else` on `expected`/`optional`).    |
-| `frt::and_then_right`  | `R -> Result<L, U>` | Chains a computation returning a result type on the right alternative (like `and_then` on `expected`/`optional`).  |
+| `frt::algorithm::and_then_right`  | `R -> Result<L, U>` | Chains a computation returning a result type on the right alternative (like `and_then` on `expected`/`optional`).  |
 | `frt::transform_left`  | `L -> U`            | Maps the left alternative to a new value wrapped in the left branch (like `transform_error` on `expected`).        |
 | `frt::transform_right` | `R -> U`            | Maps the right alternative to a new value wrapped in the right branch (like `transform` on `expected`/`optional`). |
 
@@ -80,7 +80,7 @@ MetaData metaData{/* ... */};
 
 auto contextOrError = extractContext();
 
-auto componentOrError = frt::and_then_right(
+auto componentOrError = frt::algorithm::and_then_right(
     std::move(contextOrError),
     &createComponent,
     path, frt::unwrapped, metaData);
@@ -105,7 +105,7 @@ Path path{/* ... */};
 MetaData metaData{/* ... */};
 
 auto finalResult = extractContext()
-    | frt::and_then_right(&createComponent, path, frt::unwrapped, metaData)
+    | frt::algorithm::and_then_right(&createComponent, path, frt::unwrapped, metaData)
     | frt::transform_right(&toWidget, metaData)
     | frt::algorithm::and_then_left(&fallbackWidget);
 ```
@@ -115,21 +115,21 @@ auto finalResult = extractContext()
 ## Hidden Caveats of the `|` Syntax
 
 While the pipe syntax (`|`) is concise and expressive, it has important semantic and performance differences compared
-to direct invocation (`result.and_then_right(...)` or `frt::and_then_right(result, ...)`).
+to direct invocation (`result.and_then_right(...)` or `frt::algorithm::and_then_right(result, ...)`).
 
 ### 1. Eager capture and unconditional copies/moves
 
-In a direct call such as `frt::and_then_right(result, f, a, b)`, the extra arguments `a` and `b` are simply forwarded by
-reference and are **never touched** if `result` holds the left alternative.
+In a direct call such as `frt::algorithm::and_then_right(result, f, a, b)`, the extra arguments `a` and `b` are simply
+forwarded by reference and are **never touched** if `result` holds the left alternative.
 
 In contrast, in a pipe expression:
 
 ```c++
-auto res = result | frt::and_then_right(f, a, b);
+auto res = result | frt::algorithm::and_then_right(f, a, b);
 ```
 
-the subexpression `frt::and_then_right(f, a, b)` is evaluated **before** `operator|` inspects `result`. To return a
-standalone closure object, it must decay and capture `f`, `a`, and `b` **by value** (`std::decay_t<F>` and
+the subexpression `frt::algorithm::and_then_right(f, a, b)` is evaluated **before** `operator|` inspects `result`. To
+return a standalone closure object, it must decay and capture `f`, `a`, and `b` **by value** (`std::decay_t<F>` and
 `std::decay_t<Args>...`):
 
 - **Work is performed even when short-circuiting**: Copying or moving `f` and `args...` into the closure happens
@@ -149,10 +149,10 @@ Layout layout{/* ... */};
 
 // Avoids copying `manager` and passes `layout` by mutable reference
 auto windowOrError = createComponent(path, std::move(ctx), metaData)
-    | frt::and_then_right(&WindowManager::embed,
-                          std::cref(manager),
-                          std::ref(layout),
-                          frt::unwrapped);
+    | frt::algorithm::and_then_right(&WindowManager::embed,
+                                     std::cref(manager),
+                                     std::ref(layout),
+                                     frt::unwrapped);
 ```
 
 ### 2. Move-constructibility requirements on `F` and `Args...`
@@ -164,16 +164,17 @@ must satisfy the same requirements as `std::bind_front` and `std::bind_back`:
 - `std::is_move_constructible_v<std::decay_t<T>>`
 
 If an extra argument is non-movable (for example, a synchronization primitive or a pinned GUI context), passing it by
-value to `frt::and_then_right(f, nonMovable)` will fail to compile unless wrapped in `std::ref` or `std::cref`. Direct
-invocation (`frt::and_then_right(result, f, nonMovable)`) has no such restriction because no closure is constructed.
+value to `frt::algorithm::and_then_right(f, nonMovable)` will fail to compile unless wrapped in `std::ref` or
+`std::cref`. Direct invocation (`frt::algorithm::and_then_right(result, f, nonMovable)`) has no such restriction because
+no closure is constructed.
 
 ### 3. Value category of stored closures
 
 The value category of the closure object itself determines how its captured callable and arguments are forwarded when
 `operator|` is evaluated:
 
-- **Rvalue closure (`result | frt::and_then_right(...)` or `result | std::move(closure)`)**: The captured callable and
-  arguments are forwarded as rvalues. This is required when capturing move-only types (such as
+- **Rvalue closure (`result | frt::algorithm::and_then_right(...)` or `result | std::move(closure)`)**: The captured
+  callable and arguments are forwarded as rvalues. This is required when capturing move-only types (such as
   `std::unique_ptr<Widget>`), and means a closure holding move-only state can only be consumed once.
 - **Lvalue closure (`result | closure`)**: The captured callable and arguments are forwarded as lvalues (or `const`
   lvalues if the closure is `const`), allowing the closure to be safely reused across multiple pipe expressions without
