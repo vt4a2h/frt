@@ -184,6 +184,9 @@ struct transform_left_fn
 
 } // namespace detail::transform_left_alg_
 
+namespace algorithm
+{
+
 /*!
  * \brief Applies a function to the left alternative of a result object and returns the result.
  *
@@ -198,10 +201,10 @@ struct transform_left_fn
  * auto f(left, a, b, c) -> T;
  *
  * // Equivalent to f(left, a, b, c)
- * frt::transform_left(resultObj, f, a, b, c);
+ * frt::algorithm::transform_left(resultObj, f, a, b, c);
  *
  * // Equivalent to f(a, left, b, c)
- * frt::transform_left(resultObj, f, a, frt::unwrapped, b, c);
+ * frt::algorithm::transform_left(resultObj, f, a, frt::unwrapped, b, c);
  * \endcode
  *
  * The \c frt::unwrapped placeholder is replaced with the left alternative. The extra argument pack must contain zero
@@ -213,7 +216,7 @@ struct transform_left_fn
  * auto f(a, b, c) -> T;
  *
  * // Equivalent to f(a, b, c)
- * frt::transform_left(resultObj, f, a, b, c);
+ * frt::algorithm::transform_left(resultObj, f, a, b, c);
  * \endcode
  *
  * The function \p f must be invocable with the final combination of arguments. The return value will automatically be
@@ -223,10 +226,10 @@ struct transform_left_fn
  * Pipe syntax for partial application is also supported:
  * \code{.cpp}
  * // Without extra arguments
- * auto res1 = resultObj | frt::transform_left(f);
+ * auto res1 = resultObj | frt::algorithm::transform_left(f);
  *
  * // With extra arguments and frt::unwrapped
- * auto res2 = resultObj | frt::transform_left(f, a, frt::unwrapped, b, c);
+ * auto res2 = resultObj | frt::algorithm::transform_left(f, a, frt::unwrapped, b, c);
  * \endcode
  *
  * For partial application, the callable \p f and each extra argument type \c T in \p Args must satisfy the same type
@@ -243,8 +246,8 @@ struct transform_left_fn
  * \c std::expected, or \c std::optional). By convention, the left alternative represents an error or empty state, while
  * the right alternative represents a success value.
  *
- * To use \c frt::transform_left with a custom result type, specialize \c frt::is_result_type (set to \c true) and
- * \c frt::meta_either:
+ * To use \c frt::algorithm::transform_left with a custom result type, specialize \c frt::is_result_type (set to \c
+ * true) and \c frt::meta_either:
  * - For the input result type \c Result, the \c frt::meta_either specialization must provide:
  *   - \c left_t -- the type of the left alternative,
  *   - \c right_t -- the type of the right alternative,
@@ -258,5 +261,7 @@ struct transform_left_fn
  *   - \c make_right(right) -- a callable constructing the return result object from the right alternative.
  */
 inline constexpr detail::transform_left_alg_::transform_left_fn transform_left{};
+
+} // namespace algorithm
 
 } // namespace frt

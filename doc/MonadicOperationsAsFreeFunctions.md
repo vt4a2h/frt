@@ -6,7 +6,7 @@ In addition to member functions on [`frt::either`](Either.md), [`frt::expected`]
 
 - `frt::algorithm::and_then_left`
 - `frt::algorithm::and_then_right`
-- `frt::transform_left`
+- `frt::algorithm::transform_left`
 - `frt::transform_right`
 
 These operations work uniformly with any result type that models a two-alternative sum type via `frt::meta_either` and
@@ -21,7 +21,7 @@ These operations work uniformly with any result type that models a two-alternati
 |------------------------|---------------------|--------------------------------------------------------------------------------------------------------------------|
 | `frt::algorithm::and_then_left`   | `L -> Result<U, R>` | Chains a computation returning a result type on the left alternative (like `or_else` on `expected`/`optional`).    |
 | `frt::algorithm::and_then_right`  | `R -> Result<L, U>` | Chains a computation returning a result type on the right alternative (like `and_then` on `expected`/`optional`).  |
-| `frt::transform_left`  | `L -> U`            | Maps the left alternative to a new value wrapped in the left branch (like `transform_error` on `expected`).        |
+| `frt::algorithm::transform_left`  | `L -> U`            | Maps the left alternative to a new value wrapped in the left branch (like `transform_error` on `expected`).        |
 | `frt::transform_right` | `R -> U`            | Maps the right alternative to a new value wrapped in the right branch (like `transform` on `expected`/`optional`). |
 
 All free functions support the same [Inline Partial Application](MonadicOperations.md#inline-partial-application)
