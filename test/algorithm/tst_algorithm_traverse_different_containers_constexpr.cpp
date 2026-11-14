@@ -26,7 +26,7 @@ struct frt::meta_container<MyVec<E>>
   static constexpr auto add_element = [](MyVec<E> &c, E &&e) { c.push_back(std::move(e)); };
 };
 
-TEST_CASE("frt::traverse_into constexpr -- std::vector", "[algorithm][traverse][constexpr]")
+TEST_CASE("frt::algorithm::traverse_into constexpr -- std::vector", "[algorithm][traverse][constexpr]")
 {
   using Result = frt::either<int, int>;
 
@@ -39,7 +39,7 @@ TEST_CASE("frt::traverse_into constexpr -- std::vector", "[algorithm][traverse][
           Result{frt::in_place_right, 40},
       };
 
-      const auto actual = frt::traverse_into<std::vector>(input, std::identity{});
+      const auto actual = frt::algorithm::traverse_into<std::vector>(input, std::identity{});
       using ExpectedResult = frt::either<int, std::vector<int>>;
       const auto expected = ExpectedResult{frt::in_place_right, std::vector{42, 41, 40}};
       return actual == expected;
@@ -57,7 +57,7 @@ TEST_CASE("frt::traverse_into constexpr -- std::vector", "[algorithm][traverse][
           Result{frt::in_place_right, 40},
       };
 
-      const auto actual = input | frt::traverse_into<std::vector>(std::identity{});
+      const auto actual = input | frt::algorithm::traverse_into<std::vector>(std::identity{});
       using ExpectedResult = frt::either<int, std::vector<int>>;
       const auto expected = ExpectedResult{frt::in_place_right, std::vector{42, 41, 40}};
       return actual == expected;
@@ -75,7 +75,7 @@ TEST_CASE("frt::traverse_into constexpr -- std::vector", "[algorithm][traverse][
           Result{frt::in_place_right, 40},
       };
 
-      const auto actual = frt::traverse_into<std::vector>(input, std::identity{});
+      const auto actual = frt::algorithm::traverse_into<std::vector>(input, std::identity{});
       return actual.is_left() && actual.left() == -1;
     }();
 
@@ -83,7 +83,7 @@ TEST_CASE("frt::traverse_into constexpr -- std::vector", "[algorithm][traverse][
   }
 }
 
-TEST_CASE("frt::traverse_into constexpr -- custom sequential container", "[algorithm][traverse][constexpr]")
+TEST_CASE("frt::algorithm::traverse_into constexpr -- custom sequential container", "[algorithm][traverse][constexpr]")
 {
   using Result = frt::either<int, int>;
 
@@ -96,7 +96,7 @@ TEST_CASE("frt::traverse_into constexpr -- custom sequential container", "[algor
           Result{frt::in_place_right, 40},
       };
 
-      const auto actual = frt::traverse_into<std::vector>(input, std::identity{});
+      const auto actual = frt::algorithm::traverse_into<std::vector>(input, std::identity{});
 
       std::vector expectedVec{42, 41, 40};
 
@@ -117,7 +117,7 @@ TEST_CASE("frt::traverse_into constexpr -- custom sequential container", "[algor
           Result{frt::in_place_right, 40},
       };
 
-      const auto actual = input | frt::traverse_into<MyVec>(std::identity{});
+      const auto actual = input | frt::algorithm::traverse_into<MyVec>(std::identity{});
 
       MyVec<int> expectedVec{42, 41, 40};
 
@@ -138,7 +138,7 @@ TEST_CASE("frt::traverse_into constexpr -- custom sequential container", "[algor
           Result{frt::in_place_right, 40},
       };
 
-      const auto actual = frt::traverse_into<std::vector>(input, std::identity{});
+      const auto actual = frt::algorithm::traverse_into<std::vector>(input, std::identity{});
       return actual.is_left() && actual.left() == -99;
     }();
 

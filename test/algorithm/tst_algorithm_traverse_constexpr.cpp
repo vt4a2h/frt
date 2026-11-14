@@ -13,7 +13,7 @@
 #include <functional>
 #include <vector>
 
-TEST_CASE("frt::traverse constexpr -- either", "[algorithm][traverse][constexpr]")
+TEST_CASE("frt::algorithm::traverse constexpr -- either", "[algorithm][traverse][constexpr]")
 {
   using Result = frt::either<int, int>;
 
@@ -26,7 +26,7 @@ TEST_CASE("frt::traverse constexpr -- either", "[algorithm][traverse][constexpr]
           Result{frt::in_place_right, 40},
       };
 
-      const auto actual = frt::traverse(input, std::identity{});
+      const auto actual = frt::algorithm::traverse(input, std::identity{});
       using ExpectedResult = frt::either<int, std::vector<int>>;
       const auto expected = ExpectedResult{frt::in_place_right, std::vector{42, 41, 40}};
       return actual == expected;
@@ -44,7 +44,7 @@ TEST_CASE("frt::traverse constexpr -- either", "[algorithm][traverse][constexpr]
           Result{frt::in_place_right, 40},
       };
 
-      const auto actual = input | frt::traverse(std::identity{});
+      const auto actual = input | frt::algorithm::traverse(std::identity{});
       using ExpectedResult = frt::either<int, std::vector<int>>;
       const auto expected = ExpectedResult{frt::in_place_right, std::vector{42, 41, 40}};
       return actual == expected;
@@ -62,7 +62,7 @@ TEST_CASE("frt::traverse constexpr -- either", "[algorithm][traverse][constexpr]
           Result{frt::in_place_right, 40},
       };
 
-      const auto actual = frt::traverse(input, std::identity{});
+      const auto actual = frt::algorithm::traverse(input, std::identity{});
       return actual.is_left() && actual.left() == -1;
     }();
 
@@ -70,7 +70,7 @@ TEST_CASE("frt::traverse constexpr -- either", "[algorithm][traverse][constexpr]
   }
 }
 
-TEST_CASE("frt::traverse constexpr -- expected", "[algorithm][traverse][constexpr]")
+TEST_CASE("frt::algorithm::traverse constexpr -- expected", "[algorithm][traverse][constexpr]")
 {
   using Result = frt::expected<int, double>;
 
@@ -83,7 +83,7 @@ TEST_CASE("frt::traverse constexpr -- expected", "[algorithm][traverse][constexp
           Result{frt::in_place_expected, 40},
       };
 
-      const auto actual = frt::traverse(input, std::identity{});
+      const auto actual = frt::algorithm::traverse(input, std::identity{});
       using ExpectedResult = frt::expected<std::vector<int>, int>;
       const auto expected = ExpectedResult{frt::in_place_expected, std::vector{42, 41, 40}};
       return actual == expected;
@@ -101,7 +101,7 @@ TEST_CASE("frt::traverse constexpr -- expected", "[algorithm][traverse][constexp
           Result{frt::in_place_expected, 40},
       };
 
-      const auto actual = input | frt::traverse(std::identity{});
+      const auto actual = input | frt::algorithm::traverse(std::identity{});
       using ExpectedResult = frt::expected<std::vector<int>, int>;
       const auto expected = ExpectedResult{frt::in_place_expected, std::vector{42, 41, 40}};
       return actual == expected;
@@ -119,7 +119,7 @@ TEST_CASE("frt::traverse constexpr -- expected", "[algorithm][traverse][constexp
           Result{frt::in_place_expected, 40},
       };
 
-      const auto actual = frt::traverse(input, std::identity{});
+      const auto actual = frt::algorithm::traverse(input, std::identity{});
       return !actual.has_value() && actual.error() == -1;
     }();
 
@@ -127,7 +127,7 @@ TEST_CASE("frt::traverse constexpr -- expected", "[algorithm][traverse][constexp
   }
 }
 
-TEST_CASE("frt::traverse constexpr -- expected<void, ...>", "[algorithm][traverse][constexpr]")
+TEST_CASE("frt::algorithm::traverse constexpr -- expected<void, ...>", "[algorithm][traverse][constexpr]")
 {
   using Result = frt::expected<void, int>;
 
@@ -140,7 +140,8 @@ TEST_CASE("frt::traverse constexpr -- expected<void, ...>", "[algorithm][travers
           Result{frt::in_place_expected},
       };
 
-      const auto actual = input | frt::traverse([](const Result &) -> frt::expected<int, double> { return 42; });
+      const auto actual =
+          input | frt::algorithm::traverse([](const Result &) -> frt::expected<int, double> { return 42; });
       using ExpectedResult = frt::expected<std::vector<int>, int>;
       const auto expected = ExpectedResult{frt::in_place_expected, std::vector{42, 42, 42}};
       return actual == expected;
@@ -166,7 +167,7 @@ TEST_CASE("frt::traverse constexpr -- expected<void, ...>", "[algorithm][travers
         return 100;
       };
 
-      const auto actual = frt::traverse(input, fn);
+      const auto actual = frt::algorithm::traverse(input, fn);
       return !actual.has_value() && actual.error() == -42 && callCount == 1;
     }();
 
@@ -174,7 +175,7 @@ TEST_CASE("frt::traverse constexpr -- expected<void, ...>", "[algorithm][travers
   }
 }
 
-TEST_CASE("frt::traverse constexpr -- optional", "[algorithm][traverse][constexpr]")
+TEST_CASE("frt::algorithm::traverse constexpr -- optional", "[algorithm][traverse][constexpr]")
 {
   using Result = frt::optional<int>;
 
@@ -187,7 +188,7 @@ TEST_CASE("frt::traverse constexpr -- optional", "[algorithm][traverse][constexp
           Result{frt::in_place_opt, 40},
       };
 
-      const auto actual = frt::traverse(input, std::identity{});
+      const auto actual = frt::algorithm::traverse(input, std::identity{});
       using ExpectedResult = frt::optional<std::vector<int>>;
       const auto expected = ExpectedResult{frt::in_place_opt, std::vector{42, 41, 40}};
       return actual == expected;
@@ -205,7 +206,7 @@ TEST_CASE("frt::traverse constexpr -- optional", "[algorithm][traverse][constexp
           Result{frt::in_place_opt, 40},
       };
 
-      const auto actual = input | frt::traverse(std::identity{});
+      const auto actual = input | frt::algorithm::traverse(std::identity{});
       using ExpectedResult = frt::optional<std::vector<int>>;
       const auto expected = ExpectedResult{frt::in_place_opt, std::vector{42, 41, 40}};
       return actual == expected;
@@ -223,7 +224,7 @@ TEST_CASE("frt::traverse constexpr -- optional", "[algorithm][traverse][constexp
           Result{frt::in_place_opt, 40},
       };
 
-      const auto actual = frt::traverse(input, std::identity{});
+      const auto actual = frt::algorithm::traverse(input, std::identity{});
       return !actual.has_value();
     }();
 

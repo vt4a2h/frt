@@ -85,7 +85,7 @@ inline constexpr bool is_result_type<std::optional<T>> = true;
 
 } // namespace frt
 
-TEST_CASE("frt::traverse constexpr -- std::expected", "[algorithm][traverse][constexpr]")
+TEST_CASE("frt::algorithm::traverse constexpr -- std::expected", "[algorithm][traverse][constexpr]")
 {
   using Result = std::expected<int, double>;
 
@@ -98,7 +98,7 @@ TEST_CASE("frt::traverse constexpr -- std::expected", "[algorithm][traverse][con
           Result{std::in_place, 40},
       };
 
-      const auto actual = frt::traverse(input, std::identity{});
+      const auto actual = frt::algorithm::traverse(input, std::identity{});
       using ExpectedResult = std::expected<std::vector<int>, int>;
       const auto expected = ExpectedResult{std::in_place, std::vector{42, 41, 40}};
       return actual.has_value() && actual.value() == expected.value();
@@ -116,7 +116,7 @@ TEST_CASE("frt::traverse constexpr -- std::expected", "[algorithm][traverse][con
           Result{std::in_place, 40},
       };
 
-      const auto actual = input | frt::traverse(std::identity{});
+      const auto actual = input | frt::algorithm::traverse(std::identity{});
       using ExpectedResult = std::expected<std::vector<int>, int>;
       const auto expected = ExpectedResult{std::in_place, std::vector{42, 41, 40}};
       return actual.has_value() && actual.value() == expected.value();
@@ -134,7 +134,7 @@ TEST_CASE("frt::traverse constexpr -- std::expected", "[algorithm][traverse][con
           Result{std::in_place, 40},
       };
 
-      const auto actual = frt::traverse(input, std::identity{});
+      const auto actual = frt::algorithm::traverse(input, std::identity{});
       return !actual.has_value() && actual.error() == -1;
     }();
 
@@ -142,7 +142,7 @@ TEST_CASE("frt::traverse constexpr -- std::expected", "[algorithm][traverse][con
   }
 }
 
-TEST_CASE("frt::traverse constexpr -- std::expected<void, ...>", "[algorithm][traverse][constexpr]")
+TEST_CASE("frt::algorithm::traverse constexpr -- std::expected<void, ...>", "[algorithm][traverse][constexpr]")
 {
   using Result = std::expected<void, int>;
 
@@ -155,7 +155,8 @@ TEST_CASE("frt::traverse constexpr -- std::expected<void, ...>", "[algorithm][tr
           Result{std::in_place},
       };
 
-      const auto actual = frt::traverse(input, [](const Result &) -> std::expected<int, double> { return 42; });
+      const auto actual =
+          frt::algorithm::traverse(input, [](const Result &) -> std::expected<int, double> { return 42; });
       using ExpectedResult = std::expected<std::vector<int>, int>;
       const auto expected = ExpectedResult{std::in_place, std::vector{42, 42, 42}};
       return actual.has_value() && actual.value() == expected.value();
@@ -173,7 +174,8 @@ TEST_CASE("frt::traverse constexpr -- std::expected<void, ...>", "[algorithm][tr
           Result{std::in_place},
       };
 
-      const auto actual = input | frt::traverse([](const Result &) -> std::expected<int, double> { return 42; });
+      const auto actual =
+          input | frt::algorithm::traverse([](const Result &) -> std::expected<int, double> { return 42; });
       using ExpectedResult = std::expected<std::vector<int>, int>;
       const auto expected = ExpectedResult{std::in_place, std::vector{42, 42, 42}};
       return actual.has_value() && actual.value() == expected.value();
@@ -199,7 +201,7 @@ TEST_CASE("frt::traverse constexpr -- std::expected<void, ...>", "[algorithm][tr
         return 100;
       };
 
-      const auto actual = frt::traverse(input, fn);
+      const auto actual = frt::algorithm::traverse(input, fn);
       return !actual.has_value() && actual.error() == -42 && callCount == 1;
     }();
 
@@ -207,7 +209,7 @@ TEST_CASE("frt::traverse constexpr -- std::expected<void, ...>", "[algorithm][tr
   }
 }
 
-TEST_CASE("frt::traverse constexpr -- optional", "[algorithm][traverse][constexpr]")
+TEST_CASE("frt::algorithm::traverse constexpr -- optional", "[algorithm][traverse][constexpr]")
 {
   using Result = std::optional<int>;
 
@@ -220,7 +222,7 @@ TEST_CASE("frt::traverse constexpr -- optional", "[algorithm][traverse][constexp
           Result{std::in_place, 40},
       };
 
-      const auto actual = frt::traverse(input, std::identity{});
+      const auto actual = frt::algorithm::traverse(input, std::identity{});
       using ExpectedResult = std::optional<std::vector<int>>;
       const auto expected = ExpectedResult{std::in_place, std::vector{42, 41, 40}};
       return actual.has_value() && actual.value() == expected.value();
@@ -238,7 +240,7 @@ TEST_CASE("frt::traverse constexpr -- optional", "[algorithm][traverse][constexp
           Result{std::in_place, 40},
       };
 
-      const auto actual = input | frt::traverse(std::identity{});
+      const auto actual = input | frt::algorithm::traverse(std::identity{});
       using ExpectedResult = std::optional<std::vector<int>>;
       const auto expected = ExpectedResult{std::in_place, std::vector{42, 41, 40}};
       return actual.has_value() && actual.value() == expected.value();
@@ -256,7 +258,7 @@ TEST_CASE("frt::traverse constexpr -- optional", "[algorithm][traverse][constexp
           Result{std::in_place, 40},
       };
 
-      const auto actual = frt::traverse(input, std::identity{});
+      const auto actual = frt::algorithm::traverse(input, std::identity{});
       return !actual.has_value();
     }();
 

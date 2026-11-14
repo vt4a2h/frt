@@ -24,7 +24,7 @@ struct meta_container<std::forward_list<E>>
 
 } // namespace frt
 
-TEST_CASE("frt::traverse -- either - std::list", "[algorithm][traverse]")
+TEST_CASE("frt::algorithm::traverse -- either - std::list", "[algorithm][traverse]")
 {
   using Result = frt::either<std::string, int>;
 
@@ -34,7 +34,7 @@ TEST_CASE("frt::traverse -- either - std::list", "[algorithm][traverse]")
       Result{frt::in_place_right, 40},
   };
 
-  const auto actualResult = input | frt::traverse_into<std::list>(std::identity{});
+  const auto actualResult = input | frt::algorithm::traverse_into<std::list>(std::identity{});
 
   using ExpectedResultType = frt::either<std::string, std::list<int>>;
   const auto expectedResult = ExpectedResultType{frt::in_place_right, std::list{42, 41, 40}};
@@ -42,7 +42,7 @@ TEST_CASE("frt::traverse -- either - std::list", "[algorithm][traverse]")
   REQUIRE(actualResult == expectedResult);
 }
 
-TEST_CASE("frt::traverse -- either - std::forward_list", "[algorithm][traverse]")
+TEST_CASE("frt::algorithm::traverse -- either - std::forward_list", "[algorithm][traverse]")
 {
   using Result = frt::either<std::string, int>;
 
@@ -54,7 +54,7 @@ TEST_CASE("frt::traverse -- either - std::forward_list", "[algorithm][traverse]"
 
   std::forward_list<int> fl;
 
-  const auto actualResult = frt::traverse_into<std::forward_list>(input, std::identity{});
+  const auto actualResult = frt::algorithm::traverse_into<std::forward_list>(input, std::identity{});
 
   using ExpectedResultType = frt::either<std::string, std::forward_list<int>>;
   const auto expectedResult = ExpectedResultType{frt::in_place_right, std::forward_list{40, 41, 42}};
@@ -62,7 +62,7 @@ TEST_CASE("frt::traverse -- either - std::forward_list", "[algorithm][traverse]"
   REQUIRE(actualResult == expectedResult);
 }
 
-TEST_CASE("frt::traverse -- either - std::map", "[algorithm][traverse]")
+TEST_CASE("frt::algorithm::traverse -- either - std::map", "[algorithm][traverse]")
 {
   using P = std::pair<int, int>;
   using Result = frt::either<std::string, std::pair<int, int>>;
@@ -73,7 +73,7 @@ TEST_CASE("frt::traverse -- either - std::map", "[algorithm][traverse]")
       Result{frt::in_place_right, P{40, 40}},
   };
 
-  const auto actualResult = frt::traverse_into<std::map>(input, std::identity{});
+  const auto actualResult = frt::algorithm::traverse_into<std::map>(input, std::identity{});
 
   using ExpectedResultType = frt::either<std::string, std::map<int, int>>;
   const auto expectedResult = ExpectedResultType{frt::in_place_right, std::map{P{42, 42}, P{41, 41}, P{40, 40}}};
@@ -81,7 +81,7 @@ TEST_CASE("frt::traverse -- either - std::map", "[algorithm][traverse]")
   REQUIRE(actualResult == expectedResult);
 }
 
-TEST_CASE("frt::traverse -- optional - std::map", "[algorithm][traverse]")
+TEST_CASE("frt::algorithm::traverse -- optional - std::map", "[algorithm][traverse]")
 {
   using P = std::pair<int, int>;
   using Result = frt::optional<std::pair<int, int>>;
@@ -92,7 +92,7 @@ TEST_CASE("frt::traverse -- optional - std::map", "[algorithm][traverse]")
       Result{frt::in_place_opt, P{40, 40}},
   };
 
-  const auto actualResult = frt::traverse_into<std::map>(
+  const auto actualResult = frt::algorithm::traverse_into<std::map>(
       input, [](Result v) -> Result { return Result{frt::in_place_opt, P{++v.value().first, ++v.value().second}}; });
 
   using ExpectedResultType = frt::optional<std::map<int, int>>;
@@ -101,14 +101,14 @@ TEST_CASE("frt::traverse -- optional - std::map", "[algorithm][traverse]")
   REQUIRE(actualResult == expectedResult);
 }
 
-TEST_CASE("frt::traverse -- either - std::unordered_map", "[algorithm][traverse]")
+TEST_CASE("frt::algorithm::traverse -- either - std::unordered_map", "[algorithm][traverse]")
 {
   using P = std::pair<int, int>;
   using Result = frt::either<std::string, std::pair<int, int>>;
 
   std::vector input{Result{frt::in_place_right, P{42, 42}}};
 
-  const auto actualResult = frt::traverse_into<std::unordered_map>(input, std::identity{});
+  const auto actualResult = frt::algorithm::traverse_into<std::unordered_map>(input, std::identity{});
 
   using ExpectedResultType = frt::either<std::string, std::unordered_map<int, int>>;
   const auto expectedResult = ExpectedResultType{frt::in_place_right, std::unordered_map{P{42, 42}}};
@@ -116,7 +116,7 @@ TEST_CASE("frt::traverse -- either - std::unordered_map", "[algorithm][traverse]
   REQUIRE(actualResult == expectedResult);
 }
 
-TEST_CASE("frt::traverse -- either - std::set", "[algorithm][traverse]")
+TEST_CASE("frt::algorithm::traverse -- either - std::set", "[algorithm][traverse]")
 {
   using Result = frt::either<std::string, int>;
 
@@ -126,7 +126,7 @@ TEST_CASE("frt::traverse -- either - std::set", "[algorithm][traverse]")
       Result{frt::in_place_right, 40},
   };
 
-  const auto actualResult = input | frt::traverse_into<std::set>(std::identity{});
+  const auto actualResult = input | frt::algorithm::traverse_into<std::set>(std::identity{});
 
   using ExpectedResultType = frt::either<std::string, std::set<int>>;
   const auto expectedResult = ExpectedResultType{frt::in_place_right, std::set{42, 41, 40}};

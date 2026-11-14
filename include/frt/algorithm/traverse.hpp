@@ -157,6 +157,9 @@ struct traverse_into_fn
 
 } // namespace detail::trav_alg_
 
+namespace algorithm
+{
+
 /*!
  * \brief The traverse algorithm.
  *
@@ -170,7 +173,7 @@ struct traverse_into_fn
  * using Output = frt::optional<std::vector<int>>;
  *
  * std::vector input{Result{1}, Result{2}, Result{3}};
- * Output result = frt::traverse(input, [](const Result &v) { return Result{v.value() + 1}; });
+ * Output result = frt::algorithm::traverse(input, [](const Result &v) { return Result{v.value() + 1}; });
  *
  * // result contains std::vector{2, 3, 4}
  * \endcode
@@ -181,7 +184,7 @@ struct traverse_into_fn
  * using Output = frt::optional<std::vector<int>>;
  *
  * std::vector input{Result{1}, Result{}, Result{3}};
- * Output result = frt::traverse(input, [](const Result &v) -> Result {
+ * Output result = frt::algorithm::traverse(input, [](const Result &v) -> Result {
  *   if (!v) {
  *     return {};
  *   }
@@ -202,21 +205,23 @@ struct traverse_into_fn
  * using Output = frt::optional<std::vector<int>>;
  *
  * std::vector input{Result{1}, Result{2}, Result{3}};
- * Output result = input | frt::traverse([](const Result &v) { return Result{v.value() + 1}; });
+ * Output result = input | frt::algorithm::traverse([](const Result &v) { return Result{v.value() + 1}; });
  *
  * // result contains std::vector{2, 3, 4}
  * \endcode
  * Note that this is an eager operation evaluated immediately; it returns a container wrapped in a result type, not a
  * view.
  *
- * The default output container is `std::vector`. To collect into a different container, use \c frt::traverse_into.
+ * The default output container is `std::vector`. To collect into a different container, use
+ * \c frt::algorithm::traverse_into.
  */
 inline constexpr detail::trav_alg_::traverse_fn traverse{};
 
 /*!
  * \brief The traverse algorithm with a customizable output container.
  *
- * This function behaves identically to \c frt::traverse, but allows specifying a custom output container template.
+ * This function behaves identically to \c frt::algorithm::traverse, but allows specifying a custom output container
+ * template.
  *
  * It supports standard sequential and associative containers out-of-the-box. Custom container types require
  * a specialization of \c frt::meta_container.
@@ -227,7 +232,8 @@ inline constexpr detail::trav_alg_::traverse_fn traverse{};
  * using Output = frt::optional<std::list<int>>;
  *
  * std::vector input{Result{1}, Result{2}, Result{3}};
- * Output result = frt::traverse_into<std::list>(input, [](const Result &v) { return Result{v.value() + 1}; });
+ * Output result = frt::algorithm::traverse_into<std::list>(input, [](const Result &v) { return Result{v.value() + 1};
+ * });
  *
  * // result contains std::list{2, 3, 4}
  * \endcode
@@ -240,7 +246,7 @@ inline constexpr detail::trav_alg_::traverse_fn traverse{};
  * using Output = frt::optional<std::map<int, int>>;
  *
  * std::vector input{Result{P{1, 1}}, Result{P{2, 2}}, Result{P{3, 3}}};
- * Output result = frt::traverse_into<std::map>(input, [](const Result &v) {
+ * Output result = frt::algorithm::traverse_into<std::map>(input, [](const Result &v) {
  *   return Result{P{v.value().first + 1, v.value().second + 1}};
  * });
  *
@@ -249,10 +255,13 @@ inline constexpr detail::trav_alg_::traverse_fn traverse{};
  *
  * Pipe syntax is also supported:
  * \code{.cpp}
- * auto result = input | frt::traverse_into<std::list>([](const Result &v) { return Result{v.value() + 1}; });
+ * auto result = input | frt::algorithm::traverse_into<std::list>([](const Result &v) { return Result{v.value() + 1};
+ * });
  * \endcode
  */
 template <template <typename...> class OutputContainer>
 inline constexpr detail::trav_alg_::traverse_into_fn<OutputContainer> traverse_into{};
+
+} // namespace algorithm
 
 } // namespace frt

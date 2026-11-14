@@ -1,9 +1,9 @@
 # Traverse
 
-`frt::traverse` and `frt::traverse_into` take an input range of result objects, apply a transformation function `f` to
-each element in order, and collect the unwrapped right (value) alternatives into a single container wrapped in the
-result type. If any invocation of `f` produces a left (error or empty) alternative, traversal short-circuits
-immediately and returns that failure.
+`frt::algorithm::traverse` and `frt::algorithm::traverse_into` take an input range of result objects, apply a
+transformation function `f` to each element in order, and collect the unwrapped right (value) alternatives into a single
+container wrapped in the result type. If any invocation of `f` produces a left (error or empty) alternative, traversal
+short-circuits immediately and returns that failure.
 
 Because `traverse` operates on a **range** of result objects rather than a single instance, it is **not implemented as a
 member function** on [`frt::either`](Either.md), [`frt::expected`](Expected.md), or [`frt::optional`](Optional.md).
@@ -12,15 +12,15 @@ pipe (`|`) syntax.
 
 > [!TIP]
 > If you only need to convert a range of results into a result of a container without applying an extra transformation
-> (`f` is `std::identity{}`), use [`frt::sequence` / `frt::sequence_into`](Sequence.md).
+> (`f` is `std::identity{}`), use [`frt::algorithm::sequence` / `frt::algorithm::sequence_into`](Sequence.md).
 
 ## Table of contents
 
 - [Signatures and Invocation Syntaxes](#signatures-and-invocation-syntaxes)
 - [Examples](#examples)
-    - [1. Basic traversal (`frt::traverse`)](#1-basic-traversal-frttraverse)
+    - [1. Basic traversal (`frt::algorithm::traverse`)](#1-basic-traversal-frtalgorithmtraverse)
     - [2. Traversing `void` result elements](#2-traversing-void-result-elements)
-    - [3. Customizing the output container (`frt::traverse_into`)](#3-customizing-the-output-container-frttraverse_into)
+    - [3. Customizing the output container (`frt::algorithm::traverse_into`)](#3-customizing-the-output-container-frtalgorithmtraverse_into)
         - [Sequential containers (`std::list`, `std::set`, etc.)](#sequential-containers-stdlist-stdset-etc)
         - [Associative key-value containers (`std::map`,
           `std::unordered_map`)](#associative-key-value-containers-stdmap-stdunordered_map)
@@ -36,24 +36,24 @@ pipe (`|`) syntax.
 #include <frt/algorithm/traverse.hpp>
 ```
 
-| Algorithm                       | Output container | Direct call syntax                        | Pipe (`\|`) syntax                          |
-|---------------------------------|------------------|-------------------------------------------|---------------------------------------------|
-| `frt::traverse`                 | `std::vector`    | `frt::traverse(range, f)`                 | `range \| frt::traverse(f)`                 |
-| `frt::traverse_into<Container>` | `Container`      | `frt::traverse_into<Container>(range, f)` | `range \| frt::traverse_into<Container>(f)` |
+| Algorithm                                  | Output container | Direct call syntax                                   | Pipe (`\|`) syntax                                     |
+|--------------------------------------------|------------------|------------------------------------------------------|--------------------------------------------------------|
+| `frt::algorithm::traverse`                 | `std::vector`    | `frt::algorithm::traverse(range, f)`                 | `range \| frt::algorithm::traverse(f)`                 |
+| `frt::algorithm::traverse_into<Container>` | `Container`      | `frt::algorithm::traverse_into<Container>(range, f)` | `range \| frt::algorithm::traverse_into<Container>(f)` |
 
 - **`range`**: Any `std::ranges::input_range` whose value type satisfies `frt::IsResultType`.
 - **`f`**: A callable invoked with each element of `range` (`Result` object) and returning a move-constructible result
   type whose right alternative is the element type to collect.
 
 > [!NOTE]
-> `frt::traverse` and `frt::traverse_into` are **eager** algorithms: they evaluate immediately and return a container
-> wrapped in a result type, not a lazy range view.
+> `frt::algorithm::traverse` and `frt::algorithm::traverse_into` are **eager** algorithms: they evaluate immediately and
+> return a container wrapped in a result type, not a lazy range view.
 
 ---
 
 ## Examples
 
-### 1. Basic traversal (`frt::traverse`)
+### 1. Basic traversal (`frt::algorithm::traverse`)
 
 Suppose you have a collection of `frt::expected<Component, Error>` results and want to convert each into a `Widget`,
 producing a single `frt::expected<std::vector<Widget>, Error>`:
@@ -76,17 +76,17 @@ std::vector<ComponentResult> components = loadComponents(/* ... */);
 
 // Regular free-function syntax
 frt::expected<std::vector<Widget>, Error> widgets1 =
-    frt::traverse(components, &toWidget);
+    frt::algorithm::traverse(components, &toWidget);
 
 // Pipe (`|`) syntax
 frt::expected<std::vector<Widget>, Error> widgets2 =
-    components | frt::traverse(&toWidget);
+    components | frt::algorithm::traverse(&toWidget);
 ```
 
 - **When all elements succeed**: `widgets1` and `widgets2` contain a `std::vector<Widget>` with all transformed widgets
   in order.
-- **When any element fails**: As soon as `toWidget` returns an unexpected `Error`, `frt::traverse` stops iterating and
-  returns `frt::expected<std::vector<Widget>, Error>` holding that first `Error`.
+- **When any element fails**: As soon as `toWidget` returns an unexpected `Error`, `frt::algorithm::traverse` stops
+  iterating and returns `frt::expected<std::vector<Widget>, Error>` holding that first `Error`.
 
 ### 2. Traversing `void` result elements
 
@@ -100,15 +100,15 @@ std::vector<InitStatus> statuses = initializeSubsystems(/* ... */);
 
 // Convert each successful status into a Widget, or short-circuit on the first Error
 frt::expected<std::vector<Widget>, Error> widgets =
-    statuses | frt::traverse([](const InitStatus& status) -> frt::expected<Widget, Error> {
+    statuses | frt::algorithm::traverse([](const InitStatus& status) -> frt::expected<Widget, Error> {
         return status.transform([]() { return Widget{/* ... */}; });
     });
 ```
 
-### 3. Customizing the output container (`frt::traverse_into`)
+### 3. Customizing the output container (`frt::algorithm::traverse_into`)
 
-By default, `frt::traverse` collects elements into a `std::vector`. Use `frt::traverse_into<OutputContainer>` to collect
-into any sequential or associative container:
+By default, `frt::algorithm::traverse` collects elements into a `std::vector`. Use
+`frt::algorithm::traverse_into<OutputContainer>` to collect into any sequential or associative container:
 
 #### Sequential containers (`std::list`, `std::set`, etc.)
 
@@ -118,11 +118,11 @@ into any sequential or associative container:
 
 // Collect into a std::list<Widget>
 frt::expected<std::list<Widget>, Error> widgetList =
-    components | frt::traverse_into<std::list>(&toWidget);
+    components | frt::algorithm::traverse_into<std::list>(&toWidget);
 
 // Collect into a std::set<Widget> (requires Widget to be ordered)
 frt::expected<std::set<Widget>, Error> widgetSet =
-    components | frt::traverse_into<std::set>(&toWidget);
+    components | frt::algorithm::traverse_into<std::set>(&toWidget);
 ```
 
 #### Associative key-value containers (`std::map`, `std::unordered_map`)
@@ -145,25 +145,25 @@ std::vector<NamedComponent> components = findComponents(/* ... */);
 
 // Collects key-value pairs into frt::optional<std::map<std::string, Widget>>
 frt::optional<std::map<std::string, Widget>> widgetRegistry =
-    components | frt::traverse_into<std::map>(&toNamedWidget);
+    components | frt::algorithm::traverse_into<std::map>(&toNamedWidget);
 ```
 
 ---
 
 ## Customization
 
-`frt::traverse` and `frt::traverse_into` can be customized along two orthogonal axes:
+`frt::algorithm::traverse` and `frt::algorithm::traverse_into` can be customized along two orthogonal axes:
 
 1. **Result types** via `frt::is_result_type` and `frt::meta_either`.
 2. **Output container types** via `frt::meta_container`.
 
 ### 1. Customizing result types (`frt::meta_either`)
 
-`frt::traverse` works out of the box with `frt::either`, `frt::expected`, `frt::optional`, as well as `std::expected`
-and `std::optional` (via `<frt/meta/std/meta_either_std_expected.hpp>` and
+`frt::algorithm::traverse` works out of the box with `frt::either`, `frt::expected`, `frt::optional`, as well as
+`std::expected` and `std::optional` (via `<frt/meta/std/meta_either_std_expected.hpp>` and
 `<frt/meta/std/meta_either_std_optional.hpp>`).
 
-To use `frt::traverse` with a custom result type:
+To use `frt::algorithm::traverse` with a custom result type:
 
 1. Both the input range's element type and the callable's return type `Ret` must satisfy `frt::IsResultType`
    (`frt::is_result_type<T> = true`).
@@ -190,8 +190,8 @@ move-constructible container `C` that provides:
 - `c.emplace_back(elem)` or `c.push_back(elem)` (prefers `emplace_back` for sequential containers), or
 - `c.emplace(elem)` or `c.insert(elem)` (prefers `emplace` for associative/set containers).
 
-In addition, if `C` is a `std::ranges::sized_range` and provides `c.reserve(n)`, `frt::traverse` automatically
-pre-allocates capacity for `std::ranges::size(inputRange)` elements before iterating.
+In addition, if `C` is a `std::ranges::sized_range` and provides `c.reserve(n)`, `frt::algorithm::traverse`
+automatically pre-allocates capacity for `std::ranges::size(inputRange)` elements before iterating.
 
 If you want to collect into a container with a different insertion API (such as `std::forward_list`, which only provides
 `push_front`), specialize `frt::meta_container<C>`:
@@ -217,9 +217,9 @@ struct meta_container<std::forward_list<Elem>> {
 } // namespace frt
 ```
 
-With this specialization in place, `std::forward_list` works seamlessly with `frt::traverse_into`:
+With this specialization in place, `std::forward_list` works seamlessly with `frt::algorithm::traverse_into`:
 
 ```c++
 auto widgetForwardList = components
-    | frt::traverse_into<std::forward_list>(&toWidget);
+    | frt::algorithm::traverse_into<std::forward_list>(&toWidget);
 ```

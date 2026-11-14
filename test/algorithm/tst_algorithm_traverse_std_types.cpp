@@ -9,7 +9,7 @@
 #include <utility>
 #include <vector>
 
-TEST_CASE("frt::traverse -- std::expected", "[algorithm][traverse]")
+TEST_CASE("frt::algorithm::traverse -- std::expected", "[algorithm][traverse]")
 {
   using Result = std::expected<int, std::string>;
 
@@ -19,7 +19,7 @@ TEST_CASE("frt::traverse -- std::expected", "[algorithm][traverse]")
       Result{std::in_place, 40},
   };
 
-  const auto actualResult = frt::traverse(input, std::identity{});
+  const auto actualResult = frt::algorithm::traverse(input, std::identity{});
 
   using ExpectedResultType = std::expected<std::vector<int>, std::string>;
   const auto expectedResult = ExpectedResultType{std::in_place, std::vector{42, 41, 40}};
@@ -27,7 +27,7 @@ TEST_CASE("frt::traverse -- std::expected", "[algorithm][traverse]")
   REQUIRE(actualResult.value() == expectedResult.value());
 }
 
-TEST_CASE("frt::traverse -- std::expected<void, ...>", "[algorithm][traverse]")
+TEST_CASE("frt::algorithm::traverse -- std::expected<void, ...>", "[algorithm][traverse]")
 {
   using Result = std::expected<void, std::string>;
 
@@ -37,7 +37,8 @@ TEST_CASE("frt::traverse -- std::expected<void, ...>", "[algorithm][traverse]")
       Result{std::in_place},
   };
 
-  const auto actualResult = frt::traverse(input, [](const Result &) -> std::expected<int, std::string> { return 42; });
+  const auto actualResult =
+      frt::algorithm::traverse(input, [](const Result &) -> std::expected<int, std::string> { return 42; });
 
   using ExpectedResultType = std::expected<std::vector<int>, std::string>;
   const auto expectedResult = ExpectedResultType{std::in_place, std::vector{42, 42, 42}};
@@ -45,7 +46,7 @@ TEST_CASE("frt::traverse -- std::expected<void, ...>", "[algorithm][traverse]")
   REQUIRE(actualResult.value() == expectedResult.value());
 }
 
-TEST_CASE("frt::traverse -- optional", "[algorithm][traverse]")
+TEST_CASE("frt::algorithm::traverse -- optional", "[algorithm][traverse]")
 {
   using Result = std::optional<int>;
 
@@ -55,7 +56,7 @@ TEST_CASE("frt::traverse -- optional", "[algorithm][traverse]")
       Result{std::in_place, 40},
   };
 
-  const auto actualResult = frt::traverse(input, std::identity{});
+  const auto actualResult = frt::algorithm::traverse(input, std::identity{});
 
   using ExpectedResultType = std::optional<std::vector<int>>;
   const auto expectedResult = ExpectedResultType{std::in_place, std::vector{42, 41, 40}};
