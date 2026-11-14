@@ -24,18 +24,18 @@ Key properties of `match`:
 - [Overloads](#overloads)
 - [Usage with `frt::either`](#usage-with-frteither)
     - [1. Built-in member function (`.match(...)`)](#1-built-in-member-function-match)
-    - [2. Free function (`frt::match(result, ...)`)](#2-free-function-frtmatchresult-)
-    - [3. Pipe (`|`) syntax (`result | frt::match(...)`)](#3-pipe--syntax-result--frtmatch)
+    - [2. Free function (`frt::algorithm::match(result, ...)`)](#2-free-function-frtalgorithmmatchresult-)
+    - [3. Pipe (`|`) syntax (`result | frt::algorithm::match(...)`)](#3-pipe--syntax-result--frtalgorithmmatch)
 - [Handling `void` Alternatives](#handling-void-alternatives)
-- [Customizing `frt::match` for Other Types](#customizing-frtmatch-for-other-types)
-    - [Required `frt::meta_either` interface for `frt::match`](#required-frtmeta_either-interface-for-frtmatch)
+- [Customizing `frt::algorithm::match` for Other Types](#customizing-frtalgorithmmatch-for-other-types)
+    - [Required `frt::meta_either` interface for `frt::algorithm::match`](#required-frtmeta_either-interface-for-frtalgorithmmatch)
     - [Custom type example](#custom-type-example)
 
 ---
 
 ## Overloads
 
-`match` provides two overloads (available as a member function, a free function `frt::match`, and a pipeable adaptor):
+`match` provides two overloads (available as a member function, a free function `frt::algorithm::match`, and a pipeable adaptor):
 
 1. **Two callables (`match(lf, rf)`)**:
     - Invokes the first callable if the first alternative is active, or the second callable if the second alternative is
@@ -114,10 +114,10 @@ std::string extractedName = std::move(element).match(
 );
 ```
 
-### 2. Free function (`frt::match(result, ...)`)
+### 2. Free function (`frt::algorithm::match(result, ...)`)
 
-`frt::match` in `<frt/algorithm/match.hpp>` (also included by `<frt/either.hpp>`) can be invoked as a free function with
-the result object as its first argument:
+`frt::algorithm::match` in `<frt/algorithm/match.hpp>` (also included by `<frt/either.hpp>`) can be invoked as a free
+function with the result object as its first argument:
 
 ```c++
 #include <frt/algorithm/match.hpp>
@@ -125,22 +125,23 @@ the result object as its first argument:
 WidgetOrWindow element = loadGuiElement();
 
 // Two callables
-std::string label = frt::match(
+std::string label = frt::algorithm::match(
     element,
     [](const Widget& widget) { return widget.name; },
     [](const Window& window) { return window.title; }
 );
 
 // Single callable
-frt::match(element, [](auto& item) {
+frt::algorithm::match(element, [](auto& item) {
     item.resize(1024, 768);
 });
 ```
 
-### 3. Pipe (`|`) syntax (`result | frt::match(...)`)
+### 3. Pipe (`|`) syntax (`result | frt::algorithm::match(...)`)
 
-When called without a leading result object, `frt::match(lf, rf)` and `frt::match(f)` return a partially applied closure
-object that can be used with the pipe operator (`|`). This is especially natural at the end of a monadic pipeline:
+When called without a leading result object, `frt::algorithm::match(lf, rf)` and `frt::algorithm::match(f)` return a
+partially applied closure object that can be used with the pipe operator (`|`). This is especially natural at the end of
+a monadic pipeline:
 
 ```c++
 struct Context;
@@ -151,25 +152,26 @@ frt::either<Error, Context> extractContext();
 frt::either<Error, Component> createComponent(Context);
 Widget toWidget(Component);
 
-// Chain monadic operations and unwrap the final outcome with `| frt::match(...)`
+// Chain monadic operations and unwrap the final outcome with `| frt::algorithm::match(...)`
 std::string statusMessage = extractContext()
     | frt::algorithm::and_then_right(&createComponent)
     | frt::algorithm::transform_right(&toWidget)
-    | frt::match(
+    | frt::algorithm::match(
         [](const Error& error)  { return std::format("Failed to build widget: {}", error); },
         [](const Widget& widget) { return std::format("Created widget: {}", widget.name); }
     );
 
 // Single callable with pipe syntax
-loadGuiElement() | frt::match([](auto& item) {
+loadGuiElement() | frt::algorithm::match([](auto& item) {
     item.resize(800, 600);
 });
 ```
 
-A partially applied `frt::match` closure can also be stored in a variable and reused across multiple result objects:
+A partially applied `frt::algorithm::match` closure can also be stored in a variable and reused across multiple result
+objects:
 
 ```c++
-const auto getElementName = frt::match(
+const auto getElementName = frt::algorithm::match(
     [](const Widget& widget) { return widget.name; },
     [](const Window& window) { return window.title; }
 );
@@ -180,9 +182,9 @@ std::string second = loadGuiElement() | getElementName;
 
 > [!NOTE]
 > Just like the [pipe syntax for monadic operations](MonadicOperationsAsFreeFunctions.md#hidden-caveats-of-the--syntax),
-> `frt::match(lf, rf)` and `frt::match(f)` capture the callables **by value** (`std::decay_t<F>`) into an intermediate
-> closure object. The decayed callable types must be move-constructible. If a callable holds expensive state or needs to
-> mutate its own state across calls, wrap it in `std::ref` or `std::cref`.
+> `frt::algorithm::match(lf, rf)` and `frt::algorithm::match(f)` capture the callables **by value** (`std::decay_t<F>`)
+> into an intermediate closure object. The decayed callable types must be move-constructible. If a callable holds
+> expensive state or needs to mutate its own state across calls, wrap it in `std::ref` or `std::cref`.
 
 ---
 
@@ -197,7 +199,7 @@ using ErrorOrReady = frt::either<Error, void>;
 ErrorOrReady status = initializeWindowSystem();
 
 // Right alternative is `void`, so the right callable takes no arguments
-bool ready = status | frt::match(
+bool ready = status | frt::algorithm::match(
     [](const Error& err) {
         logError(err);
         return false;
@@ -217,26 +219,27 @@ struct Visitor {
     std::string operator()() const                 { return "Initialized"; }
 };
 
-std::string message = status | frt::match(Visitor{});
+std::string message = status | frt::algorithm::match(Visitor{});
 ```
 
 ---
 
-## Customizing `frt::match` for Other Types
+## Customizing `frt::algorithm::match` for Other Types
 
-`frt::match` works out of the box with `frt::either`, `frt::expected`, `frt::optional`, as well as `std::expected` and
-`std::optional` (when `<frt/meta/std/meta_either_std_expected.hpp>` or `<frt/meta/std/meta_either_std_optional.hpp>` is
-included).
+`frt::algorithm::match` works out of the box with `frt::either`, `frt::expected`, `frt::optional`, as well as
+`std::expected` and `std::optional` (when `<frt/meta/std/meta_either_std_expected.hpp>` or
+`<frt/meta/std/meta_either_std_optional.hpp>` is included).
 
-To enable `frt::match` (both direct and `|` pipe syntax) for a custom sum type `Result`, specialize:
+To enable `frt::algorithm::match` (both direct and `|` pipe syntax) for a custom sum type `Result`, specialize:
 
 1. `frt::is_result_type<Result>` (set to `true`).
 2. `frt::meta_either<Result>`.
 
-### Required `frt::meta_either` interface for `frt::match`
+### Required `frt::meta_either` interface for `frt::algorithm::match`
 
-Unlike `and_then_*` and `transform_*`, `frt::match` only inspects and extracts from the input result object and never
-constructs or rebinds a result type. Consequently, `frt::meta_either<Result>` only needs to provide **five** members:
+Unlike `and_then_*` and `transform_*`, `frt::algorithm::match` only inspects and extracts from the input result object
+and never constructs or rebinds a result type. Consequently, `frt::meta_either<Result>` only needs to provide **five**
+members:
 
 | Member                                | Requirement                    | Description                                                                                                                                  |
 |---------------------------------------|--------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------|
@@ -248,7 +251,7 @@ constructs or rebinds a result type. Consequently, `frt::meta_either<Result>` on
 
 > [!TIP]
 > `tag_t`, `rebind_left`, `rebind_right`, `is_right`, `make_left`, and `make_right` are **not** required if you only use
-> `frt::match` with your type. For full compatibility with all free monadic operations, see
+> `frt::algorithm::match` with your type. For full compatibility with all free monadic operations, see
 > [Monadic Operations as Free Functions](MonadicOperationsAsFreeFunctions.md#customizing-monadic-operations-with-frtmeta_either).
 
 ### Custom type example
@@ -302,12 +305,12 @@ struct meta_either<GuiEventResult> {
 } // namespace frt
 ```
 
-Now `GuiEventResult` can be used with both `frt::match` and the `|` operator:
+Now `GuiEventResult` can be used with both `frt::algorithm::match` and the `|` operator:
 
 ```c++
 GuiEventResult event = pollGuiEvent();
 
-std::string description = event | frt::match(
+std::string description = event | frt::algorithm::match(
     [](const Error& err) { return "Error: " + err.reason; },
     [](const Widget& w)  { return "Widget: " + w.name; }
 );

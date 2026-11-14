@@ -63,7 +63,7 @@ TEST_CASE("match partial application constexpr", "[algorithm][match][constexpr]"
   {
     constexpr auto valid = [matchLeft, matchRight] {
       const Either left{frt::in_place_left, makeExpectedLeftValue()};
-      return (left | frt::match(matchLeft, matchRight)) == makeExpectedMatchLeftResult();
+      return (left | frt::algorithm::match(matchLeft, matchRight)) == makeExpectedMatchLeftResult();
     }();
 
     STATIC_REQUIRE(valid);
@@ -74,7 +74,7 @@ TEST_CASE("match partial application constexpr", "[algorithm][match][constexpr]"
     constexpr auto valid = [matchLeft] {
       const Either left{frt::in_place_left, makeExpectedLeftValue()};
       bool rightInvoked = false;
-      [[maybe_unused]] auto res = left | frt::match(matchLeft, [&](const std::string &) {
+      [[maybe_unused]] auto res = left | frt::algorithm::match(matchLeft, [&](const std::string &) {
                                     rightInvoked = true;
                                     return makeExpectedMatchRightResult();
                                   });
@@ -88,7 +88,7 @@ TEST_CASE("match partial application constexpr", "[algorithm][match][constexpr]"
   {
     constexpr auto valid = [matchLeft, matchRight] {
       const Either right{frt::in_place_right, makeExpectedRightValue()};
-      return (right | frt::match(matchLeft, matchRight)) == makeExpectedMatchRightResult();
+      return (right | frt::algorithm::match(matchLeft, matchRight)) == makeExpectedMatchRightResult();
     }();
 
     STATIC_REQUIRE(valid);
@@ -99,7 +99,7 @@ TEST_CASE("match partial application constexpr", "[algorithm][match][constexpr]"
     constexpr auto valid = [matchRight] {
       const Either right{frt::in_place_right, makeExpectedRightValue()};
       bool leftInvoked = false;
-      [[maybe_unused]] auto res = right | frt::match(
+      [[maybe_unused]] auto res = right | frt::algorithm::match(
                                               [&](const std::vector<int> &) {
                                                 leftInvoked = true;
                                                 return makeExpectedMatchLeftResult();
@@ -116,7 +116,7 @@ TEST_CASE("match partial application constexpr", "[algorithm][match][constexpr]"
     constexpr auto valid = [] {
       auto singleFn = [](const auto &val) -> std::size_t { return std::size(val); };
       const Either left{frt::in_place_left, makeExpectedLeftValue()};
-      return (left | frt::match(singleFn)) == makeExpectedLeftValue().size();
+      return (left | frt::algorithm::match(singleFn)) == makeExpectedLeftValue().size();
     }();
 
     STATIC_REQUIRE(valid);
@@ -127,7 +127,7 @@ TEST_CASE("match partial application constexpr", "[algorithm][match][constexpr]"
     constexpr auto valid = [] {
       auto singleFn = [](const auto &val) -> std::size_t { return std::size(val); };
       const Either right{frt::in_place_right, makeExpectedRightValue()};
-      return (right | frt::match(singleFn)) == makeExpectedRightValue().size();
+      return (right | frt::algorithm::match(singleFn)) == makeExpectedRightValue().size();
     }();
 
     STATIC_REQUIRE(valid);
@@ -138,7 +138,7 @@ TEST_CASE("match partial application constexpr", "[algorithm][match][constexpr]"
     constexpr auto valid = [] {
       const Either left{frt::in_place_left, makeExpectedLeftValue()};
       bool leftInvoked = false;
-      left | frt::match([&](const std::vector<int> &) { leftInvoked = true; }, [](const std::string &) {});
+      left | frt::algorithm::match([&](const std::vector<int> &) { leftInvoked = true; }, [](const std::string &) {});
       return leftInvoked;
     }();
 
@@ -150,7 +150,7 @@ TEST_CASE("match partial application constexpr", "[algorithm][match][constexpr]"
     constexpr auto valid = [] {
       const Either left{frt::in_place_left, makeExpectedLeftValue()};
       bool rightInvoked = false;
-      left | frt::match([](const std::vector<int> &) {}, [&](const std::string &) { rightInvoked = true; });
+      left | frt::algorithm::match([](const std::vector<int> &) {}, [&](const std::string &) { rightInvoked = true; });
       return !rightInvoked;
     }();
 
@@ -162,7 +162,7 @@ TEST_CASE("match partial application constexpr", "[algorithm][match][constexpr]"
     constexpr auto valid = [] {
       const Either right{frt::in_place_right, makeExpectedRightValue()};
       bool rightInvoked = false;
-      right | frt::match([](const std::vector<int> &) {}, [&](const std::string &) { rightInvoked = true; });
+      right | frt::algorithm::match([](const std::vector<int> &) {}, [&](const std::string &) { rightInvoked = true; });
       return rightInvoked;
     }();
 
@@ -174,7 +174,7 @@ TEST_CASE("match partial application constexpr", "[algorithm][match][constexpr]"
     constexpr auto valid = [] {
       const Either right{frt::in_place_right, makeExpectedRightValue()};
       bool leftInvoked = false;
-      right | frt::match([&](const std::vector<int> &) { leftInvoked = true; }, [](const std::string &) {});
+      right | frt::algorithm::match([&](const std::vector<int> &) { leftInvoked = true; }, [](const std::string &) {});
       return !leftInvoked;
     }();
 
@@ -186,7 +186,7 @@ TEST_CASE("match partial application constexpr", "[algorithm][match][constexpr]"
     constexpr auto valid = [] {
       const Either left{frt::in_place_left, makeExpectedLeftValue()};
       bool invoked = false;
-      left | frt::match([&](const auto &) { invoked = true; });
+      left | frt::algorithm::match([&](const auto &) { invoked = true; });
       return invoked;
     }();
 
@@ -198,7 +198,7 @@ TEST_CASE("match partial application constexpr", "[algorithm][match][constexpr]"
     constexpr auto valid = [] {
       const Either right{frt::in_place_right, makeExpectedRightValue()};
       bool invoked = false;
-      right | frt::match([&](const auto &) { invoked = true; });
+      right | frt::algorithm::match([&](const auto &) { invoked = true; });
       return invoked;
     }();
 
@@ -209,7 +209,7 @@ TEST_CASE("match partial application constexpr", "[algorithm][match][constexpr]"
   {
     constexpr auto valid = [] {
       Either either{frt::in_place_left, makeExpectedLeftValue()};
-      [[maybe_unused]] auto res = either | frt::match(
+      [[maybe_unused]] auto res = either | frt::algorithm::match(
                                                [](std::vector<int> &v) {
                                                  v.clear();
                                                  return 0;
@@ -225,11 +225,11 @@ TEST_CASE("match partial application constexpr", "[algorithm][match][constexpr]"
   {
     constexpr auto valid = [] {
       Either either{frt::in_place_right, makeExpectedRightValue()};
-      [[maybe_unused]] auto res = either | frt::match([](std::vector<int> &) { return 0; },
-                                                      [](std::string &s) {
-                                                        s.clear();
-                                                        return 0;
-                                                      });
+      [[maybe_unused]] auto res = either | frt::algorithm::match([](std::vector<int> &) { return 0; },
+                                                                 [](std::string &s) {
+                                                                   s.clear();
+                                                                   return 0;
+                                                                 });
       return either.right().empty();
     }();
 
@@ -240,8 +240,8 @@ TEST_CASE("match partial application constexpr", "[algorithm][match][constexpr]"
   {
     constexpr auto valid = [] {
       const Either either{frt::in_place_left, makeExpectedLeftValue()};
-      return either | frt::match([](const std::vector<int> &v) { return v == makeExpectedLeftValue(); },
-                                 [](const std::string &) { return false; });
+      return either | frt::algorithm::match([](const std::vector<int> &v) { return v == makeExpectedLeftValue(); },
+                                            [](const std::string &) { return false; });
     }();
 
     STATIC_REQUIRE(valid);
@@ -251,8 +251,8 @@ TEST_CASE("match partial application constexpr", "[algorithm][match][constexpr]"
   {
     constexpr auto valid = [] {
       const Either either{frt::in_place_right, makeExpectedRightValue()};
-      return either | frt::match([](const std::vector<int> &) { return false; },
-                                 [](const std::string &s) { return s == makeExpectedRightValue(); });
+      return either | frt::algorithm::match([](const std::vector<int> &) { return false; },
+                                            [](const std::string &s) { return s == makeExpectedRightValue(); });
     }();
 
     STATIC_REQUIRE(valid);
@@ -262,8 +262,8 @@ TEST_CASE("match partial application constexpr", "[algorithm][match][constexpr]"
   {
     constexpr auto valid = [] {
       Either either{frt::in_place_left, makeExpectedLeftValue()};
-      auto res = std::move(either) | frt::match([](std::vector<int> &&v) { return std::move(v); },
-                                                [](std::string &&) { return std::vector<int>{}; });
+      auto res = std::move(either) | frt::algorithm::match([](std::vector<int> &&v) { return std::move(v); },
+                                                           [](std::string &&) { return std::vector<int>{}; });
       return res == makeExpectedLeftValue();
     }();
 
@@ -274,8 +274,8 @@ TEST_CASE("match partial application constexpr", "[algorithm][match][constexpr]"
   {
     constexpr auto valid = [] {
       Either either{frt::in_place_right, makeExpectedRightValue()};
-      auto res = std::move(either) | frt::match([](std::vector<int> &&) { return std::string{}; },
-                                                [](std::string &&s) { return std::move(s); });
+      auto res = std::move(either) | frt::algorithm::match([](std::vector<int> &&) { return std::string{}; },
+                                                           [](std::string &&s) { return std::move(s); });
       return res == makeExpectedRightValue();
     }();
 
@@ -287,8 +287,8 @@ TEST_CASE("match partial application constexpr", "[algorithm][match][constexpr]"
     constexpr auto valid = [] {
       const Either either{frt::in_place_left, makeExpectedLeftValue()};
       return static_cast<const Either &&>(either) |
-             frt::match([](const std::vector<int> &&v) { return v == makeExpectedLeftValue(); },
-                        [](const std::string &&) { return false; });
+             frt::algorithm::match([](const std::vector<int> &&v) { return v == makeExpectedLeftValue(); },
+                                   [](const std::string &&) { return false; });
     }();
 
     STATIC_REQUIRE(valid);
@@ -299,8 +299,8 @@ TEST_CASE("match partial application constexpr", "[algorithm][match][constexpr]"
     constexpr auto valid = [] {
       const Either either{frt::in_place_right, makeExpectedRightValue()};
       return static_cast<const Either &&>(either) |
-             frt::match([](const std::vector<int> &&) { return false; },
-                        [](const std::string &&s) { return s == makeExpectedRightValue(); });
+             frt::algorithm::match([](const std::vector<int> &&) { return false; },
+                                   [](const std::string &&s) { return s == makeExpectedRightValue(); });
     }();
 
     STATIC_REQUIRE(valid);
@@ -316,7 +316,7 @@ TEST_CASE("match partial application (void left) constexpr", "[algorithm][match]
   {
     constexpr auto valid = [matchVoidLeft, matchRight] {
       const EitherVoidLeft left{frt::in_place_left};
-      return (left | frt::match(matchVoidLeft, matchRight)) == makeExpectedMatchLeftResult();
+      return (left | frt::algorithm::match(matchVoidLeft, matchRight)) == makeExpectedMatchLeftResult();
     }();
 
     STATIC_REQUIRE(valid);
@@ -326,7 +326,7 @@ TEST_CASE("match partial application (void left) constexpr", "[algorithm][match]
   {
     constexpr auto valid = [matchVoidLeft, matchRight] {
       const EitherVoidLeft right{frt::in_place_right, makeExpectedRightValue()};
-      return (right | frt::match(matchVoidLeft, matchRight)) == makeExpectedMatchRightResult();
+      return (right | frt::algorithm::match(matchVoidLeft, matchRight)) == makeExpectedMatchRightResult();
     }();
 
     STATIC_REQUIRE(valid);
@@ -343,8 +343,8 @@ TEST_CASE("match partial application (void left) constexpr", "[algorithm][match]
     constexpr auto valid = [] {
       const EitherVoidLeft left{frt::in_place_left};
       const EitherVoidLeft right{frt::in_place_right, makeExpectedRightValue()};
-      return (left | frt::match(Overloaded{})) == 0 &&
-             (right | frt::match(Overloaded{})) == makeExpectedRightValue().size();
+      return (left | frt::algorithm::match(Overloaded{})) == 0 &&
+             (right | frt::algorithm::match(Overloaded{})) == makeExpectedRightValue().size();
     }();
 
     STATIC_REQUIRE(valid);
@@ -355,11 +355,11 @@ TEST_CASE("match partial application (void left) constexpr", "[algorithm][match]
     constexpr auto valid = [] {
       const EitherVoidLeft left{frt::in_place_left};
       bool leftInvoked = false;
-      left | frt::match([&]() { leftInvoked = true; }, [](const std::string &) {});
+      left | frt::algorithm::match([&]() { leftInvoked = true; }, [](const std::string &) {});
 
       const EitherVoidLeft right{frt::in_place_right, makeExpectedRightValue()};
       bool rightInvoked = false;
-      right | frt::match([]() {}, [&](const std::string &) { rightInvoked = true; });
+      right | frt::algorithm::match([]() {}, [&](const std::string &) { rightInvoked = true; });
 
       return leftInvoked && rightInvoked;
     }();
@@ -377,7 +377,7 @@ TEST_CASE("match partial application (void right) constexpr", "[algorithm][match
   {
     constexpr auto valid = [matchLeft, matchVoidRight] {
       const EitherVoidRight left{frt::in_place_left, makeExpectedLeftValue()};
-      return (left | frt::match(matchLeft, matchVoidRight)) == makeExpectedMatchLeftResult();
+      return (left | frt::algorithm::match(matchLeft, matchVoidRight)) == makeExpectedMatchLeftResult();
     }();
 
     STATIC_REQUIRE(valid);
@@ -387,7 +387,7 @@ TEST_CASE("match partial application (void right) constexpr", "[algorithm][match
   {
     constexpr auto valid = [matchLeft, matchVoidRight] {
       const EitherVoidRight right{frt::in_place_right};
-      return (right | frt::match(matchLeft, matchVoidRight)) == makeExpectedMatchRightResult();
+      return (right | frt::algorithm::match(matchLeft, matchVoidRight)) == makeExpectedMatchRightResult();
     }();
 
     STATIC_REQUIRE(valid);
@@ -404,8 +404,8 @@ TEST_CASE("match partial application (void right) constexpr", "[algorithm][match
     constexpr auto valid = [] {
       const EitherVoidRight left{frt::in_place_left, makeExpectedLeftValue()};
       const EitherVoidRight right{frt::in_place_right};
-      return (left | frt::match(Overloaded{})) == makeExpectedLeftValue().size() &&
-             (right | frt::match(Overloaded{})) == 0;
+      return (left | frt::algorithm::match(Overloaded{})) == makeExpectedLeftValue().size() &&
+             (right | frt::algorithm::match(Overloaded{})) == 0;
     }();
 
     STATIC_REQUIRE(valid);
@@ -416,11 +416,11 @@ TEST_CASE("match partial application (void right) constexpr", "[algorithm][match
     constexpr auto valid = [] {
       const EitherVoidRight left{frt::in_place_left, makeExpectedLeftValue()};
       bool leftInvoked = false;
-      left | frt::match([&](const std::vector<int> &) { leftInvoked = true; }, []() {});
+      left | frt::algorithm::match([&](const std::vector<int> &) { leftInvoked = true; }, []() {});
 
       const EitherVoidRight right{frt::in_place_right};
       bool rightInvoked = false;
-      right | frt::match([](const std::vector<int> &) {}, [&]() { rightInvoked = true; });
+      right | frt::algorithm::match([](const std::vector<int> &) {}, [&]() { rightInvoked = true; });
 
       return leftInvoked && rightInvoked;
     }();
@@ -438,7 +438,7 @@ TEST_CASE("match partial application (void void) constexpr", "[algorithm][match]
   {
     constexpr auto valid = [matchVoidLeft, matchVoidRight] {
       const EitherVoidVoid left{frt::in_place_left};
-      return (left | frt::match(matchVoidLeft, matchVoidRight)) == makeExpectedMatchLeftResult();
+      return (left | frt::algorithm::match(matchVoidLeft, matchVoidRight)) == makeExpectedMatchLeftResult();
     }();
 
     STATIC_REQUIRE(valid);
@@ -448,7 +448,7 @@ TEST_CASE("match partial application (void void) constexpr", "[algorithm][match]
   {
     constexpr auto valid = [matchVoidLeft, matchVoidRight] {
       const EitherVoidVoid right{frt::in_place_right};
-      return (right | frt::match(matchVoidLeft, matchVoidRight)) == makeExpectedMatchRightResult();
+      return (right | frt::algorithm::match(matchVoidLeft, matchVoidRight)) == makeExpectedMatchRightResult();
     }();
 
     STATIC_REQUIRE(valid);
@@ -466,8 +466,8 @@ TEST_CASE("match partial application (void void) constexpr", "[algorithm][match]
       const EitherVoidVoid left{frt::in_place_left};
       const EitherVoidVoid right{frt::in_place_right};
 
-      auto c1 = left | frt::match(std::ref(singleFn));
-      auto c2 = right | frt::match(std::ref(singleFn));
+      auto c1 = left | frt::algorithm::match(std::ref(singleFn));
+      auto c2 = right | frt::algorithm::match(std::ref(singleFn));
       return c1 == 1 && c2 == 2;
     }();
 
@@ -479,11 +479,11 @@ TEST_CASE("match partial application (void void) constexpr", "[algorithm][match]
     constexpr auto valid = [] {
       const EitherVoidVoid left{frt::in_place_left};
       bool leftInvoked = false;
-      left | frt::match([&]() { leftInvoked = true; }, []() {});
+      left | frt::algorithm::match([&]() { leftInvoked = true; }, []() {});
 
       const EitherVoidVoid right{frt::in_place_right};
       bool rightInvoked = false;
-      right | frt::match([]() {}, [&]() { rightInvoked = true; });
+      right | frt::algorithm::match([]() {}, [&]() { rightInvoked = true; });
 
       return leftInvoked && rightInvoked;
     }();
@@ -499,7 +499,8 @@ TEST_CASE("match partial application closure semantics and efficiency constexpr"
   SECTION("lvalue closure can be reused multiple times")
   {
     constexpr auto valid = [] {
-      const auto closure = frt::match([](int v) -> int { return v * 2; }, [](int v) -> int { return v * 3; });
+      const auto closure =
+          frt::algorithm::match([](int v) -> int { return v * 2; }, [](int v) -> int { return v * 3; });
 
       const Result lObj{frt::in_place_left, leftValue};
       const Result rObj{frt::in_place_right, rightValue};
@@ -513,7 +514,7 @@ TEST_CASE("match partial application closure semantics and efficiency constexpr"
   SECTION("single callable lvalue closure can be reused multiple times")
   {
     constexpr auto valid = [] {
-      const auto closure = frt::match([](int v) -> int { return v * 5; });
+      const auto closure = frt::algorithm::match([](int v) -> int { return v * 5; });
 
       const Result lObj{frt::in_place_left, leftValue};
       const Result rObj{frt::in_place_right, rightValue};
@@ -528,8 +529,8 @@ TEST_CASE("match partial application closure semantics and efficiency constexpr"
   {
     constexpr auto valid = [] {
       const Result lObj{frt::in_place_left, leftValue};
-      auto closure = frt::match(QualAwareCallable{}, QualAwareCallable{});
-      const auto constClosure = frt::match(QualAwareCallable{}, QualAwareCallable{});
+      auto closure = frt::algorithm::match(QualAwareCallable{}, QualAwareCallable{});
+      const auto constClosure = frt::algorithm::match(QualAwareCallable{}, QualAwareCallable{});
 
       const auto resLval = lObj | closure;
       const auto resConstLval = lObj | constClosure;
@@ -547,8 +548,8 @@ TEST_CASE("match partial application closure semantics and efficiency constexpr"
   {
     constexpr auto valid = [] {
       const Result lObj{frt::in_place_left, leftValue};
-      auto closure = frt::match(QualAwareCallable{});
-      const auto constClosure = frt::match(QualAwareCallable{});
+      auto closure = frt::algorithm::match(QualAwareCallable{});
+      const auto constClosure = frt::algorithm::match(QualAwareCallable{});
 
       const auto resLval = lObj | closure;
       const auto resConstLval = lObj | constClosure;

@@ -195,6 +195,9 @@ struct match_fn
 
 } // namespace detail::match_alg_
 
+namespace algorithm
+{
+
 /*!
  * \brief Invoke \p lf for the left alternative or \p rf for the right alternative and return the result.
  *
@@ -214,21 +217,21 @@ struct match_fn
  *
  * \code{.cpp}
  * // Direct invocation with two functions:
- * auto res = frt::match(eitherObj,
- *                       [](const Left &l) { return format("left: {}", l); },
- *                       [](const Right &r) { return format("right: {}", r); });
+ * auto res = frt::algorithm::match(eitherObj,
+ *                                  [](const Left &l) { return format("left: {}", l); },
+ *                                  [](const Right &r) { return format("right: {}", r); });
  *
  * // Direct invocation with a single function:
- * auto res = frt::match(eitherObj, [](const auto &val) { return format("{}", val); });
+ * auto res = frt::algorithm::match(eitherObj, [](const auto &val) { return format("{}", val); });
  * \endcode
  *
  * Pipe syntax for partial application is also supported:
  * \code{.cpp}
  * // Two functions
- * auto res1 = eitherObj | frt::match(lf, rf);
+ * auto res1 = eitherObj | frt::algorithm::match(lf, rf);
  *
  * // Single function
- * auto res2 = eitherObj | frt::match(f);
+ * auto res2 = eitherObj | frt::algorithm::match(f);
  * \endcode
  *
  * For partial application, the callables must satisfy the same type requirements as \c std::bind_front:
@@ -241,7 +244,7 @@ struct match_fn
  * The algorithm works with all either-like result types (such as \c frt::either, \c frt::expected, \c frt::optional,
  * \c std::expected, or \c std::optional).
  *
- * To use \c frt::match with a custom result type, specialize \c frt::is_result_type (set to \c true) and
+ * To use \c frt::algorithm::match with a custom result type, specialize \c frt::is_result_type (set to \c true) and
  * \c frt::meta_either:
  * - \c left_t -- the type of the left alternative,
  * - \c right_t -- the type of the right alternative,
@@ -250,5 +253,7 @@ struct match_fn
  * - \c left(result) -- a callable accessing the left alternative.
  */
 inline constexpr detail::match_alg_::match_fn match{};
+
+} // namespace algorithm
 
 } // namespace frt

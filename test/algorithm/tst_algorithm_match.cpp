@@ -60,13 +60,13 @@ TEST_CASE("match partial application", "[algorithm][match]")
 
   SECTION("left alternative invokes left function and returns its result")
   {
-    REQUIRE((left | frt::match(matchLeft, matchRight)) == expectedMatchLeftResult);
+    REQUIRE((left | frt::algorithm::match(matchLeft, matchRight)) == expectedMatchLeftResult);
   }
 
   SECTION("left alternative does not invoke right function")
   {
     bool rightInvoked = false;
-    [[maybe_unused]] auto res = left | frt::match(matchLeft, [&](const std::string &) {
+    [[maybe_unused]] auto res = left | frt::algorithm::match(matchLeft, [&](const std::string &) {
                                   rightInvoked = true;
                                   return expectedMatchRightResult;
                                 });
@@ -75,13 +75,13 @@ TEST_CASE("match partial application", "[algorithm][match]")
 
   SECTION("right alternative invokes right function and returns its result")
   {
-    REQUIRE((right | frt::match(matchLeft, matchRight)) == expectedMatchRightResult);
+    REQUIRE((right | frt::algorithm::match(matchLeft, matchRight)) == expectedMatchRightResult);
   }
 
   SECTION("right alternative does not invoke left function")
   {
     bool leftInvoked = false;
-    [[maybe_unused]] auto res = right | frt::match(
+    [[maybe_unused]] auto res = right | frt::algorithm::match(
                                             [&](const std::vector<int> &) {
                                               leftInvoked = true;
                                               return expectedMatchLeftResult;
@@ -93,61 +93,61 @@ TEST_CASE("match partial application", "[algorithm][match]")
   SECTION("single callable invoked for left alternative")
   {
     auto singleFn = [](const auto &val) -> std::size_t { return std::size(val); };
-    REQUIRE((left | frt::match(singleFn)) == expectedLeftValue.size());
+    REQUIRE((left | frt::algorithm::match(singleFn)) == expectedLeftValue.size());
   }
 
   SECTION("single callable invoked for right alternative")
   {
     auto singleFn = [](const auto &val) -> std::size_t { return std::size(val); };
-    REQUIRE((right | frt::match(singleFn)) == expectedRightValue.size());
+    REQUIRE((right | frt::algorithm::match(singleFn)) == expectedRightValue.size());
   }
 
   SECTION("left alternative with void-returning function invokes left function")
   {
     bool leftInvoked = false;
-    left | frt::match([&](const std::vector<int> &) { leftInvoked = true; }, [](const std::string &) {});
+    left | frt::algorithm::match([&](const std::vector<int> &) { leftInvoked = true; }, [](const std::string &) {});
     REQUIRE(leftInvoked);
   }
 
   SECTION("left alternative with void-returning function does not invoke right function")
   {
     bool rightInvoked = false;
-    left | frt::match([](const std::vector<int> &) {}, [&](const std::string &) { rightInvoked = true; });
+    left | frt::algorithm::match([](const std::vector<int> &) {}, [&](const std::string &) { rightInvoked = true; });
     REQUIRE_FALSE(rightInvoked);
   }
 
   SECTION("right alternative with void-returning function invokes right function")
   {
     bool rightInvoked = false;
-    right | frt::match([](const std::vector<int> &) {}, [&](const std::string &) { rightInvoked = true; });
+    right | frt::algorithm::match([](const std::vector<int> &) {}, [&](const std::string &) { rightInvoked = true; });
     REQUIRE(rightInvoked);
   }
 
   SECTION("right alternative with void-returning function does not invoke left function")
   {
     bool leftInvoked = false;
-    right | frt::match([&](const std::vector<int> &) { leftInvoked = true; }, [](const std::string &) {});
+    right | frt::algorithm::match([&](const std::vector<int> &) { leftInvoked = true; }, [](const std::string &) {});
     REQUIRE_FALSE(leftInvoked);
   }
 
   SECTION("single void-returning function invoked for left")
   {
     bool invoked = false;
-    left | frt::match([&](const auto &) { invoked = true; });
+    left | frt::algorithm::match([&](const auto &) { invoked = true; });
     REQUIRE(invoked);
   }
 
   SECTION("single void-returning function invoked for right")
   {
     bool invoked = false;
-    right | frt::match([&](const auto &) { invoked = true; });
+    right | frt::algorithm::match([&](const auto &) { invoked = true; });
     REQUIRE(invoked);
   }
 
   SECTION("left with non-const lvalue forwarding allows modification")
   {
     Either either{frt::in_place_left, expectedLeftValue};
-    [[maybe_unused]] auto res = either | frt::match(
+    [[maybe_unused]] auto res = either | frt::algorithm::match(
                                              [](std::vector<int> &v) {
                                                v.clear();
                                                return 0;
@@ -159,43 +159,43 @@ TEST_CASE("match partial application", "[algorithm][match]")
   SECTION("right with non-const lvalue forwarding allows modification")
   {
     Either either{frt::in_place_right, expectedRightValue};
-    [[maybe_unused]] auto res = either | frt::match([](std::vector<int> &) { return 0; },
-                                                    [](std::string &s) {
-                                                      s.clear();
-                                                      return 0;
-                                                    });
+    [[maybe_unused]] auto res = either | frt::algorithm::match([](std::vector<int> &) { return 0; },
+                                                               [](std::string &s) {
+                                                                 s.clear();
+                                                                 return 0;
+                                                               });
     REQUIRE(either.right().empty());
   }
 
   SECTION("left with const lvalue forwarding")
   {
     const Either either{frt::in_place_left, expectedLeftValue};
-    auto res = either | frt::match([](const std::vector<int> &v) { return v == expectedLeftValue; },
-                                   [](const std::string &) { return false; });
+    auto res = either | frt::algorithm::match([](const std::vector<int> &v) { return v == expectedLeftValue; },
+                                              [](const std::string &) { return false; });
     REQUIRE(res);
   }
 
   SECTION("right with const lvalue forwarding")
   {
     const Either either{frt::in_place_right, expectedRightValue};
-    auto res = either | frt::match([](const std::vector<int> &) { return false; },
-                                   [](const std::string &s) { return s == expectedRightValue; });
+    auto res = either | frt::algorithm::match([](const std::vector<int> &) { return false; },
+                                              [](const std::string &s) { return s == expectedRightValue; });
     REQUIRE(res);
   }
 
   SECTION("left with rvalue forwarding moves value")
   {
     Either either{frt::in_place_left, expectedLeftValue};
-    auto res = std::move(either) | frt::match([](std::vector<int> &&v) { return std::move(v); },
-                                              [](std::string &&) { return std::vector<int>{}; });
+    auto res = std::move(either) | frt::algorithm::match([](std::vector<int> &&v) { return std::move(v); },
+                                                         [](std::string &&) { return std::vector<int>{}; });
     REQUIRE(res == expectedLeftValue);
   }
 
   SECTION("right with rvalue forwarding moves value")
   {
     Either either{frt::in_place_right, expectedRightValue};
-    auto res = std::move(either) | frt::match([](std::vector<int> &&) { return std::string{}; },
-                                              [](std::string &&s) { return std::move(s); });
+    auto res = std::move(either) | frt::algorithm::match([](std::vector<int> &&) { return std::string{}; },
+                                                         [](std::string &&s) { return std::move(s); });
     REQUIRE(res == expectedRightValue);
   }
 
@@ -203,8 +203,8 @@ TEST_CASE("match partial application", "[algorithm][match]")
   {
     const Either either{frt::in_place_left, expectedLeftValue};
     auto res = static_cast<const Either &&>(either) |
-               frt::match([](const std::vector<int> &&v) { return v == expectedLeftValue; },
-                          [](const std::string &&) { return false; });
+               frt::algorithm::match([](const std::vector<int> &&v) { return v == expectedLeftValue; },
+                                     [](const std::string &&) { return false; });
     REQUIRE(res);
   }
 
@@ -212,8 +212,8 @@ TEST_CASE("match partial application", "[algorithm][match]")
   {
     const Either either{frt::in_place_right, expectedRightValue};
     auto res = static_cast<const Either &&>(either) |
-               frt::match([](const std::vector<int> &&) { return false; },
-                          [](const std::string &&s) { return s == expectedRightValue; });
+               frt::algorithm::match([](const std::vector<int> &&) { return false; },
+                                     [](const std::string &&s) { return s == expectedRightValue; });
     REQUIRE(res);
   }
 }
@@ -228,12 +228,12 @@ TEST_CASE("match partial application (void left)", "[algorithm][match]")
 
   SECTION("void left invokes left function")
   {
-    REQUIRE((left | frt::match(matchVoidLeft, matchRight)) == expectedMatchLeftResult);
+    REQUIRE((left | frt::algorithm::match(matchVoidLeft, matchRight)) == expectedMatchLeftResult);
   }
 
   SECTION("right invokes right function")
   {
-    REQUIRE((right | frt::match(matchVoidLeft, matchRight)) == expectedMatchRightResult);
+    REQUIRE((right | frt::algorithm::match(matchVoidLeft, matchRight)) == expectedMatchRightResult);
   }
 
   SECTION("single callable invoked for void left and right")
@@ -244,18 +244,18 @@ TEST_CASE("match partial application (void left)", "[algorithm][match]")
       std::size_t operator()(const std::string &s) const { return s.size(); }
     };
 
-    REQUIRE((left | frt::match(Overloaded{})) == 0);
-    REQUIRE((right | frt::match(Overloaded{})) == expectedRightValue.size());
+    REQUIRE((left | frt::algorithm::match(Overloaded{})) == 0);
+    REQUIRE((right | frt::algorithm::match(Overloaded{})) == expectedRightValue.size());
   }
 
   SECTION("void return type with void left")
   {
     bool leftInvoked = false;
-    left | frt::match([&]() { leftInvoked = true; }, [](const std::string &) {});
+    left | frt::algorithm::match([&]() { leftInvoked = true; }, [](const std::string &) {});
     REQUIRE(leftInvoked);
 
     bool rightInvoked = false;
-    right | frt::match([]() {}, [&](const std::string &) { rightInvoked = true; });
+    right | frt::algorithm::match([]() {}, [&](const std::string &) { rightInvoked = true; });
     REQUIRE(rightInvoked);
   }
 }
@@ -270,12 +270,12 @@ TEST_CASE("match partial application (void right)", "[algorithm][match]")
 
   SECTION("left invokes left function")
   {
-    REQUIRE((left | frt::match(matchLeft, matchVoidRight)) == expectedMatchLeftResult);
+    REQUIRE((left | frt::algorithm::match(matchLeft, matchVoidRight)) == expectedMatchLeftResult);
   }
 
   SECTION("void right invokes right function")
   {
-    REQUIRE((right | frt::match(matchLeft, matchVoidRight)) == expectedMatchRightResult);
+    REQUIRE((right | frt::algorithm::match(matchLeft, matchVoidRight)) == expectedMatchRightResult);
   }
 
   SECTION("single callable invoked for left and void right")
@@ -286,18 +286,18 @@ TEST_CASE("match partial application (void right)", "[algorithm][match]")
       std::size_t operator()() const { return 0; }
     };
 
-    REQUIRE((left | frt::match(Overloaded{})) == expectedLeftValue.size());
-    REQUIRE((right | frt::match(Overloaded{})) == 0);
+    REQUIRE((left | frt::algorithm::match(Overloaded{})) == expectedLeftValue.size());
+    REQUIRE((right | frt::algorithm::match(Overloaded{})) == 0);
   }
 
   SECTION("void return type with void right")
   {
     bool leftInvoked = false;
-    left | frt::match([&](const std::vector<int> &) { leftInvoked = true; }, []() {});
+    left | frt::algorithm::match([&](const std::vector<int> &) { leftInvoked = true; }, []() {});
     REQUIRE(leftInvoked);
 
     bool rightInvoked = false;
-    right | frt::match([](const std::vector<int> &) {}, [&]() { rightInvoked = true; });
+    right | frt::algorithm::match([](const std::vector<int> &) {}, [&]() { rightInvoked = true; });
     REQUIRE(rightInvoked);
   }
 }
@@ -312,12 +312,12 @@ TEST_CASE("match partial application (void void)", "[algorithm][match]")
 
   SECTION("void left invokes left function")
   {
-    REQUIRE((left | frt::match(matchVoidLeft, matchVoidRight)) == expectedMatchLeftResult);
+    REQUIRE((left | frt::algorithm::match(matchVoidLeft, matchVoidRight)) == expectedMatchLeftResult);
   }
 
   SECTION("void right invokes right function")
   {
-    REQUIRE((right | frt::match(matchVoidLeft, matchVoidRight)) == expectedMatchRightResult);
+    REQUIRE((right | frt::algorithm::match(matchVoidLeft, matchVoidRight)) == expectedMatchRightResult);
   }
 
   SECTION("single callable invoked for void void")
@@ -328,18 +328,18 @@ TEST_CASE("match partial application (void void)", "[algorithm][match]")
       return callCount;
     };
 
-    REQUIRE((left | frt::match(std::ref(singleFn))) == 1);
-    REQUIRE((right | frt::match(std::ref(singleFn))) == 2);
+    REQUIRE((left | frt::algorithm::match(std::ref(singleFn))) == 1);
+    REQUIRE((right | frt::algorithm::match(std::ref(singleFn))) == 2);
   }
 
   SECTION("void return type with void void")
   {
     bool leftInvoked = false;
-    left | frt::match([&]() { leftInvoked = true; }, []() {});
+    left | frt::algorithm::match([&]() { leftInvoked = true; }, []() {});
     REQUIRE(leftInvoked);
 
     bool rightInvoked = false;
-    right | frt::match([]() {}, [&]() { rightInvoked = true; });
+    right | frt::algorithm::match([]() {}, [&]() { rightInvoked = true; });
     REQUIRE(rightInvoked);
   }
 }
@@ -350,7 +350,7 @@ TEST_CASE("match partial application closure semantics and efficiency", "[algori
 
   SECTION("lvalue closure can be reused multiple times")
   {
-    const auto closure = frt::match([](int v) -> int { return v * 2; }, [](int v) -> int { return v * 3; });
+    const auto closure = frt::algorithm::match([](int v) -> int { return v * 2; }, [](int v) -> int { return v * 3; });
 
     const Result lObj{frt::in_place_left, leftValue};
     const Result rObj{frt::in_place_right, rightValue};
@@ -361,7 +361,7 @@ TEST_CASE("match partial application closure semantics and efficiency", "[algori
 
   SECTION("single callable lvalue closure can be reused multiple times")
   {
-    const auto closure = frt::match([](int v) -> int { return v * 5; });
+    const auto closure = frt::algorithm::match([](int v) -> int { return v * 5; });
 
     const Result lObj{frt::in_place_left, leftValue};
     const Result rObj{frt::in_place_right, rightValue};
@@ -386,8 +386,8 @@ TEST_CASE("match partial application closure semantics and efficiency", "[algori
     const Result lObj{frt::in_place_left, leftValue};
     const Result rObj{frt::in_place_right, rightValue};
 
-    [[maybe_unused]] const auto res1 = lObj | frt::match(std::ref(leftFn), std::ref(rightFn));
-    [[maybe_unused]] const auto res2 = rObj | frt::match(std::ref(leftFn), std::ref(rightFn));
+    [[maybe_unused]] const auto res1 = lObj | frt::algorithm::match(std::ref(leftFn), std::ref(rightFn));
+    [[maybe_unused]] const auto res2 = rObj | frt::algorithm::match(std::ref(leftFn), std::ref(rightFn));
 
     REQUIRE((leftCalls == 1 && rightCalls == 1));
   }
@@ -398,7 +398,7 @@ TEST_CASE("match partial application closure semantics and efficiency", "[algori
     auto rightFn = [](int v) -> int { return v; };
 
     const Result lObj{frt::in_place_left, leftValue};
-    const auto res = lObj | frt::match(std::cref(leftFn), std::cref(rightFn));
+    const auto res = lObj | frt::algorithm::match(std::cref(leftFn), std::cref(rightFn));
     REQUIRE(res == leftValue);
   }
 
@@ -407,7 +407,7 @@ TEST_CASE("match partial application closure semantics and efficiency", "[algori
     int copies = 0;
     int moves = 0;
     const auto closure =
-        frt::match([t = CopyMoveTracker{leftValue, &copies, &moves}](int v) -> int { return v + t.value; });
+        frt::algorithm::match([t = CopyMoveTracker{leftValue, &copies, &moves}](int v) -> int { return v + t.value; });
 
     const int copiesAfterCapture = copies;
     const Result lObj{frt::in_place_left, rightValue};
@@ -423,7 +423,8 @@ TEST_CASE("match partial application closure semantics and efficiency", "[algori
     const Result lObj{frt::in_place_left, rightValue};
 
     [[maybe_unused]] const auto res =
-        lObj | frt::match([t = CopyMoveTracker{leftValue, &copies, &moves}](int v) -> int { return v + t.value; });
+        lObj |
+        frt::algorithm::match([t = CopyMoveTracker{leftValue, &copies, &moves}](int v) -> int { return v + t.value; });
 
     REQUIRE(copies == 0);
   }
@@ -433,8 +434,8 @@ TEST_CASE("match partial application closure semantics and efficiency", "[algori
     const Result lObj{frt::in_place_left, leftValue};
     const Result rObj{frt::in_place_right, rightValue};
 
-    const auto resLeft = lObj | frt::match(MoveOnlyCallable{multiplier}, MoveOnlyCallable{multiplier});
-    const auto resRight = rObj | frt::match(MoveOnlyCallable{multiplier}, MoveOnlyCallable{multiplier});
+    const auto resLeft = lObj | frt::algorithm::match(MoveOnlyCallable{multiplier}, MoveOnlyCallable{multiplier});
+    const auto resRight = rObj | frt::algorithm::match(MoveOnlyCallable{multiplier}, MoveOnlyCallable{multiplier});
 
     REQUIRE((resLeft == leftValue * multiplier && resRight == rightValue * multiplier));
   }
@@ -442,7 +443,7 @@ TEST_CASE("match partial application closure semantics and efficiency", "[algori
   SECTION("move-only callable object with rvalue closure (single callable)")
   {
     const Result lObj{frt::in_place_left, leftValue};
-    const auto res = lObj | frt::match(MoveOnlyCallable{multiplier});
+    const auto res = lObj | frt::algorithm::match(MoveOnlyCallable{multiplier});
 
     REQUIRE(res == leftValue * multiplier);
   }
@@ -450,8 +451,8 @@ TEST_CASE("match partial application closure semantics and efficiency", "[algori
   SECTION("closure value category forwards to callable (&, const&, &&, const&&) with two callables")
   {
     const Result lObj{frt::in_place_left, leftValue};
-    auto closure = frt::match(QualAwareCallable{}, QualAwareCallable{});
-    const auto constClosure = frt::match(QualAwareCallable{}, QualAwareCallable{});
+    auto closure = frt::algorithm::match(QualAwareCallable{}, QualAwareCallable{});
+    const auto constClosure = frt::algorithm::match(QualAwareCallable{}, QualAwareCallable{});
 
     const auto resLval = lObj | closure;
     const auto resConstLval = lObj | constClosure;
@@ -465,8 +466,8 @@ TEST_CASE("match partial application closure semantics and efficiency", "[algori
   SECTION("closure value category forwards to callable (&, const&, &&, const&&) with single callable")
   {
     const Result lObj{frt::in_place_left, leftValue};
-    auto closure = frt::match(QualAwareCallable{});
-    const auto constClosure = frt::match(QualAwareCallable{});
+    auto closure = frt::algorithm::match(QualAwareCallable{});
+    const auto constClosure = frt::algorithm::match(QualAwareCallable{});
 
     const auto resLval = lObj | closure;
     const auto resConstLval = lObj | constClosure;

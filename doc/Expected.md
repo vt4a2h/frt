@@ -170,7 +170,7 @@ several key design improvements, extended monadic capabilities, and tighter inte
     - `frt::expected<T, E>` is implemented directly on top of `frt::either<E, T>`.
     - It provides implicit/explicit constructors and assignment operators from `frt::either`, and provides the
       `.asEither()` observer for direct access to the underlying sum type.
-    - It seamlessly participates in `frt` algorithms such as `frt::traverse`, `frt::sequence`, `frt::match`, and free
+    - It seamlessly participates in `frt` algorithms such as `frt::traverse`, `frt::sequence`, `frt::algorithm::match`, and free
       monadic operators via `frt::meta_either`.
 
 7. **Disallowance of identical value and error types**:

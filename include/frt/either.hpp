@@ -823,7 +823,7 @@ struct [[nodiscard]] either
       detail::common_::NothrowInvocableV<LeftFunc, detail::common_::ForwardAlternativeT<Self, left_t>> &&
       detail::common_::NothrowInvocableV<RightFunc, detail::common_::ForwardAlternativeT<Self, right_t>>)
   {
-    return frt::match(std::forward<Self>(self), std::forward<LeftFunc>(lf), std::forward<RightFunc>(rf));
+    return algorithm::match(std::forward<Self>(self), std::forward<LeftFunc>(lf), std::forward<RightFunc>(rf));
   }
 
   /*!
@@ -850,7 +850,7 @@ struct [[nodiscard]] either
       detail::common_::NothrowInvocableV<LeftFunc, detail::common_::ForwardAlternativeT<Self, left_t>> &&
       detail::common_::NothrowInvocableV<RightFunc, detail::common_::ForwardAlternativeT<Self, right_t>>)
   {
-    frt::match(std::forward<Self>(self), std::forward<LeftFunc>(lf), std::forward<RightFunc>(rf));
+    algorithm::match(std::forward<Self>(self), std::forward<LeftFunc>(lf), std::forward<RightFunc>(rf));
   }
 
   /*!
@@ -873,7 +873,7 @@ struct [[nodiscard]] either
       detail::common_::NothrowInvocableV<Func, detail::common_::ForwardAlternativeT<Self, left_t>> &&
       detail::common_::NothrowInvocableV<Func, detail::common_::ForwardAlternativeT<Self, right_t>>)
   {
-    return frt::match(std::forward<Self>(self), std::forward<Func>(f));
+    return algorithm::match(std::forward<Self>(self), std::forward<Func>(f));
   }
 
   /*!
@@ -896,7 +896,7 @@ struct [[nodiscard]] either
       detail::common_::NothrowInvocableV<Func, detail::common_::ForwardAlternativeT<Self, left_t>> &&
       detail::common_::NothrowInvocableV<Func, detail::common_::ForwardAlternativeT<Self, right_t>>)
   {
-    frt::match(std::forward<Self>(self), std::forward<Func>(f));
+    algorithm::match(std::forward<Self>(self), std::forward<Func>(f));
   }
 
 private:
