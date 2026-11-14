@@ -547,7 +547,7 @@ struct [[nodiscard]] either
       detail::either_::is_nothrow_invocable_with_extra_args<
           F, decltype(std::forward_like<Self>(std::declval<left_t>())), Args...>)
   {
-    return frt::and_then_left(std::forward<Self>(self), std::forward<F>(f), std::forward<Args>(args)...);
+    return algorithm::and_then_left(std::forward<Self>(self), std::forward<F>(f), std::forward<Args>(args)...);
   }
 
   /*!
@@ -579,7 +579,7 @@ struct [[nodiscard]] either
   [[nodiscard]] constexpr auto and_then_left(this Self &&self, F &&f,
                                              Args &&...args) noexcept(std::is_nothrow_invocable_v<F, Args...>)
   {
-    return frt::and_then_left(std::forward<Self>(self), std::forward<F>(f), std::forward<Args>(args)...);
+    return algorithm::and_then_left(std::forward<Self>(self), std::forward<F>(f), std::forward<Args>(args)...);
   }
 
   /*!

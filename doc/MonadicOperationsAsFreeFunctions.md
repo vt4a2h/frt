@@ -1,10 +1,10 @@
 # Monadic Operations as Free Functions
 
 In addition to member functions on [`frt::either`](Either.md), [`frt::expected`](Expected.md), and
-[`frt::optional`](Optional.md), `frt` provides all monadic operations as free functions (function objects) in the `frt`
-namespace:
+[`frt::optional`](Optional.md), `frt` provides all monadic operations as free functions (function objects) in the
+`frt::algorithm` namespace:
 
-- `frt::and_then_left`
+- `frt::algorithm::and_then_left`
 - `frt::and_then_right`
 - `frt::transform_left`
 - `frt::transform_right`
@@ -19,7 +19,7 @@ These operations work uniformly with any result type that models a two-alternati
 
 | Free function          | Callable signature  | Description                                                                                                        |
 |------------------------|---------------------|--------------------------------------------------------------------------------------------------------------------|
-| `frt::and_then_left`   | `L -> Result<U, R>` | Chains a computation returning a result type on the left alternative (like `or_else` on `expected`/`optional`).    |
+| `frt::algorithm::and_then_left`   | `L -> Result<U, R>` | Chains a computation returning a result type on the left alternative (like `or_else` on `expected`/`optional`).    |
 | `frt::and_then_right`  | `R -> Result<L, U>` | Chains a computation returning a result type on the right alternative (like `and_then` on `expected`/`optional`).  |
 | `frt::transform_left`  | `L -> U`            | Maps the left alternative to a new value wrapped in the left branch (like `transform_error` on `expected`).        |
 | `frt::transform_right` | `R -> U`            | Maps the right alternative to a new value wrapped in the right branch (like `transform` on `expected`/`optional`). |
@@ -52,8 +52,8 @@ capabilities as member functions, including trailing argument packs and the `frt
 
 Every free monadic operation supports two invocation styles:
 
-1. **Direct free-function call**: `frt::op(result, f, args...)`
-2. **Pipe (`|`) syntax (partial application)**: `result | frt::op(f, args...)`
+1. **Direct free-function call**: `frt::algorithm::op(result, f, args...)`
+2. **Pipe (`|`) syntax (partial application)**: `result | frt::algorithm::op(f, args...)`
 
 ### 1. Direct free-function syntax
 
@@ -90,15 +90,15 @@ auto widgetOrError = frt::transform_right(
     &toWidget,
     metaData);
 
-auto finalResult = frt::and_then_left(
+auto finalResult = frt::algorithm::and_then_left(
     std::move(widgetOrError),
     &fallbackWidget);
 ```
 
 ### 2. Pipe (`|`) syntax
 
-When a free monadic operation is called **without** a leading result object — `frt::op(f, args...)` — it returns a
-partially applied closure object that can be chained with `operator|`:
+When a free monadic operation is called **without** a leading result object — `frt::algorithm::op(f, args...)` — it
+returns a partially applied closure object that can be chained with `operator|`:
 
 ```c++
 Path path{/* ... */};
@@ -107,7 +107,7 @@ MetaData metaData{/* ... */};
 auto finalResult = extractContext()
     | frt::and_then_right(&createComponent, path, frt::unwrapped, metaData)
     | frt::transform_right(&toWidget, metaData)
-    | frt::and_then_left(&fallbackWidget);
+    | frt::algorithm::and_then_left(&fallbackWidget);
 ```
 
 ---
