@@ -41,13 +41,16 @@ struct sequence_into_fn : std::ranges::range_adaptor_closure<sequence_into_fn<Ou
 
 } // namespace detail::sequence_alg_
 
+namespace algorithm
+{
+
 /*!
  * \brief The traverse algorithm with std::identity as a function.
  *
  * Effectively, it's a shortcut used for covering a range of result objects into a result object of range. For example,
  * `vector<optional<T>>` into `optional<vector<T>>`.
  *
- * \see \c frt::traverse for more details.
+ * \see \c frt::algorithm::traverse for more details.
  */
 inline constexpr detail::sequence_alg_::sequence_fn sequence;
 
@@ -57,9 +60,11 @@ inline constexpr detail::sequence_alg_::sequence_fn sequence;
  * Effectively, it's a shortcut used for covering a range of result objects into a result object of range. For example,
  * `vector<optional<T>>` into `optional<std::list<T>>`.
  *
- * \see \c frt::traverse_into for more details.
+ * \see \c frt::algorithm::traverse_into for more details.
  */
 template <template <typename...> class OutputContainer>
 inline constexpr detail::sequence_alg_::sequence_into_fn<OutputContainer> sequence_into;
+
+} // namespace algorithm
 
 } // namespace frt

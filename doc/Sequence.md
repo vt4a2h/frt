@@ -1,11 +1,11 @@
 # Sequence
 
-`frt::sequence` and `frt::sequence_into` convert a range of result objects into a single result object containing a
-container of the unwrapped values (for example, turning `std::vector<frt::expected<Widget, Error>>` into
-`frt::expected<std::vector<Widget>, Error>`).
+`frt::algorithm::sequence` and `frt::algorithm::sequence_into` convert a range of result objects into a single result
+object containing a container of the unwrapped values (for example, turning `std::vector<frt::expected<Widget, Error>>`
+into `frt::expected<std::vector<Widget>, Error>`).
 
-Effectively, `frt::sequence` is a shortcut for [`frt::traverse`](Traverse.md) with `std::identity{}` as the
-transformation function:
+Effectively, `frt::algorithm::sequence` is a shortcut for [`frt::algorithm::traverse`](Traverse.md) with
+`std::identity{}` as the transformation function:
 
 - If **every** element in the input range holds the right (expected/present) alternative, `sequence` returns a result
   object holding a container of all unwrapped values in order.
@@ -22,9 +22,9 @@ syntax.
 
 - [Signatures and Invocation Syntaxes](#signatures-and-invocation-syntaxes)
 - [Examples](#examples)
-  - [1. Basic usage (`frt::sequence`)](#1-basic-usage-frtsequence)
+  - [1. Basic usage (`frt::algorithm::sequence`)](#1-basic-usage-frtalgorithmsequence)
   - [2. Composing with `std::views`](#2-composing-with-stdviews)
-  - [3. Customizing the output container (`frt::sequence_into`)](#3-customizing-the-output-container-frtsequence_into)
+  - [3. Customizing the output container (`frt::algorithm::sequence_into`)](#3-customizing-the-output-container-frtalgorithmsequence_into)
 - [Customization](#customization)
 
 ---
@@ -35,24 +35,25 @@ syntax.
 #include <frt/algorithm/sequence.hpp>
 ```
 
-| Algorithm                       | Output container | Direct call syntax                     | Pipe (`\|`) syntax                       |
-|---------------------------------|------------------|----------------------------------------|------------------------------------------|
-| `frt::sequence`                 | `std::vector`    | `frt::sequence(range)`                 | `range \| frt::sequence`                 |
-| `frt::sequence_into<Container>` | `Container`      | `frt::sequence_into<Container>(range)` | `range \| frt::sequence_into<Container>` |
+| Algorithm                                  | Output container | Direct call syntax                                | Pipe (`\|`) syntax                                  |
+|--------------------------------------------|------------------|---------------------------------------------------|-----------------------------------------------------|
+| `frt::algorithm::sequence`                 | `std::vector`    | `frt::algorithm::sequence(range)`                 | `range \| frt::algorithm::sequence`                 |
+| `frt::algorithm::sequence_into<Container>` | `Container`      | `frt::algorithm::sequence_into<Container>(range)` | `range \| frt::algorithm::sequence_into<Container>` |
 
 - **`range`**: Any `std::ranges::input_range` whose elements are move-constructible result types (`frt::IsResultType`)
   with a non-`void` right alternative.
 
 > [!NOTE]
-> Because `frt::sequence` and `frt::sequence_into<Container>` derive from `std::ranges::range_adaptor_closure` and take
-> no extra arguments, they are piped directly without parentheses (`range | frt::sequence` and
-> `range | frt::sequence_into<std::list>`) and compose naturally with `std::views` pipelines.
+> Because `frt::algorithm::sequence` and `frt::algorithm::sequence_into<Container>` derive from
+> `std::ranges::range_adaptor_closure` and take no extra arguments, they are piped directly without parentheses
+> (`range | frt::algorithm::sequence` and `range | frt::algorithm::sequence_into<std::list>`) and compose naturally with
+> `std::views` pipelines.
 
 ---
 
 ## Examples
 
-### 1. Basic usage (`frt::sequence`)
+### 1. Basic usage (`frt::algorithm::sequence`)
 
 Suppose you load several GUI `Component` instances where each load operation returns
 `frt::expected<Component, Error>`, and you want either all loaded components in a `std::vector<Component>` or the first
@@ -72,17 +73,17 @@ std::vector<ComponentResult> results = loadAllComponents(/* ... */);
 
 // 1. Regular free-function call
 frt::expected<std::vector<Component>, Error> allComponents1 =
-    frt::sequence(results);
+    frt::algorithm::sequence(results);
 
 // 2. Pipe (`|`) syntax
 frt::expected<std::vector<Component>, Error> allComponents2 =
-    results | frt::sequence;
+    results | frt::algorithm::sequence;
 ```
 
 ### 2. Composing with `std::views`
 
-Because `frt::sequence` is a `std::ranges::range_adaptor_closure`, you can pipe a lazy `std::views` range directly into
-`frt::sequence` to evaluate and collect the results in a single expression:
+Because `frt::algorithm::sequence` is a `std::ranges::range_adaptor_closure`, you can pipe a lazy `std::views` range
+directly into `frt::algorithm::sequence` to evaluate and collect the results in a single expression:
 
 ```c++
 #include <ranges>
@@ -99,16 +100,16 @@ std::vector<Path> paths = getWindowPaths(/* ... */);
 // Lazily map each Path to frt::either<Error, Window>, then sequence into frt::either<Error, std::vector<Window>>
 frt::either<Error, std::vector<Window>> windowsOrError = paths
     | std::views::transform(&loadWindow)
-    | frt::sequence;
+    | frt::algorithm::sequence;
 ```
 
-If `loadWindow` returns `Error` for any `Path`, `frt::sequence` stops iterating immediately and `windowsOrError` holds
-that first `Error` without calling `loadWindow` on the remaining paths.
+If `loadWindow` returns `Error` for any `Path`, `frt::algorithm::sequence` stops iterating immediately and
+`windowsOrError` holds that first `Error` without calling `loadWindow` on the remaining paths.
 
-### 3. Customizing the output container (`frt::sequence_into`)
+### 3. Customizing the output container (`frt::algorithm::sequence_into`)
 
-Use `frt::sequence_into<OutputContainer>` to collect the unwrapped values into a container other than `std::vector`,
-such as `std::list`, `std::set`, or `std::map`:
+Use `frt::algorithm::sequence_into<OutputContainer>` to collect the unwrapped values into a container other than
+`std::vector`, such as `std::list`, `std::set`, or `std::map`:
 
 ```c++
 #include <list>
@@ -121,23 +122,24 @@ struct Widget;
 // Collect into a std::list<Widget>
 std::vector<frt::optional<Widget>> optWidgets = findWidgets(/* ... */);
 
-frt::optional<std::list<Widget>> widgetList1 = frt::sequence_into<std::list>(optWidgets);
-frt::optional<std::list<Widget>> widgetList2 = optWidgets | frt::sequence_into<std::list>;
+frt::optional<std::list<Widget>> widgetList1 = frt::algorithm::sequence_into<std::list>(optWidgets);
+frt::optional<std::list<Widget>> widgetList2 = optWidgets | frt::algorithm::sequence_into<std::list>;
 
 // Collect key-value pairs into a std::map<std::string, Widget>
 using NamedWidgetResult = frt::expected<std::pair<std::string, Widget>, Error>;
 std::vector<NamedWidgetResult> namedWidgets = loadNamedWidgets(/* ... */);
 
 frt::expected<std::map<std::string, Widget>, Error> widgetMap =
-    namedWidgets | frt::sequence_into<std::map>;
+    namedWidgets | frt::algorithm::sequence_into<std::map>;
 ```
 
 ---
 
 ## Customization
 
-`frt::sequence(range)` and `frt::sequence_into<OutputContainer>(range)` are implemented directly as
-`frt::traverse(range, std::identity{})` and `frt::traverse_into<OutputContainer>(range, std::identity{})`.
+`frt::algorithm::sequence(range)` and `frt::algorithm::sequence_into<OutputContainer>(range)` are implemented directly
+as `frt::algorithm::traverse(range, std::identity{})` and
+`frt::algorithm::traverse_into<OutputContainer>(range, std::identity{})`.
 
 Consequently, they support the exact same customization points:
 

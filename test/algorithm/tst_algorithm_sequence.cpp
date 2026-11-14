@@ -8,7 +8,7 @@
 #include <string>
 #include <vector>
 
-TEST_CASE("frt::sequence -- either", "[algorithm][sequence]")
+TEST_CASE("frt::algorithm::sequence -- either", "[algorithm][sequence]")
 {
   using Result = frt::either<std::string, int>;
 
@@ -22,18 +22,18 @@ TEST_CASE("frt::sequence -- either", "[algorithm][sequence]")
 
   SECTION("Regular call")
   {
-    const auto actualResult = frt::sequence(input);
+    const auto actualResult = frt::algorithm::sequence(input);
     REQUIRE(actualResult.right() == expectedResult);
   }
 
   SECTION("Pipe call")
   {
-    const auto actualResult = input | frt::sequence;
+    const auto actualResult = input | frt::algorithm::sequence;
     REQUIRE(actualResult.right() == expectedResult);
   }
 }
 
-TEST_CASE("frt::sequence_into -- either", "[algorithm][sequence_into]")
+TEST_CASE("frt::algorithm::sequence_into -- either", "[algorithm][sequence_into]")
 {
   using Result = frt::either<std::string, int>;
 
@@ -47,13 +47,13 @@ TEST_CASE("frt::sequence_into -- either", "[algorithm][sequence_into]")
 
   SECTION("Regular call")
   {
-    const auto actualResult = frt::sequence_into<std::list>(input);
+    const auto actualResult = frt::algorithm::sequence_into<std::list>(input);
     REQUIRE(actualResult.right() == expectedResult);
   }
 
   SECTION("Pipe call")
   {
-    const auto actualResult = input | frt::sequence_into<std::list>;
+    const auto actualResult = input | frt::algorithm::sequence_into<std::list>;
     REQUIRE(actualResult.right() == expectedResult);
   }
 }

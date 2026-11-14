@@ -177,8 +177,8 @@ extended monadic ergonomics, and full integration with the FRT library ecosystem
     - `frt::optional<T>` is implemented on top of `frt::either<void, T>`.
     - It provides direct converting constructors and assignment operators to and from `frt::either<void, U>`, as well as
       the `.asEither()` accessor.
-    - It seamlessly participates in generic FRT algorithms (`frt::algorithm::traverse`, `frt::sequence`, `frt::algorithm::match`) and free
-      monadic pipelines via `frt::meta_either`.
+    - It seamlessly participates in generic FRT algorithms (`frt::algorithm::traverse`, `frt::algorithm::sequence`,
+      `frt::algorithm::match`) and free monadic pipelines via `frt::meta_either`.
 
 6. **Deducing `this` (C++23 explicit object parameter)**:
     - `frt::optional` uses C++23 explicit object parameters (`this Self&& self`) across observers and monadic

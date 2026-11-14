@@ -25,12 +25,12 @@ struct MyVec : std::vector<Args...>
   using std::vector<Args...>::vector;
 };
 
-TEST_CASE("frt::sequence constexpr -- either", "[algorithm][sequence][constexpr]")
+TEST_CASE("frt::algorithm::sequence constexpr -- either", "[algorithm][sequence][constexpr]")
 {
   SECTION("Regular call")
   {
     constexpr auto valid = [] {
-      const auto actualResult = frt::sequence(input);
+      const auto actualResult = frt::algorithm::sequence(input);
       return std::ranges::equal(actualResult.right(), expectedResult);
     }();
     STATIC_REQUIRE(valid);
@@ -39,19 +39,19 @@ TEST_CASE("frt::sequence constexpr -- either", "[algorithm][sequence][constexpr]
   SECTION("Pipe call")
   {
     constexpr auto valid = [] {
-      const auto actualResult = input | frt::sequence;
+      const auto actualResult = input | frt::algorithm::sequence;
       return std::ranges::equal(actualResult.right(), expectedResult);
     }();
     STATIC_REQUIRE(valid);
   }
 }
 
-TEST_CASE("frt::sequence_into constexpr -- either", "[algorithm][sequence_into][constexpr]")
+TEST_CASE("frt::algorithm::sequence_into constexpr -- either", "[algorithm][sequence_into][constexpr]")
 {
   SECTION("Regular call")
   {
     constexpr auto valid = [] {
-      const auto actualResult = frt::sequence_into<MyVec>(input);
+      const auto actualResult = frt::algorithm::sequence_into<MyVec>(input);
       return std::ranges::equal(actualResult.right(), expectedResult);
     }();
     STATIC_REQUIRE(valid);
@@ -60,7 +60,7 @@ TEST_CASE("frt::sequence_into constexpr -- either", "[algorithm][sequence_into][
   SECTION("Pipe call")
   {
     constexpr auto valid = [] {
-      const auto actualResult = input | frt::sequence_into<MyVec>;
+      const auto actualResult = input | frt::algorithm::sequence_into<MyVec>;
       return std::ranges::equal(actualResult.right(), expectedResult);
     }();
     STATIC_REQUIRE(valid);
