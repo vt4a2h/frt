@@ -8,7 +8,7 @@ specialising `frt::meta_either` for these types.
 Currently, the library is available as a subfolder or via [CPM](https://github.com/cpm-cmake/cpm.cmake):
 
 ```cmake
-CPMAddPackage("gh:vt4a2h/frt@0.0.2")
+CPMAddPackage("gh:vt4a2h/frt@0.0.3")
 target_link_libraries(my_target PRIVATE frt::frt)
 ```
 
