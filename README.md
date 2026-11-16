@@ -12,6 +12,9 @@ CPMAddPackage("gh:vt4a2h/frt@0.0.3")
 target_link_libraries(my_target PRIVATE frt::frt)
 ```
 
+Requirements: C++23 and compatible toolchain. The library intentionally doesn't enforce these requirements. You can find
+more information in [CMakePresets.json](CMakePresets.json).
+
 ## Table of contents
 
 - [Result types](#result-types)
